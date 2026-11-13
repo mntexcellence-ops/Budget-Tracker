@@ -225,7 +225,7 @@ th{padding:8px 10px}
 .layout.collapsed .wsname,.layout.collapsed .sb-sec h4,.layout.collapsed .sbitem .nm,.layout.collapsed .sbitem .cnt,.layout.collapsed .sbnav span:last-child{display:none}
 .layout.collapsed .sbitem,.layout.collapsed .sbnav{justify-content:center;padding:8px 4px}
 .layout.collapsed .wshead{justify-content:center}
-.layout.collapsed .wscol{display:none}
+/* v10.8: the collapse button stays visible when collapsed (as ») so the sidebar can expand again — hiding it made expand impossible. */
 }
 .viewbar{display:flex;gap:2px;align-items:center;margin-bottom:12px;border-bottom:1px solid var(--border)}
 .vbtab{border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);border-radius:0;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
@@ -242,6 +242,9 @@ th{padding:8px 10px}
 .fb-check{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--body);padding:8px 0;cursor:pointer}
 .gbwrap{display:flex;gap:10px;align-items:center;margin:6px 0 10px}
 .gbwrap>span{font-size:12px;color:var(--muted);font-weight:600}
+/* v10.8: Group by + View as sit on ONE line (wrap on small screens). */
+.gbrow{display:flex;gap:8px 28px;flex-wrap:wrap;align-items:center;margin:6px 0 10px}
+.gbrow .gbwrap{margin:0}
 .board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
 .bdcol{background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:10px;min-height:180px}
 [data-theme="dark"] .bdcol{background:#232323}
@@ -430,7 +433,7 @@ th{padding:8px 10px}
       </div>
       <div id="view-list" class="view">
         <section class="grid">
-          <div class="card s12"><h3><i>▤</i><span data-t="listT"></span></h3><div class="s" id="tblListSub"></div><div class="gbwrap"><span data-t="groupByL"></span><div class="efseg" style="width:230px"><button id="gbUnit" class="on" onclick="setGroupBy('unit')" data-t="groupUnit"></button><button id="gbStatus" onclick="setGroupBy('status')" data-t="groupStatus"></button></div></div><div class="gbwrap"><span data-t="viewAsL"></span><div class="efseg" style="width:230px"><button id="lvTable" class="on" onclick="setListMode('table')" data-t="viewTable"></button><button id="lvGrid" onclick="setListMode('grid')" data-t="viewGrid"></button></div></div><div class="tblscroll" id="tblList"></div><div id="listGrid" style="display:none"></div></div>
+          <div class="card s12"><h3><i>▤</i><span data-t="listT"></span></h3><div class="s" id="tblListSub"></div><div class="gbrow"><div class="gbwrap"><span data-t="groupByL"></span><div class="efseg" style="width:230px"><button id="gbUnit" class="on" onclick="setGroupBy('unit')" data-t="groupUnit"></button><button id="gbStatus" onclick="setGroupBy('status')" data-t="groupStatus"></button></div></div><div class="gbwrap"><span data-t="viewAsL"></span><div class="efseg" style="width:230px"><button id="lvTable" class="on" onclick="setListMode('table')" data-t="viewTable"></button><button id="lvGrid" onclick="setListMode('grid')" data-t="viewGrid"></button></div></div></div><div class="tblscroll" id="tblList"></div><div id="listGrid" style="display:none"></div></div>
         </section>
       </div>
       <div id="view-board" class="view">
@@ -666,6 +669,9 @@ function fmtD(v){ v=(v||'').trim(); if(!v) return '—';
   if(m) return parseInt(m[3],10)+' '+DMON[parseInt(m[2],10)-1]+' '+m[1];
   m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if(m){ let y=+m[3]; if(y<100) y+=2000; return parseInt(m[2],10)+' '+DMON[parseInt(m[1],10)-1]+' '+y; }
+  /* v10.8 fallback: a raw Apps Script Date string ("Thu Feb 10 2022 00:00:00
+     GMT+0600 (Bangladesh Standard Time)") — parse it instead of showing it raw. */
+  const d=new Date(v); if(!isNaN(d.getTime())) return d.getDate()+' '+DMON[d.getMonth()]+' '+d.getFullYear();
   return v; }
 const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 /* ── Overdue (Project List only): the deadline is the Revised Finish Date
@@ -676,6 +682,9 @@ function parseD(v){ v=(v||'').trim(); if(!v) return null;
   if(m) return new Date(+m[1], +m[2]-1, +m[3]);
   m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
   if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y, +m[2]-1, +m[1]); }
+  /* v10.8 fallback: a raw Apps Script Date string — parse it (local midnight)
+     instead of returning null, which made stage days / overdue read 0. */
+  const d=new Date(v); if(!isNaN(d.getTime())) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
   return null; }
 function todayMid(){ const n=new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()); }
 function toISODate(v){ const d=parseD(v); if(!d) return '';
@@ -1576,7 +1585,7 @@ function renderProfile(){
   const av=document.getElementById('profileAvt'); if(av) av.textContent=(name||'?')[0].toUpperCase();
 }
 function toggleSidebar(){ const cs=document.getElementById('cSide'); if(cs) cs.classList.toggle('open'); }
-function toggleSidebarCollapse(){ const l=document.getElementById('layoutEl'); if(l) l.classList.toggle('collapsed'); }
+function toggleSidebarCollapse(){ const l=document.getElementById('layoutEl'); if(!l) return; const c=l.classList.toggle('collapsed'); const b=document.querySelector('.wscol'); if(b){ b.textContent=c?'»':'«'; b.title=c?'Expand':'Collapse'; } }
 /* ── Board (Kanban): one column per status; drag a card to change status. ── */
 function renderBoard(){
   const wrap=document.getElementById('boardWrap'); if(!wrap) return;
