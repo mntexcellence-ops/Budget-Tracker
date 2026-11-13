@@ -264,6 +264,17 @@ th{padding:8px 10px}
 .bdcard h5{font-size:13px;font-weight:600;line-height:1.35;margin-bottom:6px}
 .bdcard .meta{font-size:11.5px;color:var(--muted);line-height:1.7}
 .bdcard .meta b{color:var(--body)}
+/* ── v10.12: colorful board (reference design) — solid status-color cards,
+   white text, colored column dots. Open=blue, In Progress=orange,
+   Writing=red, Complete=green. ── */
+.bdcol-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
+.bdcard-c{color:#fff;border-color:transparent}
+.bdcard-c h5{color:#fff}
+.bdcard-c .meta{color:rgba(255,255,255,.88)}
+.bdcard-c .pbar{background:rgba(255,255,255,.35)}
+.bdcard-c .pbar i{background:#fff}
+.bdtag{display:inline-block;font-size:11px;font-weight:700;background:rgba(255,255,255,.22);color:#fff;border-radius:5px;padding:2px 7px;margin-bottom:7px}
+.bdfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:9px}
 .bdcard .pbar{width:100%;margin-top:7px}
 .calhead{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .calhead b{font-size:15px;min-width:170px;text-align:center}
@@ -1581,6 +1592,12 @@ async function fsSaveEdit(sl){
 }
 /* ── v3: left sidebar, Board, Calendar, Group-by, Comments. ── */
 const STATUS_ORDER=['Open','In Progress','Writing','Complete'];
+/* v10.12: board colors from the reference design — To Do blue, In Progress
+   orange, Review red, Completed green. Writing takes the Review red. */
+const STATUS_COLORS={'Open':'#2563eb','In Progress':'#f59e0b','Writing':'#ef4444','Complete':'#22c55e'};
+function statusColor(s){ return STATUS_COLORS[s]||'#7b68ee'; }
+/* Short card date like the reference ("Sep 08"). */
+function fmtDShort(v){ const d=parseD(v); if(!d) return '—'; return DMON[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0'); }
 let groupBy='unit';
 function setGroupBy(g){ groupBy=g;
   const a=document.getElementById('gbUnit'), b=document.getElementById('gbStatus');
@@ -1661,13 +1678,17 @@ function renderBoard(){
   const a=agg();
   const cols=STATUS_ORDER.map(s=>{
     const cards=a.rows.filter(r=>r.status===s);
+    const cc=statusColor(s);
     return `<div class="bdcol" data-status="${esc(s)}" ondragover="bdDragOver(event)" ondragleave="bdDragLeave(event)" ondrop="bdDrop(event,'${esc(s)}')">
-      <div class="bdcol-h"><span>${statusChip(s)}</span><span class="cnt">${cards.length}</span></div>`+
+      <div class="bdcol-h"><span style="display:flex;align-items:center;gap:8px"><span class="bdcol-dot" style="background:${cc}"></span>${esc(s)}</span><span class="cnt">${cards.length}</span></div>`+
       (cards.map(r=>{ const dl=odDeadline(r);
-        return `<div class="bdcard" draggable="true" ondragstart="bdDragStart(event,${r.sl})" onclick="bdCardClick(event,${r.sl})">
+        const dstr=dl?fmtDShort(r.revised||r.due):(r.start?fmtDShort(r.start):'—');
+        return `<div class="bdcard bdcard-c" draggable="true" ondragstart="bdDragStart(event,${r.sl})" onclick="bdCardClick(event,${r.sl})" style="background:${statusColor(r.status)}">
+          <span class="bdtag">#${esc(r.unit)}</span>
           <h5>${esc(r.name)}</h5>
-          <div class="meta"><b>${esc(r.unit)}</b><br>${T('thDeadline')}: ${dl?fmtD(r.revised||r.due):'—'}${isOverdue(r)?' <span class="odtxt">'+Tf('badgeOverdue',{d:odDays(r)})+'</span>':''}<br>${T('thCost')}: ${fmtM(r.cost||0)} · ${T('thBudget')}: ${fmtM(r.budget||0)}</div>
-          <span class="pbar"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span> <span style="font-size:11.5px">${r.prog||0}%</span>
+          <div class="meta">Completed: ${r.prog||0}%</div>
+          <span class="pbar"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span>
+          <div class="bdfoot"><span>📅 ${dstr}</span><span>${(r.subtasks?('☑ '+r.subtasks):'')}${isOverdue(r)?' · '+Tf('badgeOverdue',{d:odDays(r)}):''}</span></div>
         </div>`; }).join('') || `<p style="color:${thc().nodata};font-size:12px">${T('fsNoProjects')}</p>`)+
     `</div>`;
   }).join('');
