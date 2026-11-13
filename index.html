@@ -344,6 +344,13 @@ th{padding:8px 10px}
 .tlrow.cur:before{background:#4caf50}
 .tl-meta{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
 .tl-note{font-size:12px;color:var(--muted);margin:8px 0 2px}
+/* ── v10.9: subtasks inside the current stage (Stage History) ── */
+.tl-subs{margin-top:8px;border-top:1px dashed var(--border);padding-top:8px}
+.tl-subs-h{font-size:12px;font-weight:700;margin-bottom:2px}
+.tl-sub{padding:5px 0;font-size:13px;line-height:1.45}
+.tl-sub .tl-sub-name{font-weight:600}
+.tl-sub .tl-sub-done{color:var(--muted);text-decoration:line-through}
+.tl-sub-meta{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.5}
 .skel{pointer-events:none}
 .skel-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--soft2) 25%,var(--soft) 50%,var(--soft2) 75%);background-size:200% 100%;animation:skshimmer 1.2s infinite;margin:9px 0}
 .skel-line.big{height:18px}
@@ -624,7 +631,7 @@ cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the She
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',
-stSince:'since {d} · {n} days',stTotalDur:'Total duration: {n} days',stLoading:'⏳ Loading stage history…',stDoneOn:'done on {d}'
+stSince:'since {d} · {n} days',stTotalDur:'Total duration: {n} days',stLoading:'⏳ Loading stage history…',stDoneOn:'done on {d}',stSubInStage:'Subtasks in this stage',stSubDoneWord:'done',stSubStarted:'Started {d}',stSubFinished:'Finished {d}',stSubTook:'Took {n} days',stSubSameDay:'Same day',stSubPending:'Pending {n} days',stSubToday:'Started today',stSubOverdue:'{n} days overdue',stSubDue:'Due {d}',stSubNoStart:'Start date not recorded'
 }};
 const LANG='en';
 const T = k => (STR[LANG]||STR.en)[k] || STR.en[k] || k;
@@ -1176,7 +1183,7 @@ async function loadSubs(){
     const j=await res.json();
     dtSubs = (j&&j.ok&&Array.isArray(j.subs)) ? j.subs.filter(s=>String(s.sl)===String(r.sl)) : [];
   }catch(e){ dtSubs=[]; }
-  dtSubsState='idle'; subRefresh();
+  dtSubsState='idle'; subRefresh(); stageRefresh();
 }
 async function subToggle(subrow, checked){
   const r=rowBySl(dtRn); if(!r) return;
@@ -1188,7 +1195,7 @@ async function subToggle(subrow, checked){
     const s=dtSubs.find(x=>x.row===subrow); if(s) s.done=(j.done!==undefined)?!!j.done:checked; if(s&&j.doneDate!==undefined) s.doneDate=j.doneDate;
     toast(checked?T('toastSubDone'):T('toastSubReopen'),'ok');
   }catch(e){ toast(Tf('msgSaveFail',{e:e.message}),'err'); }
-  subRefresh();
+  subRefresh(); stageRefresh();
 }
 async function subAdd(){
   const r=rowBySl(dtRn); if(!r) return;
@@ -1235,6 +1242,38 @@ function stageInfo(r){
 function stageHeadHtml(r){ const s=stageInfo(r);
   return `<div id="dtStageHead" style="font-size:12px;color:var(--muted);margin-top:4px">${esc(r.status)} · ${Tf('stInStage',{n:fmtN(s.days)})}</div>`;
 }
+/* ── v10.9: subtasks inside the current stage — when each subtask started,
+   when it finished, how many days it took, and for open ones how many days
+   it has been pending in this stage. Created dates are stamped by script
+   v4.5; older subtasks have none, so their start shows as "not recorded"
+   and pending is measured against the due date instead. ── */
+function stageSubHtml(){
+  if(dtSubsState==='loading') return `<div class="tl-subs"><div class="tl-sub-meta">${T('stLoading')}</div></div>`;
+  if(!dtSubs.length) return '';
+  const doneN=dtSubs.filter(s=>s.done).length;
+  const rows=dtSubs.map(s=>{
+    const created=parseD(s.created||'');
+    const doneD=parseD(s.doneDate||'');
+    const dueD=parseD(s.due||'');
+    let meta='';
+    if(s.done){
+      const parts=[];
+      if(created) parts.push(Tf('stSubStarted',{d:fmtD(s.created)}));
+      if(doneD) parts.push(Tf('stSubFinished',{d:fmtD(s.doneDate)}));
+      if(created&&doneD){ const n=Math.max(0,Math.floor((doneD-created)/86400000)); parts.push(n===0?T('stSubSameDay'):Tf('stSubTook',{n:fmtN(n)})); }
+      meta=parts.join(' · ')||T('stSubDoneWord');
+    } else {
+      const parts=[];
+      if(created){ const n=Math.max(0,Math.floor((todayMid()-created)/86400000)); parts.push(Tf('stSubStarted',{d:fmtD(s.created)})); parts.push(n===0?T('stSubToday'):Tf('stSubPending',{n:fmtN(n)})); }
+      if(dueD) parts.push(Tf('stSubDue',{d:fmtD(s.due)}));
+      if(!created&&dueD){ const n=Math.floor((todayMid()-dueD)/86400000); if(n>0) parts.push(Tf('stSubOverdue',{n:fmtN(n)})); }
+      if(!created&&!dueD) parts.push(T('stSubNoStart'));
+      meta=parts.join(' · ');
+    }
+    return `<div class="tl-sub"><div class="tl-sub-name ${s.done?'tl-sub-done':''}">${s.done?'✓':'○'} ${esc(s.subtask)}</div><div class="tl-sub-meta">${meta}</div></div>`;
+  }).join('');
+  return `<div class="tl-subs"><div class="tl-subs-h">${T('stSubInStage')} — ${doneN} / ${dtSubs.length} ${T('stSubDoneWord')}</div>${rows}</div>`;
+}
 function stageBodyHtml(r){
   if(dtStageState==='loading') return `<div style="font-size:13px;color:var(--muted)">${T('stLoading')}</div>`;
   const s=stageInfo(r);
@@ -1247,10 +1286,10 @@ function stageBodyHtml(r){
       const fromTxt=e.from==='—'?T('stStarted'):esc(e.from);
       return `<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div></div>`;
     }).join('')+
-    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div></div></div>`;
+    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div>${stageSubHtml()}</div></div>`;
   } else {
     h+=`<div class="tl"><div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`+
-    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${r.start?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div></div>`+
+    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${r.start?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div>${stageSubHtml()}</div></div>`+
     `<div class="tl-note">${T('stSeedNote')}</div>`;
   }
   if(totalDays!==null) h+=`<div class="tl-note">${Tf('stTotalDur',{n:fmtN(totalDays)})}</div>`;
