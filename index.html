@@ -26,7 +26,7 @@ body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-se
 .fitem input{accent-color:var(--brand-b);width:14px;height:14px}
 .reset{font-size:11.5px;color:var(--brand);cursor:pointer;text-decoration:underline}
 .dd{position:relative}
-.ddbtn{width:100%;text-align:left;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--soft);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer}
+.ddbtn{width:100%;text-align:left;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--soft);color:var(--text);font-size:12.5px;font-weight:600;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ddpanel{margin-top:6px;border:1px solid var(--border);border-radius:8px;padding:8px;background:var(--card);box-shadow:0 4px 14px var(--shadow)}
 .ddtools{display:flex;gap:12px;border-bottom:1px solid var(--border);padding-bottom:6px;margin-bottom:6px}
 .ddtools span{font-size:11.5px;color:var(--brand);cursor:pointer;font-weight:600}
@@ -240,7 +240,7 @@ th{padding:8px 10px}
 .vbtab.on{background:transparent;color:#7b68ee;border-bottom-color:#7b68ee}
 [data-theme="dark"] .vbtab.on{color:#b3a6ff;border-bottom-color:#8b7bff}
 .filterbar{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:0 1px 2px var(--shadow);margin-bottom:14px}
-.fb-row{display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap}
+.fb-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap}
 .fb-item{min-width:150px}
 .fb-item.fb-grow{flex:1;min-width:200px}
 .fb-item label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
@@ -440,14 +440,14 @@ th{padding:8px 10px}
                 <div id="fBst"></div>
               </div></div>
           </div>
-          <div class="fb-item"><label>&nbsp;</label>
+          <div class="fb-item" style="min-width:0"><label>&nbsp;</label>
             <label class="fb-check"><input type="checkbox" id="fOverdue" onchange="setOverdue(this.checked)"> <span data-t="overdueOnly"></span></label>
           </div>
-          <div class="fb-item fb-grow"><label data-t="searchH"></label>
+          <div class="fb-item" style="flex:0 1 200px;min-width:160px"><label data-t="searchH"></label>
             <input type="text" id="qSearch" class="dinput" data-t-ph="searchPh" oninput="syncSearch(this.value,'q')">
           </div>
           <div class="fb-item"><label>&nbsp;</label><button class="toolbtn" onclick="openAddProject()" data-t="addBtn"></button></div>
-          <div class="fb-item"><label>&nbsp;</label><button id="btnMode" class="toolbtn" onclick="toggleMode()">🌙 Dark</button></div>
+          <div class="fb-item" style="min-width:0"><label>&nbsp;</label><button id="btnMode" class="toolbtn" style="text-align:center;padding:9px 10px" title="Toggle theme" onclick="toggleMode()">🌙</button></div>
         </div>
         <div style="margin-top:8px"><span class="reset" onclick="resetAll()" data-t="resetAll"></span></div>
       </div>
@@ -667,7 +667,7 @@ function applyLang(){
   document.querySelectorAll('[data-th]').forEach(e=>{ e.innerHTML=T(e.getAttribute('data-th')); });
   document.querySelectorAll('[data-t-ph]').forEach(e=>{ e.placeholder=T(e.getAttribute('data-t-ph')); });
   document.title = 'Budget Tracking — DEKKO ISHO Group';
-  const mb=document.getElementById('btnMode'); if(mb) mb.textContent = darkMode?T('light'):T('dark');
+  const mb=document.getElementById('btnMode'); if(mb) mb.textContent = darkMode?'☀️':'🌙';
   const bt=document.getElementById('btnModeTop'); if(bt) bt.textContent = darkMode?'☀️':'🌙';
 }
 
@@ -677,7 +677,7 @@ function thc(){ return darkMode
   ? {grid:'#383838', mut:'#9a9a9a', track:'#2e2e2e', ctr:'#e8e8e8', hlab:'#e8e8e8', nodata:'#9a9a9a'}
   : {grid:'#e8e8e8', mut:'#9aa0a6', track:'#f0f0f0', ctr:'#292d34', hlab:'#4a4a4a', nodata:'#9aa0a6'}; }
 function applyTheme(){ document.documentElement.dataset.theme = darkMode?'dark':'light';
-  const b=document.getElementById('btnMode'); if(b) b.textContent = darkMode?T('light'):T('dark');
+  const b=document.getElementById('btnMode'); if(b) b.textContent = darkMode?'☀️':'🌙';
   const bt=document.getElementById('btnModeTop'); if(bt) bt.textContent = darkMode?'☀️':'🌙'; }
 function toggleMode(){ darkMode=!darkMode;
   try{ localStorage.setItem('ud-theme', darkMode?'dark':'light'); }catch(e){}
