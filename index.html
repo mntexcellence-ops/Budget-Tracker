@@ -370,7 +370,8 @@ th{padding:8px 10px}
 .tl-sub .tl-sub-name{font-weight:600}
 .tl-sub .tl-sub-done{color:#4caf50}
 .tl-sub-meta{font-size:12px;color:var(--muted);margin-top:1px;line-height:1.5}
-/* ── v10.25: Workflow Steps — approval/execution chain in the task view.
+/* ── v10.25/26: Workflow Steps — approval/execution chain, shown inside
+   Stage History since v10.26 (no standalone section any more).
    The table scrolls sideways on narrow screens so the page never overflows. ── */
 .wfscroll{overflow-x:auto}
 .wftable{width:100%;min-width:640px;border-collapse:collapse;font-size:13px}
@@ -1273,7 +1274,6 @@ function dtViewHtml(r){
   return `<div class="dtsec"><h4>${T('dtFields')}</h4><div class="dtgrid">${fields.map(f=>`<div><b>${f[0]}</b>${f[1]}</div>`).join('')}</div></div>`+
   `<div class="dtsec"><h4>${T('dtTime')}</h4>${timeSection(r)}</div>`+
   `<div class="dtsec" id="dtStageSec"><h4>${T('dtStage')}</h4><div class="tl-note" style="margin:0 0 4px">${T('stStageSub')}</div><div id="dtStageBody">${stageBodyHtml(r)}</div></div>`+
-  `<div class="dtsec" id="dtWfSec"><h4>${T('wfTitle')}</h4><div class="tl-note" style="margin:0 0 4px">${T('wfSub')}</div><div id="dtWfBody">${wfBodyHtml(r)}</div></div>`+
   `<div class="dtsec" id="dtSubSec"><h4>${T('dtSubtasks')}</h4><div id="dtSubBody">${subBodyHtml(r)}</div></div>`+
   `<div class="dtsec" id="dtCmSec"><h4>${T('dtComments')}</h4><div id="dtCmBody">${cmBodyHtml(r)}</div></div>`+
   `<div class="dtsec"><h4>${T('dtProgress')}</h4><div style="font-size:13px"><span class="pbar" style="width:160px"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span> <b>${r.prog||0}%</b>${r.prog_note?`<br><span style="font-size:11.5px;color:var(--muted)">${Tf('dtNote',{p:r.prog||0})}</span>`:''}</div></div>`+
@@ -1433,6 +1433,16 @@ function stageSubHtml(){
   const rows=dtSubs.map(s=>`<div class="tl-sub"><div class="tl-sub-name ${s.done?'tl-sub-done':''}">${s.done?'✓':'○'} ${esc(s.subtask)}</div><div class="tl-sub-meta">${subMeta(s)}</div></div>`).join('');
   return `<div class="tl-subs"><div class="tl-subs-h">${T('stSubStep')} — ${doneN} / ${dtSubs.length} ${T('stSubDoneWord')}</div>${rows}</div>`;
 }
+/* ── v10.26: Workflow Steps inside Stage History — same pattern as the
+   v10.9 subtasks block: the 26-step chain is its own step in the loop,
+   with the add form and edit/delete controls kept inside it, so the
+   steps are shown once, in Stage History, not twice. ── */
+function stageWfHtml(r){
+  /* The heading/subtitle sit OUTSIDE #dtStageWfBody: wfRefresh() rewrites
+     that body's innerHTML on every workflow load/add/edit/delete, and
+     anything inside it would be wiped. */
+  return `<div class="tlrow"><div class="tl-subs"><div class="tl-subs-h">${T('wfTitle')}</div><div class="tl-note" style="margin:0 0 4px">${T('wfSub')}</div><div id="dtStageWfBody">${wfBodyHtml(r)}</div></div></div>`;
+}
 function stageBodyHtml(r){
   if(dtStageState==='loading') return `<div style="font-size:13px;color:var(--muted)">${T('stLoading')}</div>`;
   const s=stageInfo(r);
@@ -1452,6 +1462,10 @@ function stageBodyHtml(r){
   const isComp=(r.status||'').toLowerCase()==='complete';
   const isProg=(r.status||'').toLowerCase()==='in progress';
   const subsStep=(()=>{ const shtml=stageSubHtml(); return shtml?`<div class="tlrow">${shtml}</div>`:''; })();
+  /* ── v10.26: Workflow Steps sit between the status rows and the
+     subtasks step: Started → In Progress → Workflow Steps → Subtasks →
+     (other stages) → Completed → End Date. ── */
+  const wfStep=stageWfHtml(r);
   const endStep=endD?`<div class="tlrow"><div style="font-size:13px"><b>${T('stEndDate')}</b> — ${fmtD(r.finishwork||r.revised||r.due)}</div></div>`:'';
   if(dtStageLog.length){
     /* ── v10.24: keep the task's Start Date as the first step of the loop —
@@ -1462,21 +1476,21 @@ function stageBodyHtml(r){
     h+=`<div class="tl">`+startStep+dtStageLog.map(e=>{
       const fromTxt=e.from==='—'?T('stStarted'):esc(e.from);
       return `<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div></div>`;
-    }).join('')+subsStep+
+    }).join('')+wfStep+subsStep+
     `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div></div>${endStep}</div>`;
   } else {
     let steps=`<div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`;
     if(isProg){
       steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('In Progress')}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
-      steps+=subsStep;
+      steps+=wfStep+subsStep;
     } else if(isComp){
       const n=st&&compD?Math.max(0,Math.floor((compD-st)/86400000)):0;
       steps+=`<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('In Progress')}<span style="font-size:13px">${T('kpiInProg')}</span></div><div class="tl-meta">${st&&compD?fmtD(r.start)+' → '+fmtD(r.finishwork||r.revised)+' · '+Tf('stDaysIn',{n:fmtN(n),f:T('kpiInProg')}):(st?fmtD(r.start):T('tmNoStart'))}</div></div>`;
-      steps+=subsStep;
+      steps+=wfStep+subsStep;
       steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('Complete')}<span style="font-size:13px">${T('thComplete')}</span></div><div class="tl-meta">${compD?Tf('stDoneOn',{d:fmtD(r.finishwork||r.revised)}):T('stCurrentStage')}</div></div>`;
     } else {
       steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
-      steps+=subsStep;
+      steps+=wfStep+subsStep;
     }
     steps+=endStep;
     h+=`<div class="tl">${steps}</div>`+`<div class="tl-note">${T('stSeedNote')}</div>`;
@@ -1570,7 +1584,7 @@ function wfBodyHtml(r){
   }
   return h;
 }
-function wfRefresh(){ const b=document.getElementById('dtWfBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=wfBodyHtml(r); }
+function wfRefresh(){ const b=document.getElementById('dtStageWfBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=wfBodyHtml(r); }
 async function loadWorkflow(){
   const r=rowBySl(dtRn); if(!r) return;
   if(!scriptUrl()){ dtWfState='idle'; wfRefresh(); return; }
