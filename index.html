@@ -240,7 +240,7 @@ th{padding:8px 10px}
 .vbtab.on{background:transparent;color:#7b68ee;border-bottom-color:#7b68ee}
 [data-theme="dark"] .vbtab.on{color:#b3a6ff;border-bottom-color:#8b7bff}
 .filterbar{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px 16px;box-shadow:0 1px 2px var(--shadow);margin-bottom:14px}
-.fb-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:nowrap}
+.fb-row{display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap}
 .fb-item{min-width:150px}
 .fb-item.fb-grow{flex:1;min-width:200px}
 .fb-item label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px}
@@ -443,11 +443,9 @@ th{padding:8px 10px}
           <div class="fb-item" style="min-width:0"><label>&nbsp;</label>
             <label class="fb-check"><input type="checkbox" id="fOverdue" onchange="setOverdue(this.checked)"> <span data-t="overdueOnly"></span></label>
           </div>
-          <div class="fb-item" style="flex:0 1 200px;min-width:160px"><label data-t="searchH"></label>
+          <div class="fb-item" style="flex:1 1 200px;min-width:160px"><label data-t="searchH"></label>
             <input type="text" id="qSearch" class="dinput" data-t-ph="searchPh" oninput="syncSearch(this.value,'q')">
           </div>
-          <div class="fb-item"><label>&nbsp;</label><button class="toolbtn" onclick="openAddProject()" data-t="addBtn"></button></div>
-          <div class="fb-item" style="min-width:0"><label>&nbsp;</label><button id="btnMode" class="toolbtn" style="text-align:center;padding:9px 10px" title="Toggle theme" onclick="toggleMode()">🌙</button></div>
         </div>
         <div style="margin-top:8px"><span class="reset" onclick="resetAll()" data-t="resetAll"></span></div>
       </div>
@@ -667,7 +665,6 @@ function applyLang(){
   document.querySelectorAll('[data-th]').forEach(e=>{ e.innerHTML=T(e.getAttribute('data-th')); });
   document.querySelectorAll('[data-t-ph]').forEach(e=>{ e.placeholder=T(e.getAttribute('data-t-ph')); });
   document.title = 'Budget Tracking — DEKKO ISHO Group';
-  const mb=document.getElementById('btnMode'); if(mb) mb.textContent = darkMode?'☀️':'🌙';
   const bt=document.getElementById('btnModeTop'); if(bt) bt.textContent = darkMode?'☀️':'🌙';
 }
 
@@ -677,7 +674,6 @@ function thc(){ return darkMode
   ? {grid:'#383838', mut:'#9a9a9a', track:'#2e2e2e', ctr:'#e8e8e8', hlab:'#e8e8e8', nodata:'#9a9a9a'}
   : {grid:'#e8e8e8', mut:'#9aa0a6', track:'#f0f0f0', ctr:'#292d34', hlab:'#4a4a4a', nodata:'#9aa0a6'}; }
 function applyTheme(){ document.documentElement.dataset.theme = darkMode?'dark':'light';
-  const b=document.getElementById('btnMode'); if(b) b.textContent = darkMode?'☀️':'🌙';
   const bt=document.getElementById('btnModeTop'); if(bt) bt.textContent = darkMode?'☀️':'🌙'; }
 function toggleMode(){ darkMode=!darkMode;
   try{ localStorage.setItem('ud-theme', darkMode?'dark':'light'); }catch(e){}
