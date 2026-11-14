@@ -5,7 +5,8 @@
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f8f8f8;--card:#FFFFFF;--border:#e8e8e8;--text:#292d34;--body:#4a4a4a;--muted:#80868b;--faint:#9aa0a6;--soft:#f9f9f9;--soft2:#f5f5f5;--shadow:rgba(0,0,0,.06);--shadow-md:0 4px 14px rgba(0,0,0,.09);--shadow-lg:0 12px 32px rgba(0,0,0,.16);--radius:8px;--brand:#7b68ee;--brand-b:#6a5ae0;--side:#ffffff}
-[data-theme="dark"]{--bg:#1a1a1a;--card:#262626;--border:#383838;--text:#e8e8e8;--body:#d0d0d0;--muted:#9a9a9a;--faint:#777777;--soft:#232323;--soft2:#2e2e2e;--shadow:rgba(0,0,0,.35);--shadow-md:0 4px 14px rgba(0,0,0,.45);--shadow-lg:0 12px 32px rgba(0,0,0,.5);--radius:8px;--brand:#8b7bff;--brand-b:#8b7bff;--side:#232323}
+[data-theme="dark"]{--bg:#1a1f3b;--card:#282d47;--border:#3a4066;--text:#e8e8e8;--body:#d0d0d0;--muted:#9a9a9a;--faint:#777777;--soft:#232842;--soft2:#2c3150;--shadow:rgba(0,0,0,.35);--shadow-md:0 4px 14px rgba(0,0,0,.45);--shadow-lg:0 12px 32px rgba(0,0,0,.5);--radius:8px;--brand:#fed800;--brand-b:#fed800;--side:#1e2340}
+[data-theme="dark"] .entrybtn,[data-theme="dark"] .fsbtn.pri,[data-theme="dark"] .efseg button.on{color:#1a1f3b}
 [data-theme="dark"] input{color-scheme:dark}
 body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;padding:14px;transition:background .25s,color .25s}
 .app{max-width:1460px;margin:0 auto}
@@ -33,7 +34,7 @@ body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-se
 .dlabel{display:block;font-size:11px;color:var(--muted);margin:7px 0 3px}
 .dinput{width:100%;padding:7px 9px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:var(--card);font-family:inherit}
 .toolbtn{width:100%;text-align:left;padding:9px 12px;border:1px solid #d9d9d9;border-radius:6px;background:var(--card);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;margin-bottom:8px}
-[data-theme="dark"] .toolbtn{border-color:#383838}
+[data-theme="dark"] .toolbtn{border-color:#3a4066}
 .toolbtn:hover{border-color:var(--brand-b)}
 .kpis{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:14px}
 .kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px 16px 8px;box-shadow:0 1px 2px var(--shadow);position:relative;min-width:0}
@@ -74,7 +75,7 @@ th{text-align:left;color:var(--muted);font-size:10.5px;text-transform:uppercase;
 td{padding:7.5px 8px;border-bottom:1px solid var(--border);color:var(--body)}
 td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
 tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px solid var(--brand-b)}
-[data-theme="dark"] tr.tot td{background:#332f4d}
+[data-theme="dark"] tr.tot td{background:#2e3352}
 .tblscroll{max-height:560px;overflow:auto}
 .leg{display:flex;flex-wrap:wrap;gap:4px 12px;margin-top:9px}
 .leg div{font-size:11px;color:var(--muted);display:flex;gap:5px;align-items:center}
@@ -110,7 +111,7 @@ tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px so
 .fshead .tot{font-size:12.5px;color:var(--muted)}
 .fsbody{flex:1;overflow:auto;padding:14px 18px}
 .fsbtn{background:var(--card);color:var(--text);border:1px solid #d9d9d9;border-radius:6px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
-[data-theme="dark"] .fsbtn{border-color:#383838}
+[data-theme="dark"] .fsbtn{border-color:#3a4066}
 .fsbtn.pri{background:var(--brand);color:#fff;border:0}
 .fsbtn:disabled{opacity:.55;cursor:wait}
 .efinput{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;color:var(--text);background:var(--card);font-family:inherit}
@@ -671,7 +672,7 @@ function applyLang(){
 let darkMode=false;
 try{ darkMode = localStorage.getItem('ud-theme')==='dark'; }catch(e){}
 function thc(){ return darkMode
-  ? {grid:'#383838', mut:'#9a9a9a', track:'#2e2e2e', ctr:'#e8e8e8', hlab:'#e8e8e8', nodata:'#9a9a9a'}
+  ? {grid:'#3a4066', mut:'#9a9a9a', track:'#282d47', ctr:'#e8e8e8', hlab:'#e8e8e8', nodata:'#9a9a9a'}
   : {grid:'#e8e8e8', mut:'#9aa0a6', track:'#f0f0f0', ctr:'#292d34', hlab:'#4a4a4a', nodata:'#9aa0a6'}; }
 function applyTheme(){ document.documentElement.dataset.theme = darkMode?'dark':'light';
   const bt=document.getElementById('btnModeTop'); if(bt) bt.textContent = darkMode?'☀️':'🌙'; }
