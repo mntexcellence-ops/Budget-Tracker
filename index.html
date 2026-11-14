@@ -385,22 +385,27 @@ th{padding:8px 10px}
 .wfadd select.efinput{flex:2;min-width:220px}
 .wfadd input[type=text]{flex:1;min-width:140px}
 .wfadd input[type=date]{max-width:170px}
-#printSheet{display:none}
+/* ── v10.27: A4 print sheet copied from the sample task-workflow sheet
+   (~/workspace/ts-spaces/sample-task-workflow/index.html .sheet): white
+   sheet, navy table header, kv2 dashed rows, footer note. No signature
+   boxes. The sheet styles live outside @media print too, so the on-screen
+   print preview looks the same as the printed page. ── */
+#printSheet{display:none;background:#fff;color:#16233c;width:min(820px,100%);margin:0 auto;padding:34px 36px;font-size:13.5px;line-height:1.5}
+#printSheet .co{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:#5f6f86;font-weight:700}
+#printSheet h2{font-size:19px;margin:6px 0 0;line-height:1.25}
+#printSheet .kv2{display:grid;grid-template-columns:1fr 1fr;gap:4px 22px;margin:14px 0}
+#printSheet .kv2 div{display:flex;justify-content:space-between;border-bottom:1px dashed #dde3ea;padding:4px 0}
+#printSheet .kv2 span{color:#5f6f86}
+#printSheet .kv2 b{text-align:right}
+#printSheet table{width:100%;border-collapse:collapse;font-size:12.8px}
+#printSheet th{background:#19233f;color:#fff;text-align:left;padding:11px 12px;font-size:12.5px;letter-spacing:.05em;text-transform:uppercase}
+#printSheet td{padding:10px 12px;border-top:1px solid #dde3ea;vertical-align:top;text-align:left}
+#printSheet .pr-foot{font-size:11.5px;color:#5f6f86;margin-top:22px}
+@media(max-width:560px){#printSheet{padding:22px 18px}#printSheet .kv2{grid-template-columns:1fr}}
 @media print{
   @page{size:A4;margin:12mm}
   body>*:not(#printSheet){display:none!important}
-  #printSheet{display:block!important;position:absolute;inset:0;background:#fff;color:#000;font-size:12px;line-height:1.5;padding:0}
-  #printSheet h1{font-size:18px;margin:0 0 2px}
-  #printSheet h2{font-size:13px;margin:14px 0 6px;border-bottom:1px solid #999;padding-bottom:3px}
-  #printSheet table{width:100%;border-collapse:collapse;font-size:11px}
-  #printSheet th,#printSheet td{border:1px solid #999;padding:4px 6px;text-align:left;vertical-align:top}
-  #printSheet th{background:#eee}
-  .pr-grid{display:grid;grid-template-columns:1fr 1fr;gap:2px 24px;font-size:12px}
-  .pr-grid b{color:#555;font-size:10px;text-transform:uppercase;letter-spacing:.5px;display:block}
-  .pr-sigs{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:8px}
-  .pr-sig{border:1px solid #999;padding:10px 8px 6px;min-height:84px;font-size:11px}
-  .pr-sig b{display:block;margin-bottom:26px}
-  .pr-sig span{display:block;border-top:1px solid #999;padding-top:3px;color:#555}
+  #printSheet{display:block!important;position:absolute;inset:0;box-shadow:none;width:100%}
 }
 .skel{pointer-events:none}
 .skel-line{height:12px;border-radius:6px;background:linear-gradient(90deg,var(--soft2) 25%,var(--soft) 50%,var(--soft2) 75%);background-size:200% 100%;animation:skshimmer 1.2s infinite;margin:9px 0}
@@ -687,8 +692,8 @@ toastSaved:'Saved!',toastSubAdd:'Subtask added',toastSubDone:'Subtask completed'
 cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the Sheet. This cannot be undone.',cfCancel:'Cancel',cfDelete:'Delete',
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 wfTitle:'Workflow Steps',wfSub:'Approval and execution steps for this project — who handled each step, when it moved, and how long it took',
-wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 26 workflow steps are done.',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfEdit:'Workflow step updated',
-prTitle:'Project Workflow Sheet',prTaskDetails:'Task Details',prWorkflow:'Workflow Steps',prPrepared:'Prepared',prChecked:'Checked',prApproved:'Approved',prGCEO:'GCEO / Chairman',prName:'Name',prSign:'Signature',prDateL:'Date',prProgress:'Progress',
+wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 26 workflow steps are done — a custom step can still be added below.',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfEdit:'Workflow step updated',
+prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracking — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
 stSince:'since {d} · {n} days',stTotalDur:'Total duration: {n} days',stLoading:'⏳ Loading stage history…',stDoneOn:'done on {d}',stSubInStage:'Subtasks in this stage',stSubDoneWord:'done',stSubStarted:'Started {d}',stSubFinished:'Finished {d}',stSubTook:'Took {n} days',stSubSameDay:'Same day',stSubPending:'Pending {n} days',stSubToday:'Started today',stSubOverdue:'{n} days overdue',stSubDue:'Due {d}',stSubNoStart:'Start date not recorded'
@@ -1512,7 +1517,7 @@ async function loadStageLog(){
   dtStageState='idle'; stageRefresh();
 }
 
-/* ── v10.25: Workflow Steps — the 23-step approval chain plus the 3 ending
+/* ── v10.25/27: Workflow Steps — the 23-step approval chain plus the 3 ending
    steps (26 total), stored in the WORKFLOW_LOG tab via script v4.12
    (getworkflow / addworkflow / deleteworkflow / editworkflow). Spellings
    are the user's own — PROCURMENT and APPROVEED kept verbatim. With no
@@ -1527,15 +1532,29 @@ let dtWf=[], dtWfState='idle', dtWfEdit=null, dtWfLocal=[];
 function wfRows(){ return dtWf.concat(dtWfLocal); }
 /* Match a server row to its canonical step: by Step No first, else by the
    exact step name (case-insensitive), so a row written without a step number
-   still lands on the right step. Later rows win. */
+   still lands on the right step. Later rows win.
+   v10.27: custom steps — any row with stepno > 26, or a step name that is
+   not one of the 26 fixed steps, is appended after the fixed 26, sorted by
+   stepno (a row with no usable stepno gets the next free number).
+   v10.28: the dashboard sends an EXPLICIT stepno for custom adds
+   (wfNextCustomNo) — the server's max+1 auto-assign squats a fixed step
+   number when only steps 1–2 exist (it would assign 3), so never rely
+   on it for custom steps. */
 function wfModel(){
   const byNo={};
+  const customs=[];
   wfRows().forEach(w=>{
     let n=parseInt(w.stepno,10);
     if(!n && w.step){ const i=WF_STEPS.findIndex(s=>s.toLowerCase()===String(w.step).trim().toLowerCase()); if(i>=0) n=i+1; }
     if(n>=1 && n<=WF_STEPS.length) byNo[n]=w;
+    else if(n>WF_STEPS.length) customs.push({no:n, name:String(w.step||'').trim()||('Step '+n), row:w, custom:true});
+    else if(w.step && String(w.step).trim() && !WF_STEPS.some(s=>s.toLowerCase()===String(w.step).trim().toLowerCase()))
+      customs.push({no:0, name:String(w.step).trim(), row:w, custom:true});
   });
-  return WF_STEPS.map((name,i)=>({no:i+1, name, row:byNo[i+1]||null}));
+  customs.sort((a,b)=>(a.no||9999)-(b.no||9999));
+  let next=Math.max(WF_STEPS.length, ...customs.map(c=>c.no||0));
+  customs.forEach(c=>{ if(!c.no) c.no=++next; });
+  return WF_STEPS.map((name,i)=>({no:i+1, name, row:byNo[i+1]||null, custom:false})).concat(customs);
 }
 function wfDaysText(model, idx){
   const row=model[idx].row; if(!row || !parseD(row.date||'')) return '—';
@@ -1560,29 +1579,47 @@ function wfNextIso(model, idx){
   if(row.nextdate) return row.nextdate;
   return '';
 }
-function wfDoneCount(model){ return model.filter(m=>m.row && parseD(m.row.date||'')).length; }
+function wfDoneCount(model){ return model.filter(m=>!m.custom && m.row && parseD(m.row.date||'')).length; }
+function wfCustomCount(model){ return model.filter(m=>m.custom && m.row).length; }
 function wfBodyHtml(r){
   const canE=canEditUnit(r.unit);
   const model=wfModel();
   const done=wfDoneCount(model);
-  let h=`<div style="font-size:13px;margin-bottom:6px"><b>${Tf('wfProg',{done,total:WF_STEPS.length})}</b></div>`;
+  const customs=wfCustomCount(model);
+  let h=`<div style="font-size:13px;margin-bottom:6px"><b>${Tf('wfProg',{done,total:WF_STEPS.length})}${customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:''}</b></div>`;
   if(dtWfState==='loading'){ h+=`<div style="font-size:13px;color:var(--muted)">${T('wfLoading')}</div>`; return h; }
   h+=`<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfDate')}</th><th>${T('wfDays')}</th><th>${T('wfNext')}</th><th>${T('wfRef')}</th>${canE?'<th></th>':''}</tr>`+
   model.map((m,idx)=>{
     const w=m.row, dated=w&&parseD(w.date||'');
     if(canE&&dtWfEdit===m.no){
-      return `<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}"></td><td>—</td><td>—</td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
+      const nameCell=m.custom?`<input type="text" id="wfEName" class="efinput" style="min-width:140px" value="${esc(m.name)}">`:esc(m.name);
+      return `<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${nameCell}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}"></td><td>—</td><td>—</td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
     }
     const acts=canE&&w?`<button class="subedit" title="${T('wfEdit')}" onclick="wfEdit(${m.no})">✏️</button><button class="subdel" title="${T('wfDel')}" onclick="wfDel(${m.no})">✕</button>`:'';
-    return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${wfDaysText(model,idx)}</td><td>${wfNextText(model,idx)}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${canE?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
+    return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${wfDaysText(model,idx)}</td><td>${wfNextText(model,idx)}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${canE?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
   }).join('')+`</table></div>`;
   if(canE){
-    const pending=model.filter(m=>!(m.row&&parseD(m.row.date||'')));
+    const pending=model.filter(m=>!m.custom && !(m.row&&parseD(m.row.date||'')));
     if(!scriptUrl()||!curToken()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:8px">${T('wfGuestNote')}</div>`;
     if(!pending.length){ h+=`<div style="font-size:13px;color:var(--muted);margin-top:8px">${T('wfAllDone')}</div>`; }
-    else h+=`<div class="wfadd"><select id="wfStepSel" class="efinput">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}</select><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
+    h+=`<div class="wfadd"><select id="wfStepSel" class="efinput" onchange="wfStepSelChange()">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}<option value="custom">${esc(T('wfCustom'))}</option></select><input type="text" id="wfCustomName" class="efinput" placeholder="${T('wfCustomPh')}" style="display:${pending.length?'none':''}"><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
   }
   return h;
+}
+function wfStepSelChange(){
+  const sel=document.getElementById('wfStepSel'), inp=document.getElementById('wfCustomName');
+  if(sel&&inp) inp.style.display=(sel.value==='custom')?'':'none';
+}
+/* v10.28: next free CUSTOM step number — max(27, maxExistingStepNo + 1),
+   where maxExistingStepNo is the max stepno across all current workflow
+   rows (server rows + local preview rows, fixed and custom). wfModel()
+   already normalises every row to a number (fixed names map to 1–26,
+   nameless customs get the next free number), and always lists the 26
+   fixed steps, so max(model nos) >= 26 and the result is always >= 27.
+   Never send a custom add without a stepno: the server's max+1
+   auto-assign would give stepno 3 when only fixed steps 1–2 exist. */
+function wfNextCustomNo(){
+  return Math.max(WF_STEPS.length, ...wfModel().map(m=>m.no)) + 1;
 }
 function wfRefresh(){ const b=document.getElementById('dtStageWfBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=wfBodyHtml(r); }
 async function loadWorkflow(){
@@ -1600,19 +1637,36 @@ async function loadWorkflow(){
 async function wfAdd(){
   const r=rowBySl(dtRn); if(!r) return;
   const sel=document.getElementById('wfStepSel'); if(!sel) return;
-  const no=parseInt(sel.value,10);
-  const step=WF_STEPS[no-1];
+  const msg=document.getElementById('wfMsg');
+  const say=(t)=>{ if(msg){ msg.textContent=t; msg.className='fsmsg err'; } toast(t,'err'); };
+  const isCustom=sel.value==='custom';
+  let no=null, step='';
+  if(isCustom){
+    step=((document.getElementById('wfCustomName')||{}).value||'').trim();
+    if(!step){ say(T('wfCustomPh')); return; }
+    /* Duplicate custom name — blocked client-side (the server does not
+       reject duplicate step names, only duplicate step numbers). */
+    if(wfModel().some(m=>m.name.toLowerCase()===step.toLowerCase())){ say(T('wfCustomDup')); return; }
+  }else{
+    no=parseInt(sel.value,10);
+    step=WF_STEPS[no-1];
+  }
   const who=((document.getElementById('wfWho')||{}).value||'').trim();
   const date=(document.getElementById('wfDate')||{}).value||'';
   const ref=((document.getElementById('wfRef')||{}).value||'').trim();
   if(!step||!date) return;
   const url=scriptUrl(), tok=curToken();
-  /* Guest / snapshot mode: local preview only — nothing is sent anywhere. */
+  /* Guest / snapshot mode: local preview only — nothing is sent anywhere.
+     Same numbering as the logged-in path: max(27, maxExisting + 1). */
   if(!url||!tok){
-    dtWfLocal.push({sl:r.sl,unit:r.unit,task:r.name,stepno:no,step,who,date,ref,local:true});
+    dtWfLocal.push({sl:r.sl,unit:r.unit,task:r.name,stepno:isCustom?wfNextCustomNo():no,step,who,date,ref,local:true});
     wfRefresh(); toast(T('toastWfAddLocal'),'ok'); return;
   }
-  const q=new URLSearchParams({token:tok,action:'addworkflow',sl:String(r.sl),unit:r.unit,task:r.name,stepno:String(no),step,who,date,ref});
+  /* v10.28: a custom step is sent WITH an explicit stepno from
+     wfNextCustomNo() (27, 28, …) — v4.12 accepts an explicit stepno when
+     it is positive and not a duplicate. Fixed steps send their own 1–26. */
+  const q=new URLSearchParams({token:tok,action:'addworkflow',sl:String(r.sl),unit:r.unit,task:r.name,step,who,date,ref});
+  q.set('stepno',String(isCustom?wfNextCustomNo():no));
   try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
     if(!j.ok) throw new Error(j.error||'unknown error');
     await loadWorkflow();
@@ -1623,18 +1677,31 @@ function wfEdit(no){ dtWfEdit=no; wfRefresh(); }
 function wfCancelEdit(){ dtWfEdit=null; wfRefresh(); }
 async function wfSaveEdit(no){
   const r=rowBySl(dtRn); if(!r) return;
-  const model=wfModel(); const m=model[no-1]; if(!m||!m.row) return;
+  /* v10.27: find by stepno — model[no-1] is wrong once custom steps exist. */
+  const model=wfModel(); const m=model.find(x=>x.no===no); if(!m||!m.row) return;
   const who=((document.getElementById('wfEWho')||{}).value||'').trim();
   const date=(document.getElementById('wfEDate')||{}).value||'';
   const ref=((document.getElementById('wfERef')||{}).value||'').trim();
+  let newName=m.name;
+  if(m.custom){
+    newName=((document.getElementById('wfEName')||{}).value||'').trim();
+    if(!newName) return;
+    if(newName.toLowerCase()!==m.name.toLowerCase() && model.some(x=>x!==m && x.name.toLowerCase()===newName.toLowerCase())){
+      const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=T('wfCustomDup'); mm.className='fsmsg err'; }
+      toast(T('wfCustomDup'),'err'); return;
+    }
+  }
   const url=scriptUrl(), tok=curToken();
   if(m.row.local){
     const t=dtWfLocal.find(w=>Number(w.stepno)===no)||m.row;
-    if(t){ t.who=who; t.date=date; t.ref=ref; }
+    if(t){ t.who=who; t.date=date; t.ref=ref; if(m.custom) t.step=newName; }
     dtWfEdit=null; wfRefresh(); toast(T('toastWfEdit'),'ok'); return;
   }
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
   const q=new URLSearchParams({token:tok,action:'editworkflow',sl:String(r.sl),unit:r.unit,stepno:String(no),who,date,ref});
+  /* v10.27: editworkflow renames a step via p.step — send the edited name
+     for custom steps (fixed steps keep their canonical name). */
+  if(m.custom) q.set('step',newName);
   if(m.row.row!==undefined&&m.row.row!==null&&m.row.row!=='') q.set('row',String(m.row.row));
   try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
     if(!j.ok) throw new Error(j.error||'unknown error');
@@ -1643,7 +1710,8 @@ async function wfSaveEdit(no){
 }
 async function wfDel(no){
   const r=rowBySl(dtRn); if(!r) return;
-  const model=wfModel(); const m=model[no-1]; if(!m||!m.row) return;
+  /* v10.27: find by stepno — model[no-1] is wrong once custom steps exist. */
+  const model=wfModel(); const m=model.find(x=>x.no===no); if(!m||!m.row) return;
   const ok=await confirmDlg(T('wfDelT'), T('wfDelB'));
   if(!ok) return;
   const url=scriptUrl(), tok=curToken();
@@ -1660,15 +1728,16 @@ async function wfDel(no){
     toast(T('toastWfDel'),'ok');
   }catch(e){ const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } toast(Tf('msgSaveFail',{e:e.message}),'err'); }
 }
-/* ── v10.25: workflow CSV export — task header + all 26 steps. ── */
+/* ── v10.25/27: workflow CSV export — task header + 26 steps + any custom steps. ── */
 function wfCsvCell(v){ const s=String(v==null?'':v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
 function wfCsvText(r){
   const model=wfModel();
+  const customs=wfCustomCount(model);
   const L=[];
   L.push(['Task',r.name].map(wfCsvCell).join(','));
   L.push(['Unit',r.unit,'SL',r.sl,'Status',r.status].map(wfCsvCell).join(','));
   L.push(['Tentative Budget (BDT)',r.budget||0,'Tentative Cost (BDT)',r.cost||0,'Payment (BDT)',r.disb||0,'Progress', (r.prog||0)+'%'].map(wfCsvCell).join(','));
-  L.push(['Workflow', wfDoneCount(model)+' / '+WF_STEPS.length].map(wfCsvCell).join(','));
+  L.push(['Workflow', wfDoneCount(model)+' / '+WF_STEPS.length+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'')].map(wfCsvCell).join(','));
   L.push('');
   L.push(['Step No','Step','Who','Date','Days Taken','Next Step Date','Ref / Remark'].map(wfCsvCell).join(','));
   model.forEach((m,idx)=>{ const w=m.row;
@@ -1684,19 +1753,27 @@ function wfExportCsv(){
   document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
-/* ── v10.25: A4 print sheet — task details + budget + workflow table +
-   signature boxes. Print CSS (in <style>) prints only #printSheet. ── */
+/* ── v10.27: A4 print sheet — rebuilt to match the sample task-workflow
+   sheet (.sheet in ~/workspace/ts-spaces/sample-task-workflow/index.html):
+   eyebrow, h2 title, 2-column kv2 with dashed rows, flat 6-column table
+   (Step | Stage | By | Date | Days | Status), footer note. No signature
+   boxes. EBS Req No. = Ref of step 14, PO / WO No. = Ref of step 20. ── */
 function wfPrintSheetHtml(r){
   const model=wfModel();
-  const fields=[[T('thStatus'),esc(r.status)],[T('thUnit'),esc(r.unit)],[T('fStart'),fmtD(r.start)],[T('thDeadline'),fmtD(r.revised||r.due)],[T('fBudget'),fmtM(r.budget||0)],[T('fCost'),fmtM(r.cost||0)],[T('fPayment'),fmtM(r.disb||0)],[T('prProgress'),(r.prog||0)+'% · '+Tf('wfProg',{done:wfDoneCount(model),total:WF_STEPS.length})]];
-  const sigs=[T('prPrepared'),T('prChecked'),T('prApproved'),T('prGCEO')];
-  return `<h1>${esc(T('prTitle'))}</h1><div style="font-size:12px;color:#555">${esc(r.name)} · ${esc(r.unit)} · SL ${esc(r.sl)}</div>`+
-  `<h2>${esc(T('prTaskDetails'))}</h2><div class="pr-grid">${fields.map(f=>`<div><b>${esc(f[0])}</b>${f[1]}</div>`).join('')}</div>`+
-  `<h2>${esc(T('prWorkflow'))} — ${esc(Tf('wfProg',{done:wfDoneCount(model),total:WF_STEPS.length}))}</h2>`+
-  `<table><tr><th>#</th><th>${esc(T('wfStep'))}</th><th>${esc(T('wfWho'))}</th><th>${esc(T('wfDate'))}</th><th>${esc(T('wfDays'))}</th><th>${esc(T('wfNext'))}</th><th>${esc(T('wfRef'))}</th></tr>`+
-  model.map((m,idx)=>{ const w=m.row;
-    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):''}</td><td>${w&&parseD(w.date||'')?fmtD(w.date):''}</td><td>${wfDaysText(model,idx)==='—'?'':esc(wfDaysText(model,idx))}</td><td>${wfNextText(model,idx)==='—'?'':esc(wfNextText(model,idx))}</td><td>${w&&w.ref?esc(w.ref):''}</td></tr>`; }).join('')+`</table>`+
-  `<h2>${esc(T('prSign'))}</h2><div class="pr-sigs">${sigs.map(s=>`<div class="pr-sig"><b>${esc(s)}</b><span>${esc(T('prName'))} / ${esc(T('prSign'))}</span><span>${esc(T('prDateL'))}: _______________</span></div>`).join('')}</div>`;
+  const done=wfDoneCount(model);
+  const customs=wfCustomCount(model);
+  const prog=Tf('wfProg',{done,total:WF_STEPS.length})+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'');
+  const refOf=no=>{ const m=model.find(x=>x.no===no); return (m&&m.row&&m.row.ref)?esc(m.row.ref):'—'; };
+  const fields=[[T('prTaskId'), r.task_id?esc(r.task_id):'SL '+esc(r.sl)],[T('thUnit'),esc(r.unit)],[T('prBudget'),fmtM(r.budget||0)],[T('prCost'),fmtM(r.cost||0)],[T('prEbs'),refOf(14)],[T('prPo'),refOf(20)],[T('fStart'),fmtD(r.start)],[T('thStatus'),esc(r.status)+' · '+esc(prog)]];
+  let firstPending=-1;
+  model.forEach((m,idx)=>{ if(firstPending<0 && !(m.row&&parseD(m.row.date||''))) firstPending=idx; });
+  return `<div class="co">Dekko Group · Task &amp; Budget Approval Sheet</div><h2>${esc(r.name)}</h2>`+
+  `<div class="kv2">${fields.map(f=>`<div><span>${esc(f[0])}</span><b>${f[1]}</b></div>`).join('')}</div>`+
+  `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>Date</th><th>Days</th><th>${esc(T('thStatus'))}</th></tr>`+
+  model.map((m,idx)=>{ const w=m.row, dated=w&&parseD(w.date||'');
+    const st=dated?T('prDone'):(idx===firstPending?T('prInProg'):T('wfPending'));
+    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,idx))}</td><td>${esc(st)}</td></tr>`; }).join('')+`</table>`+
+  `<p class="pr-foot">${esc(Tf('prFooter',{d:fmtD(toISODate(todayMid()))}))}</p>`;
 }
 function wfPrint(){
   const r=rowBySl(dtRn); if(!r) return;
