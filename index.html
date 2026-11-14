@@ -585,7 +585,7 @@ unitCostT:'Tentative Cost by Unit',unitCostS:'How much tentative cost each unit 
 unitPayT:'Payment Share by Unit',unitPayS:'Share of total payment disbursed',
 navOv:'OVERVIEW',navList:'PROJECT LIST',navUnit:'UNIT SUMMARY',
 foot:'Source: Dekkoisho workspace · Snapshot 14 Nov 2026 · Live data from the Google Sheet',
-thSL:'SL',thUnit:'Unit',thTask:'Project',thStatus:'Status',thStart:'Start Date',thDeadline:'Deadline',thProgress:'Progress',
+thSL:'SL',thUnit:'Unit',thTask:'Project',thStatus:'Status',thStart:'Start Date',thDeadline:'Deadline',thFinish:'Finish Date',thProgress:'Progress',
 thBudget:'Tentative Budget',thCost:'Tentative Cost',thPayment:'Payment',thEdit:'Edit',thRemarks:'Remarks',thComplete:'Completed',
 thAvgProg:'Avg Progress',thProjects:'Projects',thOverdue:'Overdue',
 insOverdueT:'{n} project(s) overdue',insOverdueB:'Deadline passed and still not complete: <b>{list}</b>{more}',
@@ -628,7 +628,7 @@ dtTime:'Time',dtSubtasks:'Subtasks',dtSave:'💾 Save',dtCancel:'Cancel',
 tmStartedL:'Started',tmDeadlineL:'Deadline',tmDurationL:'Duration',tmElapsed:'{n} days elapsed',tmNoStart:'No start date',
 tmDaysLeft:'{n} days left',tmOverdueBy:'Overdue by {n} days',tmDueToday:'Due today',tmNoDeadline:'No deadline set',
 tmDuration:'Duration: {n} days ({s} → {e})',
-stEmpty:'No subtasks yet — add one',stAddPh:'Subtask name…',stAddBtn:'➕ Add',stDuePh:'Due date',stStartPh:'Start date',stEdit:'Edit subtask',stSave:'Save',stDone:'{done} of {total} done',stDel:'Delete subtask',stLoading:'⏳ Loading subtasks…',
+stEmpty:'No subtasks yet — add one',stAddPh:'Subtask name…',stAddBtn:'➕ Add',stDuePh:'Due date',stEndPh:'End date',stStartPh:'Start date',stEdit:'Edit subtask',stSave:'Save',stDone:'{done} of {total} done',stDel:'Delete subtask',stLoading:'⏳ Loading subtasks…',
 dtCuSubs:'Imported subtasks: {n}',dtEditNote:'Project name and unit cannot be changed — they identify the row in the Sheet.',
 sbLists:'Lists',sbAllProjects:'All Projects',sbNav:'Views',navBoard:'BOARD',navCalendar:'CALENDAR',
 vbList:'List',vbBoard:'Board',vbCalendar:'Calendar',
@@ -702,11 +702,19 @@ const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 /* ── Overdue (Project List only): the deadline is the Revised Finish Date
    when it exists, otherwise the Due Date. Overdue = active (not Complete)
    + deadline passed. Never shown in OVERVIEW cards or in popups. ── */
-function parseD(v){ v=(v||'').trim(); if(!v) return null;
+function parseD(v){
+  /* v10.16: a real Date object is handled FIRST — String()ing it first
+     (as the old code did) threw ".trim is not a function". */
+  if(v instanceof Date && !isNaN(v.getTime())) return new Date(v.getFullYear(), v.getMonth(), v.getDate());
+  v=(v||'').trim(); if(!v) return null;
   let m=v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
   if(m) return new Date(+m[1], +m[2]-1, +m[3]);
   m=v.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
-  if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y, +m[2]-1, +m[1]); }
+  /* v10.16: M/D/YYYY — m[1] is the MONTH, m[2] the DAY. The old code had
+     them swapped (new Date(y, day-1, month)), so every Sheet-CSV date
+     parsed months ahead (11/13/2026 became 11 Jan 2027) and CSV-sourced
+     rows could never read overdue. fmtD already had the order right. */
+  if(m){ let y=+m[3]; if(y<100) y+=2000; return new Date(y, +m[1]-1, +m[2]); }
   /* v10.8 fallback: a raw Apps Script Date string — parse it (local midnight)
      instead of returning null, which made stage days / overdue read 0. */
   const d=new Date(v); if(!isNaN(d.getTime())) return new Date(d.getFullYear(), d.getMonth(), d.getDate());
@@ -718,7 +726,9 @@ function odDeadline(row){ return parseD(row.revised) || parseD(row.due); }
 function odFromRevised(row){ return !!parseD(row.revised); }
 function odDays(row){ const d=odDeadline(row); if(!d) return null;
   return Math.floor((todayMid()-d)/86400000); }
-function odActive(row){ return (row.status||'').toLowerCase()!=='complete'; }
+/* v10.16: a task at 100% (or Complete) is never overdue — no bell, no
+   Attention Point, no Overdue KPI, not in the Overdue-only filter. */
+function odActive(row){ return (row.status||'').toLowerCase()!=='complete' && (Number(row.prog)||0)<100; }
 function isOverdue(row){ const d=odDays(row); return odActive(row) && d!==null && d>0; }
 function isDueSoon(row){ const d=odDays(row); return odActive(row) && d!==null && d<=0 && d>=-7; }
 function odBadge(row){ const d=odDays(row);
@@ -741,7 +751,10 @@ function timeSection(r){
   let dlV;
   if(!dl) dlV=T('tmNoDeadline');
   else { const left=daysLeft(r);
-    dlV = fmtD(r.revised||r.due)+' · '+(left>0?Tf('tmDaysLeft',{n:left}):left===0?T('tmDueToday'):`<span class="odtxt">${Tf('tmOverdueBy',{n:-left})}</span>`); }
+    /* v10.16: a 100% / Complete task is never "overdue" — show the plain
+       date with no overdue text, matching the bell and the List. */
+    dlV = !odActive(r) ? fmtD(r.revised||r.due)
+      : fmtD(r.revised||r.due)+' · '+(left>0?Tf('tmDaysLeft',{n:left}):left===0?T('tmDueToday'):`<span class="odtxt">${Tf('tmOverdueBy',{n:-left})}</span>`); }
   let h=`<div class="tmrow"><b>${T('tmStartedL')}</b><span>${startV}</span></div>`+
         `<div class="tmrow"><b>${T('tmDeadlineL')}</b><span>${dlV}</span></div>`;
   const end=parseD(r.finishwork)||parseD(r.revised);
@@ -976,9 +989,13 @@ function render(){
   const sub=document.getElementById('tblListSub'); if(sub) sub.textContent=Tf('listS',{n:a.n});
   /* v2: one section per unit — the Unit filter shows/hides whole sections.
      A unit with no rows at all (DGL-2) still gets its own section. */
-  const listHead=`<tr><th></th><th>${T('thSL')}</th><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('thStart')}</th><th>${T('thDeadline')}</th><th>${T('thDays')}</th><th>${T('thProgress')}</th><th class="num">${T('thBudget')} (BDT)</th><th class="num">${T('thCost')} (BDT)</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('thEdit')}</th></tr>`;
-  const listRow=r=>{ const dl=odDeadline(r);
-    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${fmtD(r.start)}</td><td>${dl?fmtD((r.revised||r.due)):'—'}${odBadge(r)?'<br>'+odBadge(r):''}</td><td>${daysCell(r)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();openListEdit('+r.sl+')">✏️ '+T('thEdit')+'</button>':''}</td></tr>`; };
+  /* v10.15 (2026-11-14): List columns per Rakib — Unit, Task, Status,
+     Priority, Tentative Cost, Start Date, Finish Date (= Revised Finish, or
+     Due if none), Progress, Payment, Latest Comment. No SL, no Deadline /
+     Days, no Tentative Budget, no Edit column (edit via row-click popup). */
+  const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th></tr>`;
+  const listRow=r=>{
+    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td></tr>`; };
   /* v3: Group by Unit (v2 sections) or Status (status sections). */
   let sections='';
   if(groupBy==='status'){
@@ -1131,7 +1148,11 @@ async function refreshLive(manual){
     const res=await fetch(SHEET_CSV_URL+'&cb='+Date.now());
     if(!res.ok) throw new Error('fetch '+res.status);
     const raw=parseCSV(await res.text());
-    const rows=rowsFromCSV(raw);
+    let rows=rowsFromCSV(raw);
+    /* v10.16: when a unit token is saved, the CSV fallback is token-scoped
+       too — a DGL-1 login sees only DGL-1 rows, never other units'. */
+    const au=allowedUnit();
+    if(au && au!=='ALL') rows=rows.filter(r=>r.unit===au);
     if(!rows.length){ if(st) st.textContent=T('liveEmpty'); render(); if(btn) btn.disabled=false; return; }
     D.rows=rows;
     D.units=UNITS_ALL;
@@ -1205,11 +1226,11 @@ function subBodyHtml(r){
   else h+=dtSubs.map(s=>{
     /* v10.10: inline edit form for this row (name + start date + due date). */
     if(canE&&dtSubEdit===s.row){
-      return `<div class="subrow"><div class="submain"><input type="text" id="seName" class="efinput" value="${esc(s.subtask)}"><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><input type="date" id="seStart" class="efinput" style="max-width:170px" title="${T('stStartPh')}" value="${toISODate(s.created||'')}"><input type="date" id="seDue" class="efinput" style="max-width:170px" title="${T('stDuePh')}" value="${toISODate(s.due||'')}"></div></div><span style="display:flex;gap:2px;flex:none"><button class="entrybtn" onclick="subSaveEdit(${s.row})">${T('stSave')}</button><button class="entrybtn off" onclick="subCancelEdit()">${T('cfCancel')}</button></span></div>`;
+      return `<div class="subrow"><div class="submain"><input type="text" id="seName" class="efinput" value="${esc(s.subtask)}"><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><input type="date" id="seStart" class="efinput" style="max-width:170px" title="${T('stStartPh')}" value="${toISODate(s.created||'')}"><input type="date" id="seDue" class="efinput" style="max-width:170px" title="${T('stEndPh')}" value="${toISODate(s.due||'')}"></div></div><span style="display:flex;gap:2px;flex:none"><button class="entrybtn" onclick="subSaveEdit(${s.row})">${T('stSave')}</button><button class="entrybtn off" onclick="subCancelEdit()">${T('cfCancel')}</button></span></div>`;
     }
     return `<div class="subrow"><input type="checkbox" ${s.done?'checked':''} ${canE?'':'disabled'} onchange="subToggle(${s.row},this.checked)">${s.done?'<span class="subtick">✓</span>':''}<div class="submain"><div class="subname">${esc(s.subtask)}</div><div class="submeta">${subMeta(s)}</div></div>${canE?`<button class="subedit" title="${T('stEdit')}" onclick="subEdit(${s.row})">✏️</button><button class="subdel" title="${T('stDel')}" onclick="subDel(${s.row})">✕</button>`:''}</div>`;
   }).join('');
-  if(canE) h+=`<div class="subadd"><input type="text" id="subName" class="efinput" placeholder="${T('stAddPh')}"><input type="date" id="subDue" class="efinput" style="max-width:170px" title="${T('stDuePh')}"><button class="entrybtn" onclick="subAdd()">${T('stAddBtn')}</button></div><div id="subMsg" class="fsmsg" style="padding:6px 0"></div>`;
+  if(canE) h+=`<div class="subadd"><input type="text" id="subName" class="efinput" placeholder="${T('stAddPh')}"><input type="date" id="subStart" class="efinput" style="max-width:170px" title="${T('stStartPh')}" value="${toISODate(todayMid())}"><input type="date" id="subDue" class="efinput" style="max-width:170px" title="${T('stEndPh')}"><button class="entrybtn" onclick="subAdd()">${T('stAddBtn')}</button></div><div id="subMsg" class="fsmsg" style="padding:6px 0"></div>`;
   return h;
 }
 function subRefresh(){ const b=document.getElementById('dtSubBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=subBodyHtml(r); }
@@ -1242,7 +1263,7 @@ async function subAdd(){
   if(!name) return;
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
-  const q=new URLSearchParams({token:tok,action:'addsubtask',sl:String(r.sl),unit:r.unit,task:r.name,subtask:name,due:(document.getElementById('subDue')||{}).value||''});
+  const q=new URLSearchParams({token:tok,action:'addsubtask',sl:String(r.sl),unit:r.unit,task:r.name,subtask:name,due:(document.getElementById('subDue')||{}).value||'',created:(document.getElementById('subStart')||{}).value||''});
   try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
     if(!j.ok) throw new Error(j.error||'unknown error');
     await loadSubs();
@@ -1318,8 +1339,9 @@ function subMeta(s){
   }
   const parts=[];
   if(created){ const n=Math.max(0,Math.floor((todayMid()-created)/86400000)); parts.push(Tf('stSubStarted',{d:fmtD(s.created)})); parts.push(n===0?T('stSubToday'):Tf('stSubPending',{n:fmtN(n)})); }
-  if(dueD) parts.push(Tf('stSubDue',{d:fmtD(s.due)}));
-  if(!created&&dueD){ const n=Math.floor((todayMid()-dueD)/86400000); if(n>0) parts.push(Tf('stSubOverdue',{n:fmtN(n)})); }
+  /* v10.16: days-over vs the end date — shown whenever the end date has
+     passed, whether or not a start date is recorded. */
+  if(dueD){ parts.push(Tf('stSubDue',{d:fmtD(s.due)})); const m=Math.floor((todayMid()-dueD)/86400000); if(m>0) parts.push(Tf('stSubOverdue',{n:fmtN(m)})); }
   if(!created&&!dueD) parts.push(T('stSubNoStart'));
   return parts.join(' · ');
 }
