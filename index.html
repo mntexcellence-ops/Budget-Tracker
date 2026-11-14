@@ -1418,7 +1418,12 @@ function stageBodyHtml(r){
   const subsStep=(()=>{ const shtml=stageSubHtml(); return shtml?`<div class="tlrow">${shtml}</div>`:''; })();
   const endStep=endD?`<div class="tlrow"><div style="font-size:13px"><b>${T('stEndDate')}</b> — ${fmtD(r.finishwork||r.revised||r.due)}</div></div>`:'';
   if(dtStageLog.length){
-    h+=`<div class="tl">`+dtStageLog.map(e=>{
+    /* ── v10.24: keep the task's Start Date as the first step of the loop —
+       the logged view showed only the status-change rows, so the original
+       start date was lost from the timeline. Same "Started" row as the
+       seeded view, so both views always open with it. ── */
+    const startStep=`<div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`;
+    h+=`<div class="tl">`+startStep+dtStageLog.map(e=>{
       const fromTxt=e.from==='—'?T('stStarted'):esc(e.from);
       return `<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div></div>`;
     }).join('')+subsStep+
