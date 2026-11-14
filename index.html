@@ -1099,6 +1099,21 @@ async function refreshLive(manual){
       const j=await res.json();
       if(!j.ok) throw new Error(j.error||'getdata failed');
       D.rows=(j.rows||[]).map(mapScriptRow);
+      /* v10.14: progress repair — the deployed script (pre-v4.8) returns the
+         RAW Sheet value, so a cell the old script wrote as "100%" reads back
+         as 1 and the dashboard showed 1%. The public Sheet CSV carries the
+         FORMATTED value ("100%"), which pPct parses to the true 100.
+         Best-effort overlay: take progress from the CSV, matched by SL +
+         unit, ONLY for rows the script already returned (no cross-unit
+         leak). If the CSV fetch fails or times out, script values stand. */
+      try{
+        const csvTxt=await Promise.race([
+          fetch(SHEET_CSV_URL+'&cb='+Date.now()).then(r=>{ if(!r.ok) throw new Error('csv '+r.status); return r.text(); }),
+          new Promise((_,rej)=>setTimeout(()=>rej(new Error('csv timeout')),10000))
+        ]);
+        const byKey=new Map(rowsFromCSV(parseCSV(csvTxt)).map(r=>[String(r.sl)+'|'+r.unit, r.prog]));
+        D.rows.forEach(r=>{ const p=byKey.get(String(r.sl)+'|'+r.unit); if(typeof p==='number'&&!isNaN(p)) r.prog=p; });
+      }catch(e){ /* keep script progress */ }
       D.units=UNITS_ALL;
       D.statuses=[...new Set(D.rows.map(r=>r.status).filter(Boolean))].sort();
       STATUSES_ALL.forEach(s=>{ if(!D.statuses.includes(s)) D.statuses.push(s); });
