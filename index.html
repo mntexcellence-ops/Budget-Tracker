@@ -433,6 +433,13 @@ th{padding:8px 10px}
                 <div id="fStatus"></div>
               </div></div>
           </div>
+          <div class="fb-item"><label data-t="bstH"></label>
+            <div class="dd"><button type="button" class="ddbtn" id="ddBstBtn" onclick="toggleDD('Bst',event)">All budget statuses ▾</button>
+              <div class="ddpanel" id="ddBstPanel" style="display:none">
+                <div class="ddtools"><span onclick="pickAll('B',true)" data-t="selectAll"></span><span onclick="pickAll('B',false)" data-t="clear"></span></div>
+                <div id="fBst"></div>
+              </div></div>
+          </div>
           <div class="fb-item"><label>&nbsp;</label>
             <label class="fb-check"><input type="checkbox" id="fOverdue" onchange="setOverdue(this.checked)"> <span data-t="overdueOnly"></span></label>
           </div>
@@ -572,6 +579,7 @@ searchH:'Search Project',searchPh:'Type project name…',resetAll:'Reset all fil
 dark:'🌙 Dark',light:'☀️ Light',selectAll:'Select all',clear:'Clear',
 allUnits:'All units ▾',noUnits:'No units selected ▾',nUnits:'{n} units selected ▾',
 allStatuses:'All statuses ▾',noStatuses:'No statuses selected ▾',nStatuses:'{n} statuses selected ▾',
+bstH:'Budget status',allBst:'All budget statuses ▾',noBst:'No budget status selected ▾',nBst:'{n} budget statuses selected ▾',bstBlank:'(No budget status)',
 kpiTotal:'Total Projects',kpiComplete:'Complete',kpiInProg:'In Progress',kpiOverdue:'Overdue',kpiUnits:'Units',kpiCost:'Total Tentative Cost',
 chipAll:'all projects',chipOfFiltered:'of filtered',chipUnits:'units',chipNone:'none yet',
 ovCostT:'Tentative Cost by Unit',ovCostS:'Ranked — total tentative cost per unit in the selected filters',
@@ -648,7 +656,7 @@ toastSaved:'Saved!',toastSubAdd:'Subtask added',toastSubDone:'Subtask completed'
 cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the Sheet. This cannot be undone.',cfCancel:'Cancel',cfDelete:'Delete',
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
-stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',
+stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
 stSince:'since {d} · {n} days',stTotalDur:'Total duration: {n} days',stLoading:'⏳ Loading stage history…',stDoneOn:'done on {d}',stSubInStage:'Subtasks in this stage',stSubDoneWord:'done',stSubStarted:'Started {d}',stSubFinished:'Finished {d}',stSubTook:'Took {n} days',stSubSameDay:'Same day',stSubPending:'Pending {n} days',stSubToday:'Started today',stSubOverdue:'{n} days overdue',stSubDue:'Due {d}',stSubNoStart:'Start date not recorded'
 }};
 const LANG='en';
@@ -675,6 +683,10 @@ function toggleMode(){ darkMode=!darkMode;
   try{ localStorage.setItem('ud-theme', darkMode?'dark':'light'); }catch(e){}
   applyTheme(); render(); }
 let selU = new Set(UNITS_ALL), selS = new Set(STATUSES_ALL);
+/* v10.19: Budget Status filter — options come from the data itself (the
+   Sheet's "Budget Status" column, whose values the owner writes), not a
+   fixed list. '' means the row has no budget status yet. */
+let BST_ALL = [], selB = new Set(), BST_KNOWN = new Set();
 let selOverdue = false;
 let selRows = new Set();
 /* v9: the top-bar search and the filter-bar search are one search — typing
@@ -763,14 +775,29 @@ function timeSection(r){
     h+=`<div class="tmrow"><b>${T('tmDurationL')}</b><span>${Tf('tmDuration',{n:dur,s:fmtD(r.start),e:fmtD(r.finishwork||r.revised)})}</span></div>`; }
   return h;
 }
+function syncBstOptions(){
+  const vals=[...new Set(D.rows.map(r=>r.bst||'').filter(v=>v!==''))].sort();
+  const hasBlank=D.rows.some(r=>!r.bst);
+  BST_ALL=hasBlank?['',...vals]:vals;
+  /* Only values never seen before join the selection — otherwise a
+     deliberate Clear (pickAll 'B' false) would be undone by the next
+     buildFilters, and an unchecked value would come straight back. */
+  BST_ALL.forEach(v=>{ if(!BST_KNOWN.has(v)){ BST_KNOWN.add(v); selB.add(v); } });
+  [...selB].forEach(v=>{ if(!BST_ALL.includes(v)) selB.delete(v); });
+}
+function jsq(v){ return String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function buildFilters(){
+  syncBstOptions();
   document.getElementById('fUnits').innerHTML = UNITS_ALL.map(u =>
     `<label class="fitem"><input type="checkbox" ${selU.has(u)?'checked':''} onchange="togU('${u}',this.checked)"> ${u}</label>`).join('');
   document.getElementById('fStatus').innerHTML = STATUSES_ALL.map(s =>
     `<label class="fitem"><input type="checkbox" ${selS.has(s)?'checked':''} onchange="togS('${esc(s)}',this.checked)"> ${esc(s)}</label>`).join('');
+  document.getElementById('fBst').innerHTML = BST_ALL.map(v =>
+    `<label class="fitem"><input type="checkbox" ${selB.has(v)?'checked':''} onchange="togB('${jsq(v)}',this.checked)"> ${v==='' ? T('bstBlank') : esc(v)}</label>`).join('');
 }
 function togU(u,on){ on?selU.add(u):selU.delete(u); render(); }
 function togS(s,on){ on?selS.add(s):selS.delete(s); render(); }
+function togB(v,on){ on?selB.add(v):selB.delete(v); render(); }
 function toggleSel(sl,on){ const k=String(sl); on?selRows.add(k):selRows.delete(k); render();
   const fm=document.getElementById('fsModal'); if(fm && fm.style.display==='flex') renderFsTable(); }
 function clearSel(){ selRows.clear(); render();
@@ -780,21 +807,23 @@ function renderSelBar(){ const b=document.getElementById('selBar'); if(!b) retur
   b.style.display='flex';
   const c=document.getElementById('selCount'); if(c) c.textContent=Tf('selBar',{n:selRows.size}); }
 function resetAll(){ UNITS_ALL.forEach(u=>selU.add(u)); STATUSES_ALL.forEach(s=>selS.add(s));
+  selB.clear(); BST_ALL.forEach(v=>selB.add(v));
   selOverdue=false;
   const fo=document.getElementById('fOverdue'); if(fo) fo.checked=false;
   const q=document.getElementById('qSearch'); if(q) q.value='';
   const qt=document.getElementById('qTop'); if(qt) qt.value='';
   buildFilters(); render(); }
 function toggleDD(which,ev){ ev.stopPropagation();
-  const p=document.getElementById('dd'+which+'Panel'), o=document.getElementById(which==='Unit'?'ddStatusPanel':'ddUnitPanel');
-  if(o) o.style.display='none';
+  ['ddUnitPanel','ddStatusPanel','ddBstPanel'].forEach(id=>{ if(id!=='dd'+which+'Panel'){ const o=document.getElementById(id); if(o) o.style.display='none'; } });
+  const p=document.getElementById('dd'+which+'Panel');
   p.style.display = p.style.display==='none' ? 'block' : 'none'; }
 function pickAll(kind,on){
   if(kind==='U'){ selU.clear(); if(on) UNITS_ALL.forEach(u=>selU.add(u)); }
+  else if(kind==='B'){ selB.clear(); if(on) BST_ALL.forEach(v=>selB.add(v)); }
   else { selS.clear(); if(on) STATUSES_ALL.forEach(s=>selS.add(s)); }
   buildFilters(); render(); }
 document.addEventListener('click', e=>{ if(!e.target.closest('.dd')){
-  ['ddUnitPanel','ddStatusPanel'].forEach(id=>{ const p=document.getElementById(id); if(p) p.style.display='none'; }); } });
+  ['ddUnitPanel','ddStatusPanel','ddBstPanel'].forEach(id=>{ const p=document.getElementById(id); if(p) p.style.display='none'; }); } });
 function ddLabel(sel, all, keyAll, keyNone, keyN){
   if(sel.size===all.length) return T(keyAll);
   if(sel.size===0) return T(keyNone);
@@ -816,7 +845,7 @@ function progCell(row){ const p=row.prog||0;
   return '<span class="pbar"><i style="width:'+Math.min(100,Math.max(0,p))+'%"></i></span> '+p+'%'; }
 function agg(){
   const q=(document.getElementById('qSearch')||{}).value.trim().toLowerCase();
-  const rows = D.rows.filter(r => selU.has(r.unit) && selS.has(r.status)
+  const rows = D.rows.filter(r => selU.has(r.unit) && selS.has(r.status) && selB.has(r.bst||'')
     && (!selOverdue || isOverdue(r))
     && (!q || r.name.toLowerCase().includes(q) || (r.unit||'').toLowerCase().includes(q)));
   let tb=0, tc=0, tp=0, tpay=0, tod=0;
@@ -935,6 +964,8 @@ function render(){
   const a=agg();
   const ub=document.getElementById('ddUnitBtn'); if(ub) ub.textContent=ddLabel(selU, UNITS_ALL, 'allUnits', 'noUnits', 'nUnits');
   const sb=document.getElementById('ddStatusBtn'); if(sb) sb.textContent=ddLabel(selS, STATUSES_ALL, 'allStatuses', 'noStatuses', 'nStatuses');
+  const bb=document.getElementById('ddBstBtn'); if(bb){ const arr=[...selB].map(v=>v==='' ? T('bstBlank') : v);
+    bb.textContent = selB.size===BST_ALL.length ? T('allBst') : selB.size===0 ? T('noBst') : arr.length<=2 ? arr.join(', ')+' ▾' : Tf('nBst',{n:selB.size}); }
   const nodata='<p style="color:'+thc().nodata+';font-size:12px">'+T('nodata')+'</p>';
   const stCount = s => a.rows.filter(r=>(r.status||'').toLowerCase()===s).length;
   /* v9: each KPI carries its raw numeric target (for the count-up), a
@@ -1073,8 +1104,9 @@ function rowsFromCSV(raw){
     if(!name && !unit) continue;
     out.push({ sl: col(r, ['SL']), unit: canonUnit(col(r, ['Unit'])), name, status: col(r, ['Status']) || 'Open',
       assignee: col(r, ['Assignee']), priority: col(r, ['Priority']),
+      bst: col(r, ['Budget Status']),
       start: col(r, ['Start Date']), due: col(r, ['Due Date']),
-      revised: col(r, ['Revised Finish Date']), finishwork: col(r, ['Finish Work']),
+      revised: col(r, ['Revised Finish Date', 'Finish Date']), finishwork: col(r, ['Finish Work']),
       prog: pPct(col(r, ['Progress'])), budget: pNum(col(r, ['Tentative Budget (BDT)'])),
       cost: pNum(col(r, ['Tentative Cost (BDT)'])), disb: pNum(col(r, ['Payment (BDT)'])),
       subtasks: pNum(col(r, ['Subtasks'])), comment: col(r, ['Latest Comment']),
@@ -1094,7 +1126,7 @@ function showSkeleton(){
 /* ── v10: the script's getdata rows are already in dashboard shape
    (start/due/revised/finishwork are ISO dates); map them onto D.rows,
    canonicalizing the unit labels the same way the script does. ── */
-function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:r.status||'Open', assignee:r.assignee||'', priority:r.priority||'', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
+function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:r.status||'Open', assignee:r.assignee||'', priority:r.priority||'', bst: r.bst || '', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
 /* ── v10: re-run whoami at boot when a token is saved, so the profile chip
    and the per-unit edit lock come back without re-entering the token. ── */
 function whoamiRestore(){ const u=scriptUrl(), t=curToken(); if(!u||!t) return;
@@ -1128,8 +1160,13 @@ async function refreshLive(manual){
           fetch(SHEET_CSV_URL+'&cb='+Date.now()).then(r=>{ if(!r.ok) throw new Error('csv '+r.status); return r.text(); }),
           new Promise((_,rej)=>setTimeout(()=>rej(new Error('csv timeout')),10000))
         ]);
-        const byKey=new Map(rowsFromCSV(parseCSV(csvTxt)).map(r=>[String(r.sl)+'|'+r.unit, r.prog]));
-        D.rows.forEach(r=>{ const p=byKey.get(String(r.sl)+'|'+r.unit); if(typeof p==='number'&&!isNaN(p)) r.prog=p; });
+        /* v10.19: same overlay for Budget Status — the script (pre-v4.11)
+           does not return the new "Budget Status" column, so take it from
+           the CSV too, matched by SL + unit, only for script rows. */
+        const byKey=new Map(rowsFromCSV(parseCSV(csvTxt)).map(r=>[String(r.sl)+'|'+r.unit, r]));
+        D.rows.forEach(r=>{ const c=byKey.get(String(r.sl)+'|'+r.unit); if(!c) return;
+          if(typeof c.prog==='number'&&!isNaN(c.prog)) r.prog=c.prog;
+          if(c.bst!==undefined) r.bst=c.bst||''; });
       }catch(e){ /* keep script progress */ }
       D.units=UNITS_ALL;
       D.statuses=[...new Set(D.rows.map(r=>r.status).filter(Boolean))].sort();
@@ -1305,12 +1342,23 @@ async function subDel(subrow){
    without a script (or before any change) the timeline is seeded from the
    task's Start Date and labelled as such — never presented as a log. ── */
 let dtStageLog=[], dtStageState='idle';
+/* ── v10.18: the dates that close a task's loop — the date it completed
+   (Finish Work first, else the Revised Finish Date) and its End Date
+   (Finish Work, else Revised Finish, else Due). ── */
+function compDateOf(r){ return parseD(r.finishwork) || parseD(r.revised) || null; }
+function endDateOf(r){ return parseD(r.finishwork) || parseD(r.revised) || parseD(r.due) || null; }
 function stageInfo(r){
   if(dtStageLog.length){
     const last=dtStageLog[dtStageLog.length-1];
     const since=parseD(last.date);
     const days=since?Math.max(0,Math.floor((todayMid()-since)/86400000)):0;
     return {since:last.date, days, seeded:false};
+  }
+  /* v10.18: a Complete task has NOT been "Completed" since its start date —
+     it completed on its Finish Work / Revised Finish date. */
+  if((r.status||'').toLowerCase()==='complete'){
+    const comp=compDateOf(r);
+    if(comp) return {since:r.finishwork||r.revised, days:Math.max(0,Math.floor((todayMid()-comp)/86400000)), seeded:true};
   }
   const el=daysElapsed(r);
   return {since:r.start, days:el===null?0:el, seeded:true};
@@ -1350,7 +1398,7 @@ function stageSubHtml(){
   if(!dtSubs.length) return '';
   const doneN=dtSubs.filter(s=>s.done).length;
   const rows=dtSubs.map(s=>`<div class="tl-sub"><div class="tl-sub-name ${s.done?'tl-sub-done':''}">${s.done?'✓':'○'} ${esc(s.subtask)}</div><div class="tl-sub-meta">${subMeta(s)}</div></div>`).join('');
-  return `<div class="tl-subs"><div class="tl-subs-h">${T('stSubInStage')} — ${doneN} / ${dtSubs.length} ${T('stSubDoneWord')}</div>${rows}</div>`;
+  return `<div class="tl-subs"><div class="tl-subs-h">${T('stSubStep')} — ${doneN} / ${dtSubs.length} ${T('stSubDoneWord')}</div>${rows}</div>`;
 }
 function stageBodyHtml(r){
   if(dtStageState==='loading') return `<div style="font-size:13px;color:var(--muted)">${T('stLoading')}</div>`;
@@ -1359,16 +1407,41 @@ function stageBodyHtml(r){
   const totalDays = (()=>{ const st=parseD(r.start); if(!st) return null;
     const end=parseD(r.finishwork)||todayMid();
     return Math.max(0,Math.floor((end-st)/86400000)); })();
+  /* ── v10.18: the Stage History is a complete step-by-step loop, as
+     asked: Started → In Progress → Subtasks → (any other stage) →
+     Completed → End Date. The old seeded view claimed the task had been
+     in its CURRENT stage since the start date (a just-completed task read
+     "Completed · 1,485 days"), and buried the subtasks inside that row.
+     Subtasks are now their own step, and the End Date closes the loop. ── */
+  const st=parseD(r.start);
+  const compD=compDateOf(r);
+  const endD=endDateOf(r);
+  const isComp=(r.status||'').toLowerCase()==='complete';
+  const isProg=(r.status||'').toLowerCase()==='in progress';
+  const subsStep=(()=>{ const shtml=stageSubHtml(); return shtml?`<div class="tlrow">${shtml}</div>`:''; })();
+  const endStep=endD?`<div class="tlrow"><div style="font-size:13px"><b>${T('stEndDate')}</b> — ${fmtD(r.finishwork||r.revised||r.due)}</div></div>`:'';
   if(dtStageLog.length){
     h+=`<div class="tl">`+dtStageLog.map(e=>{
       const fromTxt=e.from==='—'?T('stStarted'):esc(e.from);
       return `<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div></div>`;
-    }).join('')+
-    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div>${stageSubHtml()}</div></div>`;
+    }).join('')+subsStep+
+    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div></div>${endStep}</div>`;
   } else {
-    h+=`<div class="tl"><div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`+
-    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${r.start?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div>${stageSubHtml()}</div></div>`+
-    `<div class="tl-note">${T('stSeedNote')}</div>`;
+    let steps=`<div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`;
+    if(isProg){
+      steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('In Progress')}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
+      steps+=subsStep;
+    } else if(isComp){
+      const n=st&&compD?Math.max(0,Math.floor((compD-st)/86400000)):0;
+      steps+=`<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('In Progress')}<span style="font-size:13px">${T('kpiInProg')}</span></div><div class="tl-meta">${st&&compD?fmtD(r.start)+' → '+fmtD(r.finishwork||r.revised)+' · '+Tf('stDaysIn',{n:fmtN(n),f:T('kpiInProg')}):(st?fmtD(r.start):T('tmNoStart'))}</div></div>`;
+      steps+=subsStep;
+      steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('Complete')}<span style="font-size:13px">${T('thComplete')}</span></div><div class="tl-meta">${compD?Tf('stDoneOn',{d:fmtD(r.finishwork||r.revised)}):T('stCurrentStage')}</div></div>`;
+    } else {
+      steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
+      steps+=subsStep;
+    }
+    steps+=endStep;
+    h+=`<div class="tl">${steps}</div>`+`<div class="tl-note">${T('stSeedNote')}</div>`;
   }
   if(totalDays!==null) h+=`<div class="tl-note">${Tf('stTotalDur',{n:fmtN(totalDays)})}</div>`;
   return h;
