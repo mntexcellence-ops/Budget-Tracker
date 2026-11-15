@@ -582,7 +582,7 @@ th{padding:8px 10px}
       <div><label data-t="fStatus"></label><select id="faStatus" class="efinput"><option>In Progress</option><option>Complete</option><option>Writing</option><option>Open</option></select></div>
       <div><label data-t="fAssignee"></label><input id="faAssignee" class="efinput"></div>
       <div><label data-t="fPriority"></label><select id="faPriority" class="efinput"><option value=""></option><option>Urgent</option><option>Normal</option></select></div>
-      <div><label data-t="fBst"></label><input id="faBst" class="efinput"></div>
+      <div><label data-t="fBst"></label><select id="faBst" class="efinput"><option value=""></option><option>PREPARED BY</option><option>APPROVEED BY HOD</option><option>APPROVEED BY GHOM</option><option>APPROVEED BY IE-HEAD</option><option>APPROVEED BY COO</option><option>APPROVEED BY CEO</option><option>APPROVEED BY GCEO/CHAIRMEN SIR</option></select></div>
       <div><label data-t="fMatst"></label><input id="faMatst" class="efinput"></div>
       <div><label data-t="fStart"></label><input type="date" id="faStart" class="efinput"></div>
       <div><label data-t="fDue"></label><input type="date" id="faDue" class="efinput"></div>
@@ -626,6 +626,15 @@ function canonUnit(u){ const k=String(u||'').trim().toUpperCase();
   return String(u||'').trim(); }
 window.__canonUnit=canonUnit;
 const STATUSES_ALL = ['In Progress','Complete','Writing','Open'];
+const BST_OPTIONS = ['PREPARED BY','APPROVEED BY HOD','APPROVEED BY GHOM','APPROVEED BY IE-HEAD','APPROVEED BY COO','APPROVEED BY CEO','APPROVEED BY GCEO/CHAIRMEN SIR'];
+/* v10.36: Budget Status dropdown options, in the owner's order. An out-of-list stored value is appended
+   as an extra selected option, so opening Edit and saving never wipes it. */
+function bstOptionsHtml(cur){
+  cur = String(cur||'').trim();
+  let h = '<option value=""'+(cur===''?' selected':'')+'></option>' + BST_OPTIONS.map(v=>`<option ${v===cur?'selected':''}>${v}</option>`).join('');
+  if(cur && BST_OPTIONS.indexOf(cur) < 0) h += `<option selected>${esc(cur)}</option>`;
+  return h;
+}
 const PAL = ['#7b68ee','#5b8def','#4caf50','#f59e0b','#b07fe8','#9aa0a6','#e5484d','#38bdf8','#f97316','#84cc16'];
 /* ── i18n: every label in EN + BN. applyLang() updates [data-t] text,
    [data-th] HTML and [data-t-ph] placeholders; render() uses T()/Tf(). ── */
@@ -1994,7 +2003,7 @@ function dtEditForm(r){
     <div><label>${T('fStatus')}</label><select id="deStatus" class="efinput">${STATUSES_ALL.map(s=>`<option ${s.toLowerCase()===(r.status||'').toLowerCase()?'selected':''}>${s}</option>`).join('')}</select></div>
     <div><label>${T('fAssignee')}</label><input id="deAssignee" class="efinput" value="${esc(r.assignee)}"></div>
     <div><label>${T('fPriority')}</label><select id="dePriority" class="efinput"><option value=""></option><option ${r.priority==='Urgent'?'selected':''}>Urgent</option><option ${r.priority==='Normal'?'selected':''}>Normal</option></select></div>
-    <div><label>${T('fBst')}</label><input id="deBst" class="efinput" value="${esc(r.bst)}"></div>
+    <div><label>${T('fBst')}</label><select id="deBst" class="efinput">${bstOptionsHtml(r.bst)}</select></div>
     <div><label>${T('fMatst')}</label><input id="deMatst" class="efinput" value="${esc(r.matst)}"></div>
     <div><label>${T('fStart')}</label><input type="date" id="deStart" class="efinput" value="${toISODate(r.start)}"></div>
     <div><label>${T('fDue')}</label><input type="date" id="deDue" class="efinput" value="${toISODate(r.due)}"></div>
