@@ -1626,18 +1626,25 @@ async function loadStageLog(){
    server also stores it and updates the previous row's Next Step Date
    when a step is added. Guest mode (no script/token) keeps adds/edits/
    deletes as a local preview only. ── */
-const WF_SECTIONS=[{name:'Approval Process',steps:['APPROVEED BY CEO (PROJECT/BUDGET/CS)','CHECKED BY AUDIT (PROJECT/BUDGET/CS)','CHECKED & APPROVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY PROCURMENT','CHECKED & CONFIRMED BY H/O AUDIT','APPROVEED BY GHOM','APPROVEED BY CEO','APPROVEED BY GCEO/CHAIRMEN SIR','SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)']},{name:'After Approval Process',steps:['REQUISITION RISE IN EBS','REQUISITION APPROVEED BY HOD','REQUISITION APPROVEED BY IA (INTERNAL AUDIT)','REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)','CS MAKE AND CHECKED & APPROVED BY PROCURMENT','CS CHECKED & APPROVED BY H/O AUDIT','PO CREATE BY PROCURMENT','PO APPROVED BY FINANCE','PO CHECKED & APPROVED BY PROCURMENT HEAD','PO SEND TO SUPPLIER','MATERIALS RECEIVED','WORK START']}];
+const WF_SECTIONS=[{name:'Approval Process',steps:['APPROVEED BY CEO (PROJECT/BUDGET/CS)','CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)','BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY (H/O PROCURMENT)','APPROVEED BY GHOM (RECOMANDATION)','APPROVEED BY SR.GM-OPERATON','CHECKED & CONFIRMED BY (H/O AUDIT)','APPROVEED BY CEO (RECOMANDATION)','APPROVEED BY GCEO/CHAIRMEN SIR']},{name:'After Approval Process',steps:['REQUISITION RISE IN EBS','REQUISITION APPROVEED BY HOD','REQUISITION APPROVEED BY IA (INTERNAL AUDIT)','REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)','CS MAKE AND CHECKED & APPROVED BY PROCURMENT','CS CHECKED & APPROVED BY H/O AUDIT','PO CREATE BY PROCURMENT','PO APPROVED BY FINANCE','PO CHECKED & APPROVED BY PROCURMENT HEAD','PO SEND TO SUPPLIER','MATERIALS RECEIVED','WORK START']}];
 const WF_STEPS=WF_SECTIONS.flatMap(s=>s.steps);
 /* First step number of the second section (1-based) — section header rows
    in the table and the print sheet are drawn before this step and step 1. */
 const WF_SEC2_START=WF_SECTIONS[0].steps.length+1;
 /* Names that were fixed steps in the 26- or 28-step chain but are not in
-   the 21-step chain (v10.33/v10.35). Compared case-insensitively in
+   the 21-step chain (v10.33/v10.35/v10.37). Compared case-insensitively in
    wfModel(). v10.35 adds the three PO-approval steps the user removed —
    a stored row under one of those names is an earlier step by NAME, not
    by stepno range, because its stored stepno (19–21) now overlaps the
-   new chain's numbers. */
-const WF_RETIRED=['PREPARED BY','APPROVED BY HOD','APPROVED BY IE-HEAD','APPROVED BY COO','CHECKED BY AUDIT','SEND TO H/O (ORIGINAL COPY)','RECEIVED H/O (OPERATION DEPARTMENT)','SEND TO FACTORY (SCAN COPY THROW THE MAIL)','PO APPROVED BY GCEO','WORK COMPLETE','SEND TO H/O','SEND TO FACTORY','PO APPROVED BY CEO SIR','PO APPROVED BY GCEO SIR','PO APPROVED BY CHAIRMAN SIR'];
+   new chain's numbers. v10.37 adds the seven old section A names the
+   user's revised Approval Process replaced — a stored row under one of
+   those names is an earlier step by NAME: the APPROVED/APPROVEED
+   normalisation must NOT merge them into the new steps ("APPROVED BY
+   GHOM" is not new step 5 "APPROVEED BY GHOM (RECOMANDATION)", and
+   "APPROVED BY CEO" is not new step 8 "APPROVEED BY CEO
+   (RECOMANDATION)"); only "APPROVED BY GCEO/CHAIRMEN SIR" still matches
+   a fixed step (new step 9). */
+const WF_RETIRED=['PREPARED BY','APPROVED BY HOD','APPROVED BY IE-HEAD','APPROVED BY COO','CHECKED BY AUDIT','SEND TO H/O (ORIGINAL COPY)','RECEIVED H/O (OPERATION DEPARTMENT)','SEND TO FACTORY (SCAN COPY THROW THE MAIL)','PO APPROVED BY GCEO','WORK COMPLETE','SEND TO H/O','SEND TO FACTORY','PO APPROVED BY CEO SIR','PO APPROVED BY GCEO SIR','PO APPROVED BY CHAIRMAN SIR','CHECKED BY AUDIT (PROJECT/BUDGET/CS)','CHECKED & APPROVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY PROCURMENT','CHECKED & CONFIRMED BY H/O AUDIT','APPROVEED BY GHOM','APPROVEED BY CEO'];
 /* v10.33: name matching ignores the user's APPROVED / APPROVEED spelling
    wobble — the old chain wrote "APPROVED BY GHOM / CEO / GCEO-CHAIRMEN",
    the new chain writes them "APPROVEED …", and an old stored row must
@@ -1668,9 +1675,14 @@ function wfRows(){ return dtWf.concat(dtWfLocal); }
    "SEND TO H/O (ORIGINAL COPY)", "RECEIVED H/O (OPERATION DEPARTMENT)",
    "SEND TO FACTORY (SCAN COPY THROW THE MAIL)", "PO APPROVED BY GCEO",
    "PO APPROVED BY CEO SIR", "PO APPROVED BY GCEO SIR", "PO APPROVED BY
-   CHAIRMAN SIR", "Work Complete", "SEND TO H/O", "SEND TO FACTORY") it
-   is shown after the fixed chain as a legacy row, under its RECORDED
-   name, tagged "Earlier step".
+   CHAIRMAN SIR", "Work Complete", "SEND TO H/O", "SEND TO FACTORY",
+   "CHECKED BY AUDIT (PROJECT/BUDGET/CS)", "CHECKED & APPROVED BY (H/O
+   OPERATION DEPARTMENT)", "CHECKED & APPROVED BY PROCURMENT", "CHECKED
+   & CONFIRMED BY H/O AUDIT", "APPROVEED BY GHOM", "APPROVED BY CEO")
+   (v10.37: the old section A names — the new steps carry "(RECOMANDATION)"
+   / "(H/O PROCURMENT)" / "INTERNAL AUDIT" suffixes, so the old names
+   match nothing) it is shown after the fixed chain as a legacy row,
+   under its RECORDED name, tagged "Earlier step".
    Legacy rows get a model number from the free pool (>= 22) instead of
    their stored stepno, so they can never collide with a fixed step's
    number in edit/delete lookups (model.find by no returns the fixed
