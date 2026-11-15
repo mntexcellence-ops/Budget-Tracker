@@ -1888,6 +1888,75 @@ function wfStepSelChange(){
 function wfNextCustomNo(){
   return Math.max(WF_STEPS.length, ...wfModel().map(m=>m.no)) + 1;
 }
+/* ── v10.39: phase-derived Status — the user's rule (2026-11-15): a task
+   in the Approval Process phase is "Open"; a task in the After Approval
+   Process phase is "In Progress". The phase is derived from the task's
+   workflow rows: any step in section A (canonical stepno 1–9) means
+   Approval; any step in section B (canonical stepno 10–21) means After
+   Approval (section B wins when both exist). Classification is strictly
+   by section: a fixed step by its canonical number; a stored earlier-step
+   row keeps its RECORDED stepno (a retired name whose stored stepno is
+   19–21 was a PO-approval step, i.e. After Approval); a genuine custom
+   step (stepno >= 22) sets no phase. ── */
+function wfPhase(){
+  let hasA=false, hasB=false;
+  wfModel().forEach(m=>{
+    if(!m.row) return;
+    let n;
+    if(!m.custom) n=m.no;
+    else if(m.legacy){ n=parseInt(m.row.stepno,10); if(isNaN(n)) return; }
+    else return; /* genuine custom step (>= 22): no phase */
+    if(n>=1&&n<=9) hasA=true;
+    else if(n>=10&&n<=21) hasB=true;
+  });
+  return hasB?'B':(hasA?'A':null);
+}
+/* The status the phase rule wants for this task, or null when no change
+   applies: no workflow steps at all, the status already matches the
+   phase, or the task is Complete (a task at 100%/Complete is never
+   overdue and must stay Complete) or Writing — only Open / In Progress
+   tasks are ever moved. */
+function wfPhaseStatus(r){
+  const ph=wfPhase(); if(!ph) return null;
+  const cur=(r.status||'').toLowerCase();
+  if(cur!=='open'&&cur!=='in progress') return null;
+  const want=ph==='B'?'In Progress':'Open';
+  return want.toLowerCase()===cur?null:want;
+}
+/* Status-only update — v4.14 writes only the fields sent and logs the
+   change into Stage History when the status actually changed. If the
+   local status moved again while this write was in flight (a second step
+   added meanwhile), the newer status is sent right after, so the Sheet
+   always ends on the latest phase — never on a stale one. */
+function wfWriteStatus(r, want, onOk, onFail){
+  const q=new URLSearchParams({token:curToken(),action:'update',sl:String(r.sl),unit:r.unit,name:r.name,status:want});
+  bgWrite(scriptUrl(),q,
+    ()=>{ const live=rowBySl(r.sl);
+      if(live&&(live.status||'')!==want) wfWriteStatus(live,live.status,onOk,onFail);
+      else if(onOk) onOk(); },
+    onFail);
+}
+/* Apply a phase-derived status flip locally at once (v10.38 optimistic
+   pattern): patch the row, protect it from a silent refresh landing
+   mid-write, and re-render list / board / KPIs / filters plus the open
+   detail (its status chip). Returns the previous status, or null when
+   the rule wants no change. The caller sends the write. */
+function wfApplyPhaseStatus(r){
+  const want=wfPhaseStatus(r); if(!want) return null;
+  const prev=r.status; r.status=want;
+  __trackPending(String(r.sl),{status:want});
+  render(); renderDetail();
+  return prev;
+}
+/* Undo a local phase-status flip (on a failed write): restore the
+   previous status, but only if nothing newer superseded it meanwhile. */
+function wfUndoPhaseStatus(r, prev, want){
+  if(!want) return;
+  __untrackPending(String(r.sl));
+  const live=rowBySl(r.sl)||r;
+  if((live.status||'')===want) live.status=prev;
+  render(); renderDetail();
+}
 function wfRefresh(){ const r=rowBySl(dtRn); if(!r) return;
   /* v10.34: refresh all three block bodies, all three counters, the
      custom block's visibility and the shared Add Step form. Counters
@@ -1947,6 +2016,10 @@ async function wfAdd(){
      Same numbering as the logged-in path: max(22, maxExisting + 1). */
   if(!url||!tok){
     dtWfLocal.push({sl:r.sl,unit:r.unit,task:r.name,stepno:isCustom?wfNextCustomNo():no,step,who,date,ref,local:true});
+    /* v10.39: guest preview — the phase rule is previewed locally too
+       (nothing is sent anywhere). */
+    const wantG=wfPhaseStatus(r);
+    if(wantG){ r.status=wantG; render(); renderDetail(); }
     wfRefresh(); toast(T('toastWfAddLocal'),'ok'); return;
   }
   /* v10.28: a custom step is sent WITH an explicit stepno from
@@ -1963,13 +2036,31 @@ async function wfAdd(){
      shown. */
   const local={sl:r.sl,unit:r.unit,task:r.name,stepno,step,who,date,ref,local:true};
   dtWfLocal.push(local);
+  /* v10.39: the new step sets the phase — flip the status at once (the
+     local row above is already in the model, so the phase counts it). */
+  const wantStatus=wfPhaseStatus(r);
+  const prevStatus=wantStatus?wfApplyPhaseStatus(r):null;
   wfRefresh();
   toast(T('toastWfAdd'),'ok');
   const q=new URLSearchParams({token:tok,action:'addworkflow',sl:String(r.sl),unit:r.unit,task:r.name,step,who,date,ref});
   q.set('stepno',String(stepno));
   bgWrite(url,q,
-    async ()=>{ dtWfLocal=dtWfLocal.filter(w=>w!==local); bgRelease(key); await loadWorkflow(true); },
-    (e)=>{ bgRelease(key); dtWfLocal=dtWfLocal.filter(w=>w!==local); wfRefresh();
+    ()=>{ dtWfLocal=dtWfLocal.filter(w=>w!==local); bgRelease(key);
+      /* v10.39: write the phase status ONLY after the step saved — a
+         failed step add must never leave a status the Sheet's workflow
+         rows do not justify. Then converge (Stage History picks up the
+         logged status change). */
+      if(!wantStatus){ loadWorkflow(true); return; }
+      wfWriteStatus(r,wantStatus,
+        async ()=>{ __untrackPending(String(r.sl)); loadStageLog(true); await loadWorkflow(true); refreshLive(false,true); },
+        (e)=>{ wfUndoPhaseStatus(r,prevStatus,wantStatus); loadWorkflow(true);
+          const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
+    },
+    (e)=>{ bgRelease(key); dtWfLocal=dtWfLocal.filter(w=>w!==local);
+      /* v10.39: the step did not save — roll the status back with it
+         (no status write was sent yet). */
+      if(wantStatus) wfUndoPhaseStatus(r,prevStatus,wantStatus);
+      wfRefresh();
       const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
 function wfEdit(no){ dtWfEdit=no; wfRefresh(); }
@@ -2023,6 +2114,10 @@ async function wfDel(no){
   const url=scriptUrl(), tok=curToken();
   if(m.row.local){
     dtWfLocal=dtWfLocal.filter(w=>w!==m.row);
+    /* v10.39: guest/local preview — the phase is recomputed from the
+       remaining steps and the status follows locally (nothing is sent). */
+    const wantL=wfPhaseStatus(r);
+    if(wantL){ r.status=wantL; render(); renderDetail(); }
     wfRefresh(); toast(T('toastWfDel'),'ok'); return;
   }
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
@@ -2033,10 +2128,25 @@ async function wfDel(no){
      runs in the background and the row is restored if it fails. */
   const rowObj=m.row;
   dtWf=dtWf.filter(w=>w!==rowObj);
+  /* v10.39: the remaining steps set the phase now — e.g. deleting the
+     only After Approval step drops the task back to Open. */
+  const wantStatus=wfPhaseStatus(r);
+  const prevStatus=wantStatus?wfApplyPhaseStatus(r):null;
   wfRefresh(); toast(T('toastWfDel'),'ok');
   bgWrite(url,q,
-    async ()=>{ await loadWorkflow(true); },
-    (e)=>{ dtWf.push(rowObj); wfRefresh();
+    ()=>{ if(!wantStatus){ loadWorkflow(true); return; }
+      /* v10.39: write the phase status ONLY after the delete saved,
+         then converge (Stage History picks up the logged change). */
+      wfWriteStatus(r,wantStatus,
+        async ()=>{ __untrackPending(String(r.sl)); loadStageLog(true); await loadWorkflow(true); refreshLive(false,true); },
+        (e)=>{ wfUndoPhaseStatus(r,prevStatus,wantStatus); loadWorkflow(true);
+          const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
+    },
+    (e)=>{ dtWf.push(rowObj);
+      /* v10.39: the delete did not save — restore the row and roll the
+         status back with it (no status write was sent yet). */
+      if(wantStatus) wfUndoPhaseStatus(r,prevStatus,wantStatus);
+      wfRefresh();
       const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
 /* ── v10.25/27: workflow CSV export — task header + 21 steps + any custom steps. ── */
