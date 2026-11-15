@@ -179,6 +179,9 @@ main{padding-right:0}
 .cside{background:var(--side);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:14px 12px;height:fit-content;position:sticky;top:14px;box-shadow:0 1px 2px var(--shadow)}
 .wshead{display:flex;align-items:center;gap:10px;padding:4px 6px 12px;border-bottom:1px solid var(--border);margin-bottom:12px}
 .wslogo{width:34px;height:34px;border-radius:50%;background:#7b68ee;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:17px;color:#fff;flex:none}
+/* v10.29: dark mode only — the purple "D" avatar becomes yellow on navy,
+   matching the dark theme (light mode keeps the purple ClickUp look). */
+[data-theme="dark"] .wslogo{background:#fed800;color:#1a1f3b}
 /* ── v5 polish: 8px rhythm, focus rings, refined scrollbars, hover lift ── */
 :focus-visible{outline:2px solid var(--brand-b);outline-offset:1px;border-radius:4px}
 ::-webkit-scrollbar{width:10px;height:10px}
@@ -213,9 +216,11 @@ th{padding:8px 10px}
 .sbitem:hover{background:#f5f5f5}
 [data-theme="dark"] .sbitem:hover{background:#2e2e2e}
 .sbitem.act{background:#f0edff;color:#7b68ee}
-[data-theme="dark"] .sbitem.act{background:#332f4d;color:#b3a6ff}
+/* v10.29: dark mode only — selected sidebar rows go navy + yellow with a
+   yellow left bar instead of purple (light mode keeps the purple look). */
+[data-theme="dark"] .sbitem.act{background:#2c3150;color:#fed800;box-shadow:inset 3px 0 0 #fed800}
 .sbitem.act .cnt{background:rgba(123,104,238,.15);color:#7b68ee}
-[data-theme="dark"] .sbitem.act .cnt{background:rgba(179,166,255,.18);color:#b3a6ff}
+[data-theme="dark"] .sbitem.act .cnt{background:rgba(254,216,0,.18);color:#fed800}
 .sbitem .nm{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sbitem .cnt{font-size:11px;font-weight:700;background:#f0f0f0;color:#666;border-radius:12px;padding:1px 8px}
 [data-theme="dark"] .sbitem .cnt{background:#333;color:#aaa}
@@ -223,7 +228,7 @@ th{padding:8px 10px}
 .sbnav:hover{background:#f5f5f5}
 [data-theme="dark"] .sbnav:hover{background:#2e2e2e}
 .sbnav.act{background:#f0edff;color:#7b68ee}
-[data-theme="dark"] .sbnav.act{background:#332f4d;color:#b3a6ff}
+[data-theme="dark"] .sbnav.act{background:#2c3150;color:#fed800;box-shadow:inset 3px 0 0 #fed800}
 .sbnav .ic{font-size:14px}
 @media(min-width:901px){
 .layout.collapsed{grid-template-columns:60px 1fr}
@@ -655,11 +660,11 @@ addFoot:'Setup: open ⚙️ Setup and enter your password — owner password = a
 saveBtn:'💾 Save New Project',
 msgUnitName:'❌ Unit and Project Name are required.',msgSetupUrl:'❌ First open ⚙️ Setup and save the Apps Script URL.',
 msgToken:'❌ Enter the password in ⚙️ Setup first.',msgNoScript:'❌ Apps Script is not set up yet — open ⚙️ Setup and save the Script URL + password first.',
-msgSaving:'⏳ Saving...',msgSaved:'✅ Saved! Refreshing...',msgSaveFail:'❌ Save failed: {e}',
+msgSaving:'⏳ Saving...',msgSaved:'✅ Saved!',msgSaveFail:'❌ Save failed: {e}',
 msgSetupSaved:'✅ Setup saved.',msgSetupSavedUnit:'✅ Setup saved — you can edit only {u}.',msgSetupSavedAll:'✅ Setup saved — you can edit all units.',
 msgNeedUrl:'❌ Enter the Web app URL.',msgWrongToken:'❌ Wrong password for this script URL — please check it and save again.',
 msgRowGone:'❌ Row not found — please refresh the dashboard.',
-liveFetching:'⏳ Fetching data from the Sheet...',liveFail:'⚪ Snapshot data (could not fetch from Sheet)',liveOk:'🟢 Live · updated ',
+liveFetching:'⏳ Fetching data from the Sheet...',liveFail:'⚪ Snapshot data (could not fetch from Sheet)',liveSilentFail:'⚠️ Background refresh failed — showing your saved values',liveOk:'🟢 Live · updated ',
 liveEmpty:'⚪ Sheet is empty — showing the snapshot. Import the data into the Sheet, then press Refresh.',
 fsTitleAll:'All Projects',fsTotals:'{n} project(s) · Total cost {c} · Total budget {b} · Total payment {p}',
 fsNoProjects:'No projects in this status yet. If a project gets this status in the Sheet, it will appear here automatically.',
@@ -1170,7 +1175,11 @@ function whoamiRestore(){ const u=scriptUrl(), t=curToken(); if(!u||!t) return;
   fetch(u+'?'+new URLSearchParams({action:'whoami',token:t,cb:Date.now()}),{redirect:'follow'}).then(r=>r.json()).then(j=>{
     if(j&&j.ok&&j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=t; render(); }
   }).catch(()=>{}); }
-async function refreshLive(manual){
+/* v10.29: silent=true runs a background refresh — no skeleton, no
+   "Fetching…" status, and on failure the local (just-saved) values stay
+   with only a small non-blocking toast. Used after saves so "Saved" shows
+   at once instead of after a 6–10s full refetch. */
+async function refreshLive(manual, silent){
   const st=document.getElementById('liveStatus'), btn=document.getElementById('btnRefresh');
   if(btn) btn.disabled=true;
   /* v10: when logged in (script URL + token saved), the script's getdata is
@@ -1178,8 +1187,8 @@ async function refreshLive(manual){
      canonical units. Before login / without a script, the public CSV +
      snapshot fallback below still applies. */
   if(scriptUrl() && curToken()){
-    if(st) st.textContent=T('liveFetching');
-    showSkeleton();
+    if(st&&!silent) st.textContent=T('liveFetching');
+    if(!silent) showSkeleton();
     try{
       const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getdata',token:curToken(),cb:Date.now()}),{redirect:'follow'});
       const j=await res.json();
@@ -1215,9 +1224,9 @@ async function refreshLive(manual){
       return;
     }catch(e){ /* fall through to the CSV + snapshot path below */ }
   }
-  if(!SHEET_CSV_URL){ if(st) st.textContent=T('liveFail'); if(btn) btn.disabled=false; return; }
-  if(st) st.textContent=T('liveFetching');
-  showSkeleton();
+  if(!SHEET_CSV_URL){ if(silent){ toast(T('liveSilentFail'),'err'); } else if(st) st.textContent=T('liveFail'); if(btn) btn.disabled=false; return; }
+  if(st&&!silent) st.textContent=T('liveFetching');
+  if(!silent) showSkeleton();
   try{
     const res=await fetch(SHEET_CSV_URL+'&cb='+Date.now());
     if(!res.ok) throw new Error('fetch '+res.status);
@@ -1235,7 +1244,8 @@ async function refreshLive(manual){
     buildFilters(); render();
     if(st) st.innerHTML=T('liveOk')+new Date().toLocaleTimeString('en-GB');
   }catch(e){
-    if(st) st.textContent=T('liveFail');
+    if(silent){ toast(T('liveSilentFail'),'err'); }
+    else if(st) st.textContent=T('liveFail');
     render();
   }
   if(btn) btn.disabled=false;
@@ -1842,14 +1852,19 @@ async function dtSaveEdit(){
     const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now());
     const j=await res.json();
     if(!j.ok) throw new Error(j.error||'unknown error');
+    /* v10.29: fast save — apply the sent values to the local row and
+       re-render at once (no blocking full refetch); server values
+       converge via a silent background refresh below. */
+    Object.assign(r,{status:q.get('status'),assignee:q.get('assignee'),priority:q.get('priority'),start:q.get('start'),due:q.get('due'),revised:q.get('revised'),finishwork:q.get('finishwork'),prog:Number(q.get('prog'))||0,budget:Number(q.get('budget'))||0,cost:Number(q.get('cost'))||0,disb:Number(q.get('payment'))||0,subtasks:Number(q.get('subtasks'))||0,comment:q.get('comment')||'',desc:q.get('desc')||'',task_id:q.get('task_id')||''});
     say(T('msgSaved'),'ok');
     toast(T('toastSaved'),'ok');
     dtEdit=false;
-    await refreshLive(false);
+    render();
     renderDetail();
     loadSubs();
     loadComments();
     loadStageLog();
+    refreshLive(false,true);
   }catch(e){ say(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); }
   if(btn) btn.disabled=false;
 }
@@ -1937,8 +1952,10 @@ async function fsAddSave(){
     fsSay(T('msgSaved'),'ok');
     toast(T('toastSaved'),'ok');
     ['faName','faAssignee','faStart','faDue','faRevised','faFinishWork','faProg','faBudget','faCost','faPayment','faSubtasks','faComment','faDesc','faTaskId'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-    await refreshLive(false);
+    /* v10.29: show the list at once — the new row lands via a silent
+       background refresh instead of a blocking full refetch. */
     fsStatus='all'; setFsTab('list');
+    refreshLive(false,true);
   }catch(e){ fsSay(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); }
   btn.disabled=false;
 }
@@ -2016,11 +2033,15 @@ async function fsSaveEdit(sl){
     const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now());
     const j=await res.json();
     if(!j.ok) throw new Error(j.error||'unknown error');
+    /* v10.29: fast save — apply the sent values to the local row,
+       re-render the table at once, converge via a silent background
+       refresh (no blocking full refetch). */
+    Object.assign(row,{status:q.get('status'),start:q.get('start'),due:q.get('due'),revised:q.get('revised'),prog:Number(q.get('prog'))||0,budget:Number(q.get('budget'))||0,cost:Number(q.get('cost'))||0,disb:Number(q.get('payment'))||0,comment:q.get('comment')||''});
     fsSay(T('msgSaved'),'ok');
     toast(T('toastSaved'),'ok');
     fsEditSl=null;
-    await refreshLive(false);
     renderFsTable();
+    refreshLive(false,true);
   }catch(e){ fsSay(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); }
 }
 /* ── v3: left sidebar, Board, Calendar, Group-by, Comments. ── */
@@ -2151,7 +2172,7 @@ async function moveTask(sl, newStatus){
   try{
     const res=await fetch(full); const j=await res.json();
     if(!j.ok) throw new Error(j.error||'unknown error');
-    r.status=newStatus; boardSay(T('msgSaved'),'ok'); toast(T('toastStatus'),'ok'); render(); refreshLive(false); return true;
+    r.status=newStatus; boardSay(T('msgSaved'),'ok'); toast(T('toastStatus'),'ok'); render(); refreshLive(false,true); return true;
   }catch(e){ boardSay(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); render(); return false; }
 }
 window.__moveTask=moveTask;
