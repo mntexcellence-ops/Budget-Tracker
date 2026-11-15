@@ -973,6 +973,46 @@ function toast(msg, type){
   box.appendChild(el);
   setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(), 320); }, 3600);
 }
+/* ── v10.38: optimistic saves — click = saved at once. Every save applies
+   its change to the local state and re-renders FIRST, shows "Saved!" at
+   once, and only then sends the write to the script in the background
+   (the Apps Script round-trip is a cold start and takes 5–15 s — the
+   user must never wait for it). On success the silent refresh converges
+   server-computed values; on failure the local change is rolled back and
+   a clear error is shown, so the screen never shows data the Sheet does
+   not have. There is no "⏳ Saving..." wait state anywhere on the save
+   path, and no Save button stays disabled while the user waits.
+   __inflight ignores an identical repeat click (e.g. a double-click)
+   while a write for the same item is in flight — different items are
+   unaffected. __pendingRows tracks optimistic task-row edits so a silent
+   refresh that lands while a write is still in flight cannot visually
+   revert them; the entry is dropped when its write resolves (success or
+   failure) or after a 2-minute safety timeout. ── */
+const __inflight=new Set();
+function bgGuard(key){ if(__inflight.has(key)) return false; __inflight.add(key); return true; }
+function bgRelease(key){ __inflight.delete(key); }
+function bgWrite(url,q,onOk,onFail){
+  fetch(url+'?'+q.toString()+'&cb='+Date.now())
+    .then(r=>r.json())
+    .then(j=>{ if(!j.ok) throw new Error(j.error||'unknown error'); if(onOk) onOk(j); })
+    .catch(e=>{ if(onFail) onFail(e); });
+}
+function bgFailToast(e){ toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+const __pendingRows=new Map();
+function __trackPending(sl,vals){
+  const k=String(sl);
+  const cur=__pendingRows.get(k)||{vals:{},n:0};
+  cur.vals=Object.assign({},cur.vals,vals); cur.n++;
+  __pendingRows.set(k,cur);
+  setTimeout(()=>{ const c=__pendingRows.get(k); if(c){ c.n--; if(c.n<=0) __pendingRows.delete(k); } },120000);
+}
+function __untrackPending(sl){
+  const k=String(sl); const c=__pendingRows.get(k); if(!c) return;
+  c.n--; if(c.n<=0) __pendingRows.delete(k);
+}
+function __applyPendingRows(){
+  __pendingRows.forEach((c,sl)=>{ const row=D.rows.find(x=>String(x.sl)===sl); if(row) Object.assign(row,c.vals); });
+}
 /* ── v9: small confirmation dialog (returns a Promise<boolean>). Used for
    subtask delete, which used to run immediately. ── */
 let __cfResolve=null;
@@ -1249,6 +1289,9 @@ async function refreshLive(manual, silent){
         D.rows.forEach(r=>{ const c=byKey.get(String(r.sl)+'|'+r.unit); if(!c) return;
           if(typeof c.prog==='number'&&!isNaN(c.prog)) r.prog=c.prog; });
       }catch(e){ /* keep script progress */ }
+      /* v10.38: re-apply optimistic edits still in flight, so a silent
+         refresh landing before their write resolves cannot revert them. */
+      __applyPendingRows();
       D.units=UNITS_ALL;
       D.statuses=[...new Set(D.rows.map(r=>r.status).filter(Boolean))].sort();
       STATUSES_ALL.forEach(s=>{ if(!D.statuses.includes(s)) D.statuses.push(s); });
@@ -1348,47 +1391,74 @@ function subBodyHtml(r){
     if(canE&&dtSubEdit===s.row){
       return `<div class="subrow"><div class="submain"><input type="text" id="seName" class="efinput" value="${esc(s.subtask)}"><div style="display:flex;gap:8px;margin-top:6px;flex-wrap:wrap"><input type="date" id="seStart" class="efinput" style="max-width:170px" title="${T('stStartPh')}" value="${toISODate(s.created||'')}"><input type="date" id="seDue" class="efinput" style="max-width:170px" title="${T('stEndPh')}" value="${toISODate(s.due||'')}"></div></div><span style="display:flex;gap:2px;flex:none"><button class="entrybtn" onclick="subSaveEdit(${s.row})">${T('stSave')}</button><button class="entrybtn off" onclick="subCancelEdit()">${T('cfCancel')}</button></span></div>`;
     }
-    return `<div class="subrow"><input type="checkbox" ${s.done?'checked':''} ${canE?'':'disabled'} onchange="subToggle(${s.row},this.checked)">${s.done?'<span class="subtick">✓</span>':''}<div class="submain"><div class="subname">${esc(s.subtask)}</div><div class="submeta">${subMeta(s)}</div></div>${canE?`<button class="subedit" title="${T('stEdit')}" onclick="subEdit(${s.row})">✏️</button><button class="subdel" title="${T('stDel')}" onclick="subDel(${s.row})">✕</button>`:''}</div>`;
+    const dis=!canE||s.local;
+    return `<div class="subrow"><input type="checkbox" ${s.done?'checked':''} ${dis?'disabled':''} ${s.local?'':`onchange="subToggle(${s.row},this.checked)"`}>${s.done?'<span class="subtick">✓</span>':''}<div class="submain"><div class="subname">${esc(s.subtask)}</div><div class="submeta">${subMeta(s)}</div></div>${canE&&!s.local?`<button class="subedit" title="${T('stEdit')}" onclick="subEdit(${s.row})">✏️</button><button class="subdel" title="${T('stDel')}" onclick="subDel(${s.row})">✕</button>`:''}</div>`;
   }).join('');
   if(canE) h+=`<div class="subadd"><input type="text" id="subName" class="efinput" placeholder="${T('stAddPh')}"><input type="date" id="subStart" class="efinput" style="max-width:170px" title="${T('stStartPh')}" value="${toISODate(todayMid())}"><input type="date" id="subDue" class="efinput" style="max-width:170px" title="${T('stEndPh')}"><button class="entrybtn" onclick="subAdd()">${T('stAddBtn')}</button></div><div id="subMsg" class="fsmsg" style="padding:6px 0"></div>`;
   return h;
 }
 function subRefresh(){ const b=document.getElementById('dtSubBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=subBodyHtml(r); }
-async function loadSubs(){
+async function loadSubs(quiet){
   const r=rowBySl(dtRn); if(!r) return;
   if(!scriptUrl()){ dtSubsState='idle'; subRefresh(); return; }
-  dtSubsState='loading'; subRefresh();
+  if(!quiet){ dtSubsState='loading'; subRefresh(); }
   try{
     const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getsubtasks',token:curToken(),cb:Date.now()}),{redirect:'follow'});
     const j=await res.json();
-    dtSubs = (j&&j.ok&&Array.isArray(j.subs)) ? j.subs.filter(s=>String(s.sl)===String(r.sl)) : [];
-  }catch(e){ dtSubs=[]; }
+    const fresh=(j&&j.ok&&Array.isArray(j.subs)) ? j.subs.filter(s=>String(s.sl)===String(r.sl)) : [];
+    /* v10.38: keep optimistic local rows the server has not returned yet
+       (a second add still in flight) — deduped by subtask name. */
+    const pending=dtSubs.filter(s=>s.local && !fresh.some(f=>String(f.subtask||'').trim().toLowerCase()===String(s.subtask||'').trim().toLowerCase()));
+    dtSubs=fresh.concat(pending);
+  }catch(e){ dtSubs=dtSubs.filter(s=>s.local); }
   dtSubsState='idle'; subRefresh(); stageRefresh();
 }
 async function subToggle(subrow, checked){
   const r=rowBySl(dtRn); if(!r) return;
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ subRefresh(); toast(T('msgNoScript'),'err'); return; }
-  const q=new URLSearchParams({token:tok,action:'togglesubtask',sl:String(r.sl),unit:r.unit,task:r.name,subrow:String(subrow)});
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    const s=dtSubs.find(x=>x.row===subrow); if(s) s.done=(j.done!==undefined)?!!j.done:checked; if(s&&j.doneDate!==undefined) s.doneDate=j.doneDate;
-    toast(checked?T('toastSubDone'):T('toastSubReopen'),'ok');
-  }catch(e){ toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  const s=dtSubs.find(x=>x.row===subrow); if(!s||s.local) return;
+  /* v10.38: optimistic — the checkbox flips at once; a second click on
+     the same row while the write is in flight is ignored and the
+     checkbox is re-rendered to the model state. */
+  if(!bgGuard('subToggle:'+subrow)){ subRefresh(); return; }
+  const prevDone=s.done, prevDoneDate=s.doneDate;
+  s.done=checked; s.doneDate=checked?toISODate(todayMid()):'';
   subRefresh(); stageRefresh();
+  toast(checked?T('toastSubDone'):T('toastSubReopen'),'ok');
+  const q=new URLSearchParams({token:tok,action:'togglesubtask',sl:String(r.sl),unit:r.unit,task:r.name,subrow:String(subrow)});
+  bgWrite(url,q,
+    (j)=>{ bgRelease('subToggle:'+subrow);
+      const t=dtSubs.find(x=>x.row===subrow); if(t){ t.done=(j.done!==undefined)?!!j.done:checked; if(j.doneDate!==undefined) t.doneDate=j.doneDate; }
+      subRefresh(); stageRefresh(); },
+    (e)=>{ bgRelease('subToggle:'+subrow);
+      const t=dtSubs.find(x=>x.row===subrow); if(t){ t.done=prevDone; t.doneDate=prevDoneDate; }
+      subRefresh(); stageRefresh(); bgFailToast(e); });
 }
 async function subAdd(){
   const r=rowBySl(dtRn); if(!r) return;
   const name=((document.getElementById('subName')||{}).value||'').trim();
   if(!name) return;
+  const due=(document.getElementById('subDue')||{}).value||'';
+  const created=(document.getElementById('subStart')||{}).value||'';
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
-  const q=new URLSearchParams({token:tok,action:'addsubtask',sl:String(r.sl),unit:r.unit,task:r.name,subtask:name,due:(document.getElementById('subDue')||{}).value||'',created:(document.getElementById('subStart')||{}).value||''});
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    await loadSubs();
-    toast(T('toastSubAdd'),'ok');
-  }catch(e){ const m=document.getElementById('subMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  const key='subAdd:'+r.sl+':'+name+'|'+due+'|'+created;
+  if(!bgGuard(key)) return;
+  /* v10.38: optimistic — the subtask appears at once (local:true, so its
+     checkbox/edit/delete stay disabled until the server confirms it and
+     loadSubs() brings the real sheet row number). */
+  const local={sl:String(r.sl),unit:r.unit,task:r.name,subtask:name,done:false,due,created,local:true};
+  dtSubs.push(local);
+  const nameEl=document.getElementById('subName'), dueEl=document.getElementById('subDue');
+  if(nameEl) nameEl.value=''; if(dueEl) dueEl.value='';
+  subRefresh(); stageRefresh();
+  toast(T('toastSubAdd'),'ok');
+  const q=new URLSearchParams({token:tok,action:'addsubtask',sl:String(r.sl),unit:r.unit,task:r.name,subtask:name,due,created});
+  bgWrite(url,q,
+    ()=>{ bgRelease(key); loadSubs(true); },
+    (e)=>{ bgRelease(key); dtSubs=dtSubs.filter(x=>x!==local); subRefresh(); stageRefresh();
+      const m=document.getElementById('subMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } bgFailToast(e); });
 }
 /* ── v10.10: edit a subtask inline — name, start date and due date.
    Save calls the script's editsubtask action (v4.6); an empty date clears it. ── */
@@ -1398,13 +1468,21 @@ async function subSaveEdit(subrow){
   const r=rowBySl(dtRn); if(!r) return;
   const name=((document.getElementById('seName')||{}).value||'').trim();
   if(!name) return;
+  const due=(document.getElementById('seDue')||{}).value||'';
+  const created=(document.getElementById('seStart')||{}).value||'';
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
-  const q=new URLSearchParams({token:tok,action:'editsubtask',sl:String(r.sl),unit:r.unit,task:r.name,subrow:String(subrow),subtask:name,due:(document.getElementById('seDue')||{}).value||'',created:(document.getElementById('seStart')||{}).value||''});
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    dtSubEdit=null; await loadSubs(); toast(T('toastSubEdit'),'ok');
-  }catch(e){ const m=document.getElementById('subMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  const s=dtSubs.find(x=>x.row===subrow); if(!s||s.local) return;
+  /* v10.38: optimistic — apply locally at once, send in the background,
+     roll back on failure. */
+  const prev={subtask:s.subtask,due:s.due,created:s.created};
+  s.subtask=name; s.due=due; s.created=created;
+  dtSubEdit=null; subRefresh(); toast(T('toastSubEdit'),'ok');
+  const q=new URLSearchParams({token:tok,action:'editsubtask',sl:String(r.sl),unit:r.unit,task:r.name,subrow:String(subrow),subtask:name,due,created});
+  bgWrite(url,q,
+    ()=>{ loadSubs(true); },
+    (e)=>{ const live=dtSubs.find(x=>x.row===subrow)||s; Object.assign(live,prev); subRefresh();
+      const m=document.getElementById('subMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } bgFailToast(e); });
 }
 async function subDel(subrow){
   const r=rowBySl(dtRn); if(!r) return;
@@ -1413,12 +1491,19 @@ async function subDel(subrow){
   if(!ok) return;
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
+  const idx=dtSubs.findIndex(x=>x.row===subrow); if(idx<0) return;
+  const s=dtSubs[idx];
+  if(s.local){ dtSubs.splice(idx,1); subRefresh(); stageRefresh(); toast(T('toastSubDel'),'ok'); return; }
+  /* v10.38: optimistic — the row disappears at once; the server delete
+     runs in the background and the row is restored if it fails. */
+  dtSubs.splice(idx,1);
+  subRefresh(); stageRefresh();
+  toast(T('toastSubDel'),'ok');
   const q=new URLSearchParams({token:tok,action:'deletesubtask',sl:String(r.sl),unit:r.unit,task:r.name,subrow:String(subrow)});
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    await loadSubs();
-    toast(T('toastSubDel'),'ok');
-  }catch(e){ const m=document.getElementById('subMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  bgWrite(url,q,
+    ()=>{ loadSubs(true); },
+    (e)=>{ dtSubs.splice(Math.min(idx,dtSubs.length),0,s); subRefresh(); stageRefresh();
+      const m=document.getElementById('subMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } bgFailToast(e); });
 }
 /* ── v10: Stage History — how a task moved through the stages, and how long
    each stage lasted. The server logs every status change (STATUS_LOG tab);
@@ -1592,10 +1677,10 @@ function stageBodyHtml(r){
 }
 function stageRefresh(){ const b=document.getElementById('dtStageBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=stageBodyHtml(r);
   const hb=document.getElementById('dtStageHead'); if(hb&&r) hb.outerHTML=stageHeadHtml(r); }
-async function loadStageLog(){
+async function loadStageLog(quiet){
   const r=rowBySl(dtRn); if(!r) return;
   if(!scriptUrl()){ dtStageState='idle'; stageRefresh(); return; }
-  dtStageState='loading'; stageRefresh();
+  if(!quiet){ dtStageState='loading'; stageRefresh(); }
   try{
     const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getstatuslog',token:curToken(),sl:String(r.sl),cb:Date.now()}),{redirect:'follow'});
     const j=await res.json();
@@ -1655,6 +1740,7 @@ const WF_RETIRED=['PREPARED BY','APPROVED BY HOD','APPROVED BY IE-HEAD','APPROVE
    steps, never customs. */
 function wfNormName(nm){ return String(nm||'').trim().toLowerCase().replace(/approveed/g,'approved'); }
 let dtWf=[], dtWfState='idle', dtWfEdit=null, dtWfLocal=[];
+let __wfLastAddAt=0;
 function wfRows(){ return dtWf.concat(dtWfLocal); }
 /* Match a server row to its canonical step: by the exact step NAME first
    (case-insensitive), so a row written without a step number still lands
@@ -1783,10 +1869,11 @@ function wfAddFormHtml(r){
   let h='';
   if(!scriptUrl()||!curToken()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:8px">${T('wfGuestNote')}</div>`;
   if(!pending.length){ h+=`<div style="font-size:13px;color:var(--muted);margin-top:8px">${T('wfAllDone')}</div>`; }
-  h+=`<div class="wfadd"><select id="wfStepSel" class="efinput" onchange="wfStepSelChange()">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}<option value="custom">${esc(T('wfCustom'))}</option></select><input type="text" id="wfCustomName" class="efinput" placeholder="${T('wfCustomPh')}" style="display:${pending.length?'none':''}"><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
+  h+=`<div class="wfadd"><select id="wfStepSel" class="efinput" onchange="wfStepSelChange()">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}<option value="custom">${esc(T('wfCustom'))}</option></select><input type="text" id="wfCustomName" class="efinput" placeholder="${T('wfCustomPh')}" style="display:${pending.length?'none':''}" oninput="window.__wfFormTouched=true"><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}" oninput="window.__wfFormTouched=true"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}" oninput="window.__wfFormTouched=true"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}" oninput="window.__wfFormTouched=true"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
   return h;
 }
 function wfStepSelChange(){
+  window.__wfFormTouched=true;
   const sel=document.getElementById('wfStepSel'), inp=document.getElementById('wfCustomName');
   if(sel&&inp) inp.style.display=(sel.value==='custom')?'':'none';
 }
@@ -1815,10 +1902,10 @@ function wfRefresh(){ const r=rowBySl(dtRn); if(!r) return;
   const cw=document.getElementById('dtStageWfWrapC');
   if(cw){ const has=wfModel().some(m=>m.custom); cw.style.display=has?'':'none'; if(has) set('dtWfCountC',wfCustomCountHtml()); }
   set('dtStageWfForm',wfAddFormHtml(r)); }
-async function loadWorkflow(){
+async function loadWorkflow(quiet){
   const r=rowBySl(dtRn); if(!r) return;
   if(!scriptUrl()){ dtWfState='idle'; wfRefresh(); return; }
-  dtWfState='loading'; wfRefresh();
+  if(!quiet){ dtWfState='loading'; wfRefresh(); }
   try{
     const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getworkflow',token:curToken(),sl:String(r.sl),unit:r.unit,cb:Date.now()}),{redirect:'follow'});
     const j=await res.json();
@@ -1848,6 +1935,13 @@ async function wfAdd(){
   const date=(document.getElementById('wfDate')||{}).value||'';
   const ref=((document.getElementById('wfRef')||{}).value||'').trim();
   if(!step||!date) return;
+  /* v10.38: double-click guard — a fast second click right after an add,
+     before the user touched the rebuilt form, is an accidental
+     double-click, not a second add (the rebuilt form auto-selects the
+     next pending step, so without this guard a double-click would add a
+     step the user never chose). */
+  if(Date.now()-__wfLastAddAt<600 && !window.__wfFormTouched) return;
+  __wfLastAddAt=Date.now(); window.__wfFormTouched=false;
   const url=scriptUrl(), tok=curToken();
   /* Guest / snapshot mode: local preview only — nothing is sent anywhere.
      Same numbering as the logged-in path: max(22, maxExisting + 1). */
@@ -1858,13 +1952,25 @@ async function wfAdd(){
   /* v10.28: a custom step is sent WITH an explicit stepno from
      wfNextCustomNo() (22, 23, …) — v4.12 accepts an explicit stepno when
      it is positive and not a duplicate. Fixed steps send their own 1–21. */
+  const stepno=isCustom?wfNextCustomNo():no;
+  const key='wfAdd:'+r.sl+':'+stepno+':'+step;
+  if(!bgGuard(key)) return;
+  /* v10.38: optimistic — the step appears at once (as a local preview
+     row tagged Pending), the Add Step form clears, and the server write
+     runs in the background. On success the server rows are loaded
+     (server-computed Days / Next Step Date) and the local row is
+     swapped out; on failure the local row is removed and the error is
+     shown. */
+  const local={sl:r.sl,unit:r.unit,task:r.name,stepno,step,who,date,ref,local:true};
+  dtWfLocal.push(local);
+  wfRefresh();
+  toast(T('toastWfAdd'),'ok');
   const q=new URLSearchParams({token:tok,action:'addworkflow',sl:String(r.sl),unit:r.unit,task:r.name,step,who,date,ref});
-  q.set('stepno',String(isCustom?wfNextCustomNo():no));
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    await loadWorkflow();
-    toast(T('toastWfAdd'),'ok');
-  }catch(e){ const m=document.getElementById('wfMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  q.set('stepno',String(stepno));
+  bgWrite(url,q,
+    async ()=>{ dtWfLocal=dtWfLocal.filter(w=>w!==local); bgRelease(key); await loadWorkflow(true); },
+    (e)=>{ bgRelease(key); dtWfLocal=dtWfLocal.filter(w=>w!==local); wfRefresh();
+      const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
 function wfEdit(no){ dtWfEdit=no; wfRefresh(); }
 function wfCancelEdit(){ dtWfEdit=null; wfRefresh(); }
@@ -1898,10 +2004,15 @@ async function wfSaveEdit(no){
      for custom steps (fixed steps keep their canonical name). */
   if(m.custom) q.set('step',newName);
   if(m.row.row!==undefined&&m.row.row!==null&&m.row.row!=='') q.set('row',String(m.row.row));
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    dtWfEdit=null; await loadWorkflow(); toast(T('toastWfEdit'),'ok');
-  }catch(e){ const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  /* v10.38: optimistic — apply locally at once; the server write runs in
+     the background and the edit is rolled back if it fails. */
+  const prev={who:m.row.who,date:m.row.date,ref:m.row.ref,step:m.row.step};
+  m.row.who=who; m.row.date=date; m.row.ref=ref; if(m.custom) m.row.step=newName;
+  dtWfEdit=null; wfRefresh(); toast(T('toastWfEdit'),'ok');
+  bgWrite(url,q,
+    async ()=>{ await loadWorkflow(true); },
+    (e)=>{ const live=dtWf.find(w=>w===m.row)||dtWf.find(w=>String(w.stepno)===String(m.row.stepno))||m.row; Object.assign(live,prev); wfRefresh();
+      const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
 async function wfDel(no){
   const r=rowBySl(dtRn); if(!r) return;
@@ -1918,11 +2029,15 @@ async function wfDel(no){
   /* v10.30: send the row's STORED stepno, not the model number (see wfSaveEdit). */
   const q=new URLSearchParams({token:tok,action:'deleteworkflow',sl:String(r.sl),unit:r.unit,stepno:String((m.row&&m.row.stepno)||no)});
   if(m.row.row!==undefined&&m.row.row!==null&&m.row.row!=='') q.set('row',String(m.row.row));
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    await loadWorkflow();
-    toast(T('toastWfDel'),'ok');
-  }catch(e){ const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  /* v10.38: optimistic — the row disappears at once; the server delete
+     runs in the background and the row is restored if it fails. */
+  const rowObj=m.row;
+  dtWf=dtWf.filter(w=>w!==rowObj);
+  wfRefresh(); toast(T('toastWfDel'),'ok');
+  bgWrite(url,q,
+    async ()=>{ await loadWorkflow(true); },
+    (e)=>{ dtWf.push(rowObj); wfRefresh();
+      const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
 /* ── v10.25/27: workflow CSV export — task header + 21 steps + any custom steps. ── */
 function wfCsvCell(v){ const s=String(v==null?'':v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
@@ -2041,10 +2156,7 @@ async function dtSaveEdit(){
   const say=(t,c)=>{ if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } };
   if(!url){ say(T('msgNoScript'),'err'); toast(T('msgNoScript'),'err'); return; }
   if(!token){ say(T('msgToken'),'err'); toast(T('msgToken'),'err'); return; }
-  const btn=document.getElementById('dtSaveBtn'); if(btn) btn.disabled=true;
-  say(T('msgSaving'));
-  const q=new URLSearchParams({token, action:'update', sl:String(r.sl), unit:r.unit, name:r.name,
-    status:document.getElementById('deStatus').value,
+  const vals={status:document.getElementById('deStatus').value,
     assignee:document.getElementById('deAssignee').value.trim(),
     priority:document.getElementById('dePriority').value,
     bst:document.getElementById('deBst').value.trim(),
@@ -2053,33 +2165,41 @@ async function dtSaveEdit(){
     due:document.getElementById('deDue').value,
     revised:document.getElementById('deRevised').value,
     finishwork:document.getElementById('deFinishWork').value,
-    prog:document.getElementById('deProg').value,
-    budget:document.getElementById('deBudget').value,
-    cost:document.getElementById('deCost').value,
-    payment:document.getElementById('dePayment').value,
-    subtasks:document.getElementById('deSubtasks').value,
+    prog:Number(document.getElementById('deProg').value)||0,
+    budget:Number(document.getElementById('deBudget').value)||0,
+    cost:Number(document.getElementById('deCost').value)||0,
+    disb:Number(document.getElementById('dePayment').value)||0,
+    subtasks:Number(document.getElementById('deSubtasks').value)||0,
     comment:document.getElementById('deComment').value.trim(),
     desc:document.getElementById('deDesc').value.trim(),
-    task_id:document.getElementById('deTaskId').value.trim()});
-  try{
-    const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now());
-    const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    /* v10.29: fast save — apply the sent values to the local row and
-       re-render at once (no blocking full refetch); server values
-       converge via a silent background refresh below. */
-    Object.assign(r,{status:q.get('status'),assignee:q.get('assignee'),priority:q.get('priority'),bst:q.get('bst')||'',matst:q.get('matst')||'',start:q.get('start'),due:q.get('due'),revised:q.get('revised'),finishwork:q.get('finishwork'),prog:Number(q.get('prog'))||0,budget:Number(q.get('budget'))||0,cost:Number(q.get('cost'))||0,disb:Number(q.get('payment'))||0,subtasks:Number(q.get('subtasks'))||0,comment:q.get('comment')||'',desc:q.get('desc')||'',task_id:q.get('task_id')||''});
-    say(T('msgSaved'),'ok');
-    toast(T('toastSaved'),'ok');
-    dtEdit=false;
-    render();
-    renderDetail();
-    loadSubs();
-    loadComments();
-    loadStageLog();
-    refreshLive(false,true);
-  }catch(e){ say(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); }
-  if(btn) btn.disabled=false;
+    task_id:document.getElementById('deTaskId').value.trim()};
+  const q=new URLSearchParams({token, action:'update', sl:String(r.sl), unit:r.unit, name:r.name,
+    status:vals.status, assignee:vals.assignee, priority:vals.priority, bst:vals.bst, matst:vals.matst,
+    start:vals.start, due:vals.due, revised:vals.revised, finishwork:vals.finishwork,
+    prog:String(vals.prog), budget:String(vals.budget), cost:String(vals.cost), payment:String(vals.disb),
+    subtasks:String(vals.subtasks), comment:vals.comment, desc:vals.desc, task_id:vals.task_id});
+  /* v10.38: optimistic — apply at once and close the form; the server
+     write runs in the background. On failure the row is restored and the
+     edit form reopens with the attempted values, so nothing typed is lost. */
+  const prev={...r};
+  Object.assign(r,vals);
+  __trackPending(String(r.sl),vals);
+  dtEdit=false;
+  render();
+  renderDetail();
+  toast(T('toastSaved'),'ok');
+  bgWrite(url,q,
+    ()=>{ __untrackPending(String(r.sl)); loadSubs(true); loadComments(true); loadStageLog(true); refreshLive(false,true); },
+    (e)=>{ const live=rowBySl(r.sl)||r; Object.assign(live,prev); __untrackPending(String(r.sl));
+      dtEdit=true; render(); renderDetail();
+      const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+      set('deStatus',vals.status); set('deAssignee',vals.assignee); set('dePriority',vals.priority);
+      set('deBst',vals.bst); set('deMatst',vals.matst); set('deStart',vals.start); set('deDue',vals.due);
+      set('deRevised',vals.revised); set('deFinishWork',vals.finishwork); set('deProg',String(vals.prog));
+      set('deBudget',String(vals.budget)); set('deCost',String(vals.cost)); set('dePayment',String(vals.disb));
+      set('deSubtasks',String(vals.subtasks)); set('deComment',vals.comment); set('deDesc',vals.desc); set('deTaskId',vals.task_id);
+      const mm=document.getElementById('dtMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; }
+      bgFailToast(e); });
 }
 /* ── Full-screen status popup + row edit + add (Apps Script bridge) ── */
 let fsStatus='all', fsEditSl=null, fsTab='list';
@@ -2141,8 +2261,7 @@ async function fsAddSave(){
   if(!url){ fsSay(T('msgNoScript'),'err'); toggleFsSettings(); return; }
   if(!token){ fsSay(T('msgToken'),'err'); toggleFsSettings(); return; }
   if(document.getElementById('fsRemember').checked) fsSet('cu-entry-token',token);
-  const q=new URLSearchParams({token, action:'add', unit, name,
-    status:document.getElementById('faStatus').value,
+  const vals={status:document.getElementById('faStatus').value,
     assignee:document.getElementById('faAssignee').value.trim(),
     priority:document.getElementById('faPriority').value,
     bst:document.getElementById('faBst').value.trim(),
@@ -2151,28 +2270,46 @@ async function fsAddSave(){
     due:document.getElementById('faDue').value,
     revised:document.getElementById('faRevised').value,
     finishwork:document.getElementById('faFinishWork').value,
-    prog:document.getElementById('faProg').value,
-    budget:document.getElementById('faBudget').value,
-    cost:document.getElementById('faCost').value,
-    payment:document.getElementById('faPayment').value,
-    subtasks:document.getElementById('faSubtasks').value,
+    prog:Number(document.getElementById('faProg').value)||0,
+    budget:Number(document.getElementById('faBudget').value)||0,
+    cost:Number(document.getElementById('faCost').value)||0,
+    payment:Number(document.getElementById('faPayment').value)||0,
+    subtasks:Number(document.getElementById('faSubtasks').value)||0,
     comment:document.getElementById('faComment').value.trim(),
     desc:document.getElementById('faDesc').value.trim(),
-    task_id:document.getElementById('faTaskId').value.trim()});
-  const btn=document.getElementById('fsAddBtn'); btn.disabled=true; fsSay(T('msgSaving'));
-  try{
-    const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now());
-    const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    fsSay(T('msgSaved'),'ok');
-    toast(T('toastSaved'),'ok');
-    ['faName','faAssignee','faBst','faMatst','faStart','faDue','faRevised','faFinishWork','faProg','faBudget','faCost','faPayment','faSubtasks','faComment','faDesc','faTaskId'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-    /* v10.29: show the list at once — the new row lands via a silent
-       background refresh instead of a blocking full refetch. */
-    fsStatus='all'; setFsTab('list');
-    refreshLive(false,true);
-  }catch(e){ fsSay(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); }
-  btn.disabled=false;
+    task_id:document.getElementById('faTaskId').value.trim()};
+  const q=new URLSearchParams({token, action:'add', unit, name,
+    status:vals.status, assignee:vals.assignee, priority:vals.priority, bst:vals.bst, matst:vals.matst,
+    start:vals.start, due:vals.due, revised:vals.revised, finishwork:vals.finishwork,
+    prog:String(vals.prog), budget:String(vals.budget), cost:String(vals.cost), payment:String(vals.payment),
+    subtasks:String(vals.subtasks), comment:vals.comment, desc:vals.desc, task_id:vals.task_id});
+  /* v10.38: optimistic — the new project appears at once (local SL =
+     max SL + 1, as the server computes it), the form clears and the list
+     shows; the server write runs in the background. On failure the local
+     row is removed and the form is restored with the typed values. */
+  const nextSl=String(Math.max(0,...D.rows.map(r=>parseInt(r.sl,10)||0))+1);
+  const local={sl:nextSl,unit,name,status:vals.status,assignee:vals.assignee,priority:vals.priority,
+    bst:vals.bst,matst:vals.matst,start:vals.start,due:vals.due,revised:vals.revised,finishwork:vals.finishwork,
+    prog:vals.prog,budget:vals.budget,cost:vals.cost,disb:vals.payment,payment:vals.payment,subtasks:vals.subtasks,
+    comment:vals.comment,comment_by:'',comment_date:'',desc:vals.desc,task_id:vals.task_id,prog_note:''};
+  D.rows.push(local);
+  __trackPending(nextSl,Object.assign({},vals,{disb:vals.payment}));
+  ['faName','faAssignee','faBst','faMatst','faStart','faDue','faRevised','faFinishWork','faProg','faBudget','faCost','faPayment','faSubtasks','faComment','faDesc','faTaskId'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+  fsStatus='all'; setFsTab('list');
+  render();
+  toast(T('toastSaved'),'ok');
+  bgWrite(url,q,
+    ()=>{ __untrackPending(nextSl); refreshLive(false,true); },
+    (e)=>{ D.rows=D.rows.filter(x=>x!==local); __untrackPending(nextSl); render(); renderFsTable();
+      setFsTab('add');
+      const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+      set('faUnit',unit); set('faStatus',vals.status); set('faName',name); set('faAssignee',vals.assignee);
+      set('faPriority',vals.priority); set('faBst',vals.bst); set('faMatst',vals.matst);
+      set('faStart',vals.start); set('faDue',vals.due); set('faRevised',vals.revised); set('faFinishWork',vals.finishwork);
+      set('faProg',String(vals.prog)); set('faBudget',String(vals.budget)); set('faCost',String(vals.cost));
+      set('faPayment',String(vals.payment)); set('faSubtasks',String(vals.subtasks)); set('faComment',vals.comment);
+      set('faDesc',vals.desc); set('faTaskId',vals.task_id);
+      fsSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
 }
 document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return;
   const dm=document.getElementById('dtModal');
@@ -2233,31 +2370,35 @@ async function fsSaveEdit(sl){
   if(!url){ fsSay(T('msgNoScript'),'err'); toggleFsSettings(); return; }
   if(!token){ fsSay(T('msgToken'),'err'); toggleFsSettings(); return; }
   if(document.getElementById('fsRemember').checked) fsSet('cu-entry-token',token);
-  const q=new URLSearchParams({token, action:'update', sl:String(sl), unit:row.unit, name:row.name,
-    status:document.getElementById('fsSt').value,
+  const vals={status:document.getElementById('fsSt').value,
     start:document.getElementById('feStart').value,
     due:document.getElementById('feDue').value,
     revised:document.getElementById('feRevised').value,
-    prog:document.getElementById('fsPr').value,
-    budget:document.getElementById('fsBu').value,
-    cost:document.getElementById('fsCo').value,
-    payment:document.getElementById('fsDi').value,
-    comment:document.getElementById('fsRe').value.trim()});
-  fsSay(T('msgSaving'));
-  try{
-    const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now());
-    const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    /* v10.29: fast save — apply the sent values to the local row,
-       re-render the table at once, converge via a silent background
-       refresh (no blocking full refetch). */
-    Object.assign(row,{status:q.get('status'),start:q.get('start'),due:q.get('due'),revised:q.get('revised'),prog:Number(q.get('prog'))||0,budget:Number(q.get('budget'))||0,cost:Number(q.get('cost'))||0,disb:Number(q.get('payment'))||0,comment:q.get('comment')||''});
-    fsSay(T('msgSaved'),'ok');
-    toast(T('toastSaved'),'ok');
-    fsEditSl=null;
-    renderFsTable();
-    refreshLive(false,true);
-  }catch(e){ fsSay(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+    prog:Number(document.getElementById('fsPr').value)||0,
+    budget:Number(document.getElementById('fsBu').value)||0,
+    cost:Number(document.getElementById('fsCo').value)||0,
+    disb:Number(document.getElementById('fsDi').value)||0,
+    comment:document.getElementById('fsRe').value.trim()};
+  const q=new URLSearchParams({token, action:'update', sl:String(sl), unit:row.unit, name:row.name,
+    status:vals.status, start:vals.start, due:vals.due, revised:vals.revised,
+    prog:String(vals.prog), budget:String(vals.budget), cost:String(vals.cost), payment:String(vals.disb),
+    comment:vals.comment});
+  /* v10.38: optimistic — same pattern as dtSaveEdit: apply at once,
+     close the inline edit, background write, rollback + reopen on failure. */
+  const prev={...row};
+  Object.assign(row,vals);
+  __trackPending(String(sl),vals);
+  fsEditSl=null;
+  renderFsTable();
+  toast(T('toastSaved'),'ok');
+  bgWrite(url,q,
+    ()=>{ __untrackPending(String(sl)); refreshLive(false,true); },
+    (e)=>{ const live=rowBySl(sl)||row; Object.assign(live,prev); __untrackPending(String(sl)); fsEditSl=sl; renderFsTable();
+      const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
+      set('fsSt',vals.status); set('feStart',vals.start); set('feDue',vals.due); set('feRevised',vals.revised);
+      set('fsPr',String(vals.prog)); set('fsBu',String(vals.budget)); set('fsCo',String(vals.cost));
+      set('fsDi',String(vals.disb)); set('fsRe',vals.comment);
+      fsSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
 }
 /* ── v3: left sidebar, Board, Calendar, Group-by, Comments. ── */
 const STATUS_ORDER=['Open','In Progress','Writing','Complete'];
@@ -2384,11 +2525,16 @@ async function moveTask(sl, newStatus){
     cost:String(r.cost||0), payment:String(r.disb||0), comment:r.comment||''});
   const full=url+'?'+q.toString()+'&cb='+Date.now();
   window.__lastMoveUrl=full; window.__lastMoveStatus=newStatus;
-  try{
-    const res=await fetch(full); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    r.status=newStatus; boardSay(T('msgSaved'),'ok'); toast(T('toastStatus'),'ok'); render(); refreshLive(false,true); return true;
-  }catch(e){ boardSay(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); render(); return false; }
+  /* v10.38: optimistic — the card moves at once; the server write runs
+     in the background and the card moves back if it fails. */
+  const prevStatus=r.status;
+  r.status=newStatus;
+  __trackPending(String(r.sl),{status:newStatus});
+  boardSay(T('msgSaved'),'ok'); toast(T('toastStatus'),'ok'); render();
+  bgWrite(url,q,
+    ()=>{ __untrackPending(String(r.sl)); refreshLive(false,true); },
+    (e)=>{ const live=rowBySl(sl)||r; live.status=prevStatus; __untrackPending(String(r.sl)); boardSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); render(); });
+  return true;
 }
 window.__moveTask=moveTask;
 /* ── Calendar: tasks as chips on their deadline date; no-date list below. ── */
@@ -2444,15 +2590,19 @@ function cmBodyHtml(r){
   return h;
 }
 function cmRefresh(){ const b=document.getElementById('dtCmBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=cmBodyHtml(r); }
-async function loadComments(){
+async function loadComments(quiet){
   const r=rowBySl(dtRn); if(!r) return;
   if(!scriptUrl()){ dtCmState='idle'; cmRefresh(); return; }
-  dtCmState='loading'; cmRefresh();
+  if(!quiet){ dtCmState='loading'; cmRefresh(); }
   try{
     const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getcomments',token:curToken(),cb:Date.now()}),{redirect:'follow'});
     const j=await res.json();
-    dtCm=(j&&j.ok&&Array.isArray(j.comments)) ? j.comments.filter(c=>String(c.sl)===String(r.sl)) : [];
-  }catch(e){ dtCm=[]; }
+    const fresh=(j&&j.ok&&Array.isArray(j.comments)) ? j.comments.filter(c=>String(c.sl)===String(r.sl)) : [];
+    /* v10.38: keep optimistic local comments the server has not returned
+       yet — deduped by author + text. */
+    const pending=dtCm.filter(c=>c.local && !fresh.some(f=>String(f.comment||'').trim()===String(c.comment||'').trim() && String(f.author||'')===String(c.author||'')));
+    dtCm=fresh.concat(pending);
+  }catch(e){ dtCm=dtCm.filter(c=>c.local); }
   dtCmState='idle'; cmRefresh();
 }
 async function cmAdd(){
@@ -2464,12 +2614,18 @@ async function cmAdd(){
   if(!text) return;
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ say(T('msgNoScript'),'err'); toast(T('msgNoScript'),'err'); return; }
+  /* v10.38: optimistic — the comment appears at once; the server write
+     runs in the background and the comment is removed if it fails. */
+  const local={sl:String(r.sl),author,comment:text,date:toISODate(todayMid()),local:true};
+  dtCm.push(local);
+  const tEl=document.getElementById('cmText'); if(tEl) tEl.value='';
+  cmRefresh();
+  toast(T('toastCmPost'),'ok');
   const q=new URLSearchParams({token:tok,action:'addcomment',sl:String(r.sl),unit:r.unit,task:r.name,author,comment:text});
-  try{ const res=await fetch(url+'?'+q.toString()+'&cb='+Date.now()); const j=await res.json();
-    if(!j.ok) throw new Error(j.error||'unknown error');
-    await loadComments();
-    toast(T('toastCmPost'),'ok');
-  }catch(e){ say(Tf('msgSaveFail',{e:e.message}),'err'); toast(Tf('msgSaveFail',{e:e.message}),'err'); }
+  bgWrite(url,q,
+    ()=>{ loadComments(true); },
+    (e)=>{ dtCm=dtCm.filter(x=>x!==local); cmRefresh();
+      const mm=document.getElementById('cmMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
 buildFilters(); applyTheme(); applyLang(); whoamiRestore(); render(); refreshLive(false);
 </script>
