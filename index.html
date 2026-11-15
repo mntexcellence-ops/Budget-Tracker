@@ -391,15 +391,18 @@ th{padding:8px 10px}
 .wfadd select.efinput{flex:2;min-width:220px}
 .wfadd input[type=text]{flex:1;min-width:140px}
 .wfadd input[type=date]{max-width:170px}
-/* ── v10.31: Workflow Steps collapse — same idea as the sidebar collapse:
-   the header (title + counter + chevron) stays visible, the steps table +
-   Add Step form hide when collapsed. The collapsed class lives on the
-   wrapper OUTSIDE #dtStageWfBody, so wfRefresh() never wipes it. ── */
+/* ── v10.31/34: Workflow Steps collapse — same idea as the sidebar collapse:
+   each block's header (title + counter + chevron + Print button) stays
+   visible, its steps table hides when collapsed. The collapsed class lives
+   on the block wrapper OUTSIDE its .wf-sec-body, so wfRefresh() never
+   wipes it. ── */
 .wf-head{display:flex;align-items:flex-start;gap:8px;cursor:pointer;user-select:none}
 .wf-chev{font-size:15px;line-height:1.4;color:var(--muted);flex:0 0 auto}
 .wf-head-txt{flex:1 1 auto;min-width:0}
 .wf-count{font-size:13px;white-space:nowrap;flex:0 0 auto;padding-top:1px}
-.wf-wrap.wf-collapsed #dtStageWfBody{display:none}
+.wf-wrap.wf-collapsed .wf-sec-body{display:none}
+.wf-sec{margin-top:10px}
+.wf-head .fsbtn{flex:0 0 auto;padding:5px 10px}
 /* ── v10.27: A4 print sheet copied from the sample task-workflow sheet
    (~/workspace/ts-spaces/sample-task-workflow/index.html .sheet): white
    sheet, navy table header, kv2 dashed rows, footer note. No signature
@@ -710,7 +713,7 @@ toastSaved:'Saved!',toastSubAdd:'Subtask added',toastSubDone:'Subtask completed'
 cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the Sheet. This cannot be undone.',cfCancel:'Cancel',cfDelete:'Delete',
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 wfTitle:'Workflow Steps',wfSub:'Approval and execution steps for this project — who handled each step, when it moved, and how long it took',
-wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfEdit:'Workflow step updated',
+wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfEdit:'Workflow step updated',
 prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracking — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
@@ -1475,31 +1478,53 @@ function stageSubHtml(){
    v10.9 subtasks block: the 24-step chain is its own step in the loop,
    with the add form and edit/delete controls kept inside it, so the
    steps are shown once, in Stage History, not twice. ── */
-/* ── v10.31: Workflow Steps collapse — persisted per task in localStorage
-   (key wfCollapsed_<sl>). Default expanded; collapsing one task never
-   affects another. The collapsed class lives on the wrapper OUTSIDE
-   #dtStageWfBody, so wfRefresh() never wipes it; stageWfHtml() re-reads
-   the stored state whenever Stage History is re-rendered. ── */
-function wfIsCollapsed(sl){ try{ return localStorage.getItem('wfCollapsed_'+String(sl))==='1'; }catch(e){ return false; } }
-function wfToggleCollapse(){
+/* ── v10.34: each workflow block collapses independently — one stored
+   state per section per task (wfCollapsed_<sl>_approval / _after /
+   _custom). Default expanded; collapsing one task or one section never
+   affects another. The collapsed class lives on each block's wrapper
+   OUTSIDE its body div, so wfRefresh() never wipes it; stageWfHtml()
+   re-reads the stored state whenever Stage History is re-rendered.
+   (The v10.31 single key wfCollapsed_<sl> is no longer read.) ── */
+function wfSecSuffix(sec){ return sec==='approval'?'A':sec==='after'?'B':'C'; }
+function wfIsCollapsedSec(sl,sec){ try{ return localStorage.getItem('wfCollapsed_'+String(sl)+'_'+sec)==='1'; }catch(e){ return false; } }
+function wfToggleCollapseSec(sec){
   const r=rowBySl(dtRn); if(!r) return;
-  const c=!wfIsCollapsed(r.sl);
-  try{ localStorage.setItem('wfCollapsed_'+String(r.sl), c?'1':'0'); }catch(e){}
-  wfApplyCollapse();
+  const c=!wfIsCollapsedSec(r.sl,sec);
+  try{ localStorage.setItem('wfCollapsed_'+String(r.sl)+'_'+sec, c?'1':'0'); }catch(e){}
+  wfApplyCollapseSec(sec);
 }
-function wfApplyCollapse(){
-  const wrap=document.getElementById('dtStageWfWrap'); if(!wrap) return;
-  const r=rowBySl(dtRn); const c=r?wfIsCollapsed(r.sl):false;
+function wfApplyCollapseSec(sec){
+  const wrap=document.getElementById('dtStageWfWrap'+wfSecSuffix(sec)); if(!wrap) return;
+  const r=rowBySl(dtRn); const c=r?wfIsCollapsedSec(r.sl,sec):false;
   wrap.classList.toggle('wf-collapsed',c);
-  const ch=document.getElementById('dtWfChev'); if(ch) ch.textContent=c?'▸':'▾';
+  const ch=document.getElementById('dtWfChev'+wfSecSuffix(sec)); if(ch) ch.textContent=c?'▸':'▾';
+}
+/* v10.34: the Workflow Steps block is three separate blocks stacked
+   vertically — Approval Process, After Approval Process, Custom /
+   Earlier Steps — each with its own collapsible header and counter, and
+   the two fixed sections each with their own Print button. The Add Step
+   form is ONE shared form below all three blocks. The headings and the
+   form live OUTSIDE the per-block body divs: wfRefresh() rewrites those
+   bodies on every workflow load/add/edit/delete, and anything inside
+   them would be wiped. */
+function wfSectionBlockHtml(r,sec){
+  const key=sec===0?'approval':'after';
+  const suf=wfSecSuffix(key);
+  const c=wfIsCollapsedSec(r.sl,key);
+  return `<div class="tl-subs wf-wrap wf-sec${c?' wf-collapsed':''}" id="dtStageWfWrap${suf}"><div class="wf-head" onclick="wfToggleCollapseSec('${key}')" role="button" tabindex="0" title="Click to show / hide" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();wfToggleCollapseSec('${key}');}"><span class="wf-chev" id="dtWfChev${suf}">${c?'▸':'▾'}</span><div class="wf-head-txt"><div class="tl-subs-h">${esc(WF_SECTIONS[sec].name)}</div></div><span class="wf-count" id="dtWfCount${suf}">${wfSecCounterHtml(sec)}</span><button class="fsbtn" onclick="event.stopPropagation();wfPrint(${sec})" title="${T('wfPrint')}">${T('wfPrint')}</button></div><div class="wf-sec-body" id="dtStageWfBody${suf}">${wfTableHtml(r,sec)}</div></div>`;
+}
+function wfCustomCountHtml(){
+  const model=wfModel();
+  const customs=wfCustomCount(model), legacy=wfLegacyCount(model);
+  return `<b>${(customs?Tf('wfCustomCount',{n:fmtN(customs)}):'')+(legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:'')}</b>`;
+}
+function wfCustomBlockHtml(r){
+  const has=wfModel().some(m=>m.custom);
+  const c=wfIsCollapsedSec(r.sl,'custom');
+  return `<div class="tl-subs wf-wrap wf-sec${c?' wf-collapsed':''}" id="dtStageWfWrapC" style="${has?'':'display:none'}"><div class="wf-head" onclick="wfToggleCollapseSec('custom')" role="button" tabindex="0" title="Click to show / hide" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();wfToggleCollapseSec('custom');}"><span class="wf-chev" id="dtWfChevC">${c?'▸':'▾'}</span><div class="wf-head-txt"><div class="tl-subs-h">${T('wfCustomTitle')}</div></div><span class="wf-count" id="dtWfCountC">${wfCustomCountHtml()}</span></div><div class="wf-sec-body" id="dtStageWfBodyC">${wfTableHtml(r,'custom')}</div></div>`;
 }
 function stageWfHtml(r){
-  /* The heading/subtitle sit OUTSIDE #dtStageWfBody: wfRefresh() rewrites
-     that body's innerHTML on every workflow load/add/edit/delete, and
-     anything inside it would be wiped. The counter lives in the header
-     too, so it stays visible while the table + Add Step form are hidden. */
-  const c=wfIsCollapsed(r.sl);
-  return `<div class="tlrow"><div class="tl-subs wf-wrap${c?' wf-collapsed':''}" id="dtStageWfWrap"><div class="wf-head" onclick="wfToggleCollapse()" role="button" tabindex="0" title="Click to show / hide workflow steps" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();wfToggleCollapse();}"><span class="wf-chev" id="dtWfChev">${c?'▸':'▾'}</span><div class="wf-head-txt"><div class="tl-subs-h">${T('wfTitle')}</div><div class="tl-note" style="margin:0 0 4px">${T('wfSub')}</div></div><span class="wf-count" id="dtWfCount">${wfCounterHtml()}</span></div><div id="dtStageWfBody">${wfBodyHtml(r)}</div></div></div>`;
+  return `<div class="tlrow"><div class="tl-subs"><div class="wf-head-txt"><div class="tl-subs-h">${T('wfTitle')}</div><div class="tl-note" style="margin:0 0 4px">${T('wfSub')}</div></div>${wfSectionBlockHtml(r,0)}${wfSectionBlockHtml(r,1)}${wfCustomBlockHtml(r)}<div id="dtStageWfForm">${wfAddFormHtml(r)}</div></div></div>`;
 }
 function stageBodyHtml(r){
   if(dtStageState==='loading') return `<div style="font-size:13px;color:var(--muted)">${T('stLoading')}</div>`;
@@ -1570,7 +1595,10 @@ async function loadStageLog(){
   dtStageState='idle'; stageRefresh();
 }
 
-/* ── v10.25/27: Workflow Steps — the 24-step chain in two sections
+/* ── v10.25/27, v10.34: Workflow Steps — the 24-step chain in two
+   SEPARATE blocks ("Approval Process" 1–9, "After Approval Process"
+   10–24), each with its own print button, plus a Custom / Earlier
+   Steps block; one shared Add Step form below them.
    (v10.33: the user's revised list, 2026-11-15 — "Approval Process" 1–9,
    "After Approval Process" 10–24; the old 28-step chain's PREPARED BY,
    APPROVED BY HOD, APPROVED BY IE-HEAD, APPROVED BY COO, CHECKED BY AUDIT,
@@ -1680,39 +1708,50 @@ function wfNextIso(model, idx){
 function wfDoneCount(model){ return model.filter(m=>!m.custom && m.row && parseD(m.row.date||'')).length; }
 function wfCustomCount(model){ return model.filter(m=>m.custom && !m.legacy && m.row).length; }
 function wfLegacyCount(model){ return model.filter(m=>m.legacy && m.row).length; }
-/* v10.31: the "Workflow: n / 24" counter lives in the collapsible header
-   (outside #dtStageWfBody), so it stays visible while collapsed. */
-function wfCounterHtml(){
+/* v10.34: each block's header carries its own counter — "Approval
+   Process: n / 9" / "After Approval Process: n / 15" — so it stays
+   visible while that block is collapsed. The old combined
+   "Workflow: n / 24 + N custom + N earlier" counter is gone. */
+function wfSecCounterHtml(sec){
   const model=wfModel();
-  const done=wfDoneCount(model);
-  const customs=wfCustomCount(model);
-  const legacy=wfLegacyCount(model);
-  return `<b>${Tf('wfProg',{done,total:WF_STEPS.length})}${customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:''}${legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:''}</b>`;
+  const list=model.filter(m=>!m.custom&&((sec===0&&m.no<=WF_SECTIONS[0].steps.length)||(sec===1&&m.no>WF_SECTIONS[0].steps.length)));
+  const done=list.filter(m=>m.row&&parseD(m.row.date||'')).length;
+  return `<b>${esc(WF_SECTIONS[sec].name)}: ${fmtN(done)} / ${fmtN(list.length)}</b>`;
 }
-function wfBodyHtml(r){
+/* v10.34: one table per block. `which` is 0 (steps 1–9), 1 (steps 10–24)
+   or 'custom' (custom + earlier rows). The in-table section header rows
+   are gone — each block carries its own header above the table. Days /
+   Next Step Date are still computed against the FULL model (idx is the
+   full-model index), so step 10's days still count from step 9. */
+function wfTableHtml(r,which){
   const canE=canEditUnit(r.unit);
   const model=wfModel();
-  let h='';
-  if(dtWfState==='loading'){ h+=`<div style="font-size:13px;color:var(--muted)">${T('wfLoading')}</div>`; return h; }
-  h+=`<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfDate')}</th><th>${T('wfDays')}</th><th>${T('wfNext')}</th><th>${T('wfRef')}</th>${canE?'<th></th>':''}</tr>`+
-  model.map((m,idx)=>{
+  if(dtWfState==='loading'){ return `<div style="font-size:13px;color:var(--muted)">${T('wfLoading')}</div>`; }
+  const rows=model.filter(m=>which==='custom'?m.custom:!m.custom&&((which===0&&m.no<=WF_SECTIONS[0].steps.length)||(which===1&&m.no>WF_SECTIONS[0].steps.length)));
+  return `<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfDate')}</th><th>${T('wfDays')}</th><th>${T('wfNext')}</th><th>${T('wfRef')}</th>${canE?'<th></th>':''}</tr>`+
+  rows.map((m)=>{
+    const idx=model.indexOf(m);
     const w=m.row, dated=w&&parseD(w.date||'');
-    /* v10.33: section header row before step 1 and before the second
-       section's first step — fixed steps only, never before a custom. */
-    const sec=(!m.custom&&(m.no===1||m.no===WF_SEC2_START))?`<tr class="wfsec"><td colspan="8">${esc(m.no===1?WF_SECTIONS[0].name:WF_SECTIONS[1].name)}</td></tr>`:'';
     if(canE&&dtWfEdit===m.no){
       const nameCell=m.custom?`<input type="text" id="wfEName" class="efinput" style="min-width:140px" value="${esc(m.name)}">`:esc(m.name);
-      return sec+`<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${nameCell}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}"></td><td>—</td><td>—</td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
+      return `<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${nameCell}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}"></td><td>—</td><td>—</td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
     }
     const acts=canE&&w?`<button class="subedit" title="${T('wfEdit')}" onclick="wfEdit(${m.no})">✏️</button><button class="subdel" title="${T('wfDel')}" onclick="wfDel(${m.no})">✕</button>`:'';
-    return sec+`<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.legacy?` <span style="font-size:11px;color:var(--muted)">(${T('wfLegacy')})</span>`:m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${wfDaysText(model,idx)}</td><td>${wfNextText(model,idx)}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${canE?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
+    return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.legacy?` <span style="font-size:11px;color:var(--muted)">(${T('wfLegacy')})</span>`:m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${wfDaysText(model,idx)}</td><td>${wfNextText(model,idx)}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${canE?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
   }).join('')+`</table></div>`;
-  if(canE){
-    const pending=model.filter(m=>!m.custom && !(m.row&&parseD(m.row.date||'')));
-    if(!scriptUrl()||!curToken()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:8px">${T('wfGuestNote')}</div>`;
-    if(!pending.length){ h+=`<div style="font-size:13px;color:var(--muted);margin-top:8px">${T('wfAllDone')}</div>`; }
-    h+=`<div class="wfadd"><select id="wfStepSel" class="efinput" onchange="wfStepSelChange()">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}<option value="custom">${esc(T('wfCustom'))}</option></select><input type="text" id="wfCustomName" class="efinput" placeholder="${T('wfCustomPh')}" style="display:${pending.length?'none':''}"><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
-  }
+}
+/* v10.34: the Add Step form is ONE shared form below all three blocks
+   (it is not duplicated per section). It is re-rendered by wfRefresh()
+   so the dropdown always lists the fixed steps still pending. */
+function wfAddFormHtml(r){
+  const canE=canEditUnit(r.unit);
+  if(!canE||dtWfState==='loading') return '';
+  const model=wfModel();
+  const pending=model.filter(m=>!m.custom && !(m.row&&parseD(m.row.date||'')));
+  let h='';
+  if(!scriptUrl()||!curToken()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:8px">${T('wfGuestNote')}</div>`;
+  if(!pending.length){ h+=`<div style="font-size:13px;color:var(--muted);margin-top:8px">${T('wfAllDone')}</div>`; }
+  h+=`<div class="wfadd"><select id="wfStepSel" class="efinput" onchange="wfStepSelChange()">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}<option value="custom">${esc(T('wfCustom'))}</option></select><input type="text" id="wfCustomName" class="efinput" placeholder="${T('wfCustomPh')}" style="display:${pending.length?'none':''}"><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
   return h;
 }
 function wfStepSelChange(){
@@ -1730,10 +1769,20 @@ function wfStepSelChange(){
 function wfNextCustomNo(){
   return Math.max(WF_STEPS.length, ...wfModel().map(m=>m.no)) + 1;
 }
-function wfRefresh(){ const b=document.getElementById('dtStageWfBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=wfBodyHtml(r);
-  /* v10.31: keep the header counter in sync after add/edit/delete — the
-     counter lives outside the body, so it is not rewritten with it. */
-  const hc=document.getElementById('dtWfCount'); if(hc) hc.innerHTML=wfCounterHtml(); }
+function wfRefresh(){ const r=rowBySl(dtRn); if(!r) return;
+  /* v10.34: refresh all three block bodies, all three counters, the
+     custom block's visibility and the shared Add Step form. Counters
+     live outside the bodies, so they stay visible while a block is
+     collapsed. */
+  const set=(id,html)=>{ const el=document.getElementById(id); if(el) el.innerHTML=html; };
+  set('dtStageWfBodyA',wfTableHtml(r,0));
+  set('dtStageWfBodyB',wfTableHtml(r,1));
+  set('dtStageWfBodyC',wfTableHtml(r,'custom'));
+  set('dtWfCountA',wfSecCounterHtml(0));
+  set('dtWfCountB',wfSecCounterHtml(1));
+  const cw=document.getElementById('dtStageWfWrapC');
+  if(cw){ const has=wfModel().some(m=>m.custom); cw.style.display=has?'':'none'; if(has) set('dtWfCountC',wfCustomCountHtml()); }
+  set('dtStageWfForm',wfAddFormHtml(r)); }
 async function loadWorkflow(){
   const r=rowBySl(dtRn); if(!r) return;
   if(!scriptUrl()){ dtWfState='idle'; wfRefresh(); return; }
@@ -1876,30 +1925,48 @@ function wfExportCsv(){
    boxes. EBS Req No. = Ref of step 10 (REQUISITION RISE IN EBS), PO / WO
    No. = Ref of step 16 (PO CREATE BY PROCURMENT). Section header rows
    split the table into the same two sections as the on-screen table. ── */
-function wfPrintSheetHtml(r){
+/* v10.34: wfPrintSheetHtml(r, sec) — sec 0/1 prints ONLY that section's
+   steps (task header + that section's table; the EBS/PO ref fields and
+   the other section never appear). No sec prints the whole sheet (both
+   sections + customs), as before. */
+function wfPrintSheetHtml(r,sec){
   const model=wfModel();
-  const done=wfDoneCount(model);
-  const customs=wfCustomCount(model);
-  const legacy=wfLegacyCount(model);
-  const prog=Tf('wfProg',{done,total:WF_STEPS.length})+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'')+(legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:'');
+  const whole=(sec===undefined||sec===null);
+  const list=whole?model:model.filter(m=>!m.custom&&((sec===0&&m.no<=WF_SECTIONS[0].steps.length)||(sec===1&&m.no>WF_SECTIONS[0].steps.length)));
+  const done=whole?wfDoneCount(model):list.filter(m=>m.row&&parseD(m.row.date||'')).length;
+  const customs=whole?wfCustomCount(model):0;
+  const legacy=whole?wfLegacyCount(model):0;
+  const prog=whole?Tf('wfProg',{done,total:WF_STEPS.length})+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'')+(legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:''):`${WF_SECTIONS[sec].name}: ${fmtN(done)} / ${fmtN(list.length)}`;
   const refOf=no=>{ const m=model.find(x=>x.no===no); return (m&&m.row&&m.row.ref)?esc(m.row.ref):'—'; };
-  const fields=[[T('prTaskId'), r.task_id?esc(r.task_id):'SL '+esc(r.sl)],[T('thUnit'),esc(r.unit)],[T('prBudget'),fmtM(r.budget||0)],[T('prCost'),fmtM(r.cost||0)],[T('prEbs'),refOf(10)],[T('prPo'),refOf(16)],[T('fStart'),fmtD(r.start)],[T('thStatus'),esc(r.status)+' · '+esc(prog)]];
+  const fields=[[T('prTaskId'), r.task_id?esc(r.task_id):'SL '+esc(r.sl)],[T('thUnit'),esc(r.unit)],[T('prBudget'),fmtM(r.budget||0)],[T('prCost'),fmtM(r.cost||0)]];
+  if(whole) fields.push([T('prEbs'),refOf(10)],[T('prPo'),refOf(16)]);
+  fields.push([T('fStart'),fmtD(r.start)],[T('thStatus'),esc(r.status)+' · '+esc(prog)]);
   let firstPending=-1;
-  model.forEach((m,idx)=>{ if(firstPending<0 && !(m.row&&parseD(m.row.date||''))) firstPending=idx; });
+  list.forEach((m,idx)=>{ if(firstPending<0 && !(m.row&&parseD(m.row.date||''))) firstPending=idx; });
+  const rowsHtml=list.map((m,idx)=>{ const w=m.row, dated=w&&parseD(w.date||'');
+    const st=dated?T('prDone'):(idx===firstPending?T('prInProg'):T('wfPending'));
+    /* Days still count against the FULL model, so a section print keeps
+       the same day counts as the whole print. */
+    const fullIdx=model.indexOf(m);
+    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,fullIdx))}</td><td>${esc(st)}</td></tr>`; }).join('');
+  const secRow=whole
+    ? ''
+    : `<tr class="prsec"><td colspan="6">${esc(WF_SECTIONS[sec].name)}</td></tr>`;
+  const wholeRows=model.map((m,idx)=>{ const w=m.row, dated=w&&parseD(w.date||'');
+    const st=dated?T('prDone'):(idx===firstPending?T('prInProg'):T('wfPending'));
+    const sec2=(!m.custom&&(m.no===1||m.no===WF_SEC2_START))?`<tr class="prsec"><td colspan="6">${esc(m.no===1?WF_SECTIONS[0].name:WF_SECTIONS[1].name)}</td></tr>`:'';
+    return sec2+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,idx))}</td><td>${esc(st)}</td></tr>`; }).join('');
   return `<div class="co">Dekko Group · Task &amp; Budget Approval Sheet</div><h2>${esc(r.name)}</h2>`+
   `<div class="kv2">${fields.map(f=>`<div><span>${esc(f[0])}</span><b>${f[1]}</b></div>`).join('')}</div>`+
   `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>Date</th><th>Days</th><th>${esc(T('thStatus'))}</th></tr>`+
-  model.map((m,idx)=>{ const w=m.row, dated=w&&parseD(w.date||'');
-    const st=dated?T('prDone'):(idx===firstPending?T('prInProg'):T('wfPending'));
-    const sec=(!m.custom&&(m.no===1||m.no===WF_SEC2_START))?`<tr class="prsec"><td colspan="6">${esc(m.no===1?WF_SECTIONS[0].name:WF_SECTIONS[1].name)}</td></tr>`:'';
-    return sec+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,idx))}</td><td>${esc(st)}</td></tr>`; }).join('')+`</table>`+
+  (whole?wholeRows:secRow+rowsHtml)+`</table>`+
   `<p class="pr-foot">${esc(Tf('prFooter',{d:fmtD(toISODate(todayMid()))}))}</p>`;
 }
-function wfPrint(){
+function wfPrint(sec){
   const r=rowBySl(dtRn); if(!r) return;
   let sh=document.getElementById('printSheet');
   if(!sh){ sh=document.createElement('div'); sh.id='printSheet'; document.body.appendChild(sh); }
-  sh.innerHTML=wfPrintSheetHtml(r);
+  sh.innerHTML=wfPrintSheetHtml(r,sec);
   window.print();
 }
 
