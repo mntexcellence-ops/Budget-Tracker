@@ -577,6 +577,8 @@ th{padding:8px 10px}
       <div><label data-t="fStatus"></label><select id="faStatus" class="efinput"><option>In Progress</option><option>Complete</option><option>Writing</option><option>Open</option></select></div>
       <div><label data-t="fAssignee"></label><input id="faAssignee" class="efinput"></div>
       <div><label data-t="fPriority"></label><select id="faPriority" class="efinput"><option value=""></option><option>Urgent</option><option>Normal</option></select></div>
+      <div><label data-t="fBst"></label><input id="faBst" class="efinput"></div>
+      <div><label data-t="fMatst"></label><input id="faMatst" class="efinput"></div>
       <div><label data-t="fStart"></label><input type="date" id="faStart" class="efinput"></div>
       <div><label data-t="fDue"></label><input type="date" id="faDue" class="efinput"></div>
       <div><label data-t="fRevised"></label><input type="date" id="faRevised" class="efinput"></div>
@@ -601,7 +603,7 @@ const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1LVyKMJRTGdK0Kc3hT
    the /exec URL is embedded here by rebuilding). When set, Setup asks only
    for the 6-digit token — the URL field comes prefilled and read-only. ── */
 const EMBEDDED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2lMcNSwjxVajtJZBcocD6eM9d8P09GDdLs3-AsEgzTTN2MIW216a-xBua73GJDDs/exec';
-let D = {"rows": [{"sl": 1, "unit": "DGL-1", "name": "Levis Structural issue", "status": "In Progress", "assignee": "", "priority": "", "start": "2022-10-21", "due": "", "revised": "2026-11-13", "finishwork": "", "prog": 100, "budget": 0, "cost": 0, "disb": 13300000, "subtasks": 0, "comment": "Work Done", "comment_by": "", "comment_date": "", "desc": "To proceed URM wall with retrofit, total 6 building", "task_id": "", "prog_note": ""}], "units": ["DGL-1", "DGL-2", "DRL", "DFL", "GGL", "AWL", "AFL"], "statuses": ["In Progress", "Complete", "Writing", "Open"], "assignees": [], "updated": "2026-11-12"};
+let D = {"rows": [{"sl": 1, "unit": "DGL-1", "name": "Levis Structural issue", "status": "In Progress", "assignee": "", "priority": "", "bst": "", "matst": "", "start": "2022-10-21", "due": "", "revised": "2026-11-13", "finishwork": "", "prog": 100, "budget": 0, "cost": 0, "disb": 13300000, "subtasks": 0, "comment": "Work Done", "comment_by": "", "comment_date": "", "desc": "To proceed URM wall with retrofit, total 6 building", "task_id": "", "prog_note": ""}], "units": ["DGL-1", "DGL-2", "DRL", "DFL", "GGL", "AWL", "AFL"], "statuses": ["In Progress", "Complete", "Writing", "Open"], "assignees": [], "updated": "2026-11-12"};
 const UNITS_ALL = ['DGL-1','DGL-2','DRL','DFL','GGL','AWL','AFL'];
 /* ── v10: canonical units — the same rules as the script (7 separate
    units: AWL and AFL are separate, DAL/DFL is now DFL; a legacy
@@ -655,7 +657,7 @@ badgeOverdue:'⚠ {d}d overdue',badgeDueToday:'⏳ Due today',badgeDueIn:'⏳ Du
 dtFields:'Fields',dtProgress:'Progress',dtComment:'Latest Comment',dtDesc:'Description',dtEdit:'✏️ Edit',dtClose:'✖ Close',
 fPriority:'Priority',fStart:'Start Date',fDue:'Due Date',fRevised:'Revised Finish Date',fFinishWork:'Finish Work',
 fProgress:'Progress (%)',fBudget:'Tentative Budget (BDT)',fCost:'Tentative Cost (BDT)',fPayment:'Payment (BDT)',
-fSubtasks:'Subtasks',fComment:'Latest Comment',fDesc:'Description',fTaskId:'Task ID',fUnit:'Unit *',fTask:'Project Name *',fStatus:'Status',fAssignee:'Assignee',
+fSubtasks:'Subtasks',fComment:'Latest Comment',fDesc:'Description',fTaskId:'Task ID',fUnit:'Unit *',fTask:'Project Name *',fStatus:'Status',fAssignee:'Assignee',fBst:'Budget Status',fMatst:'Materials Status',
 fTaskPh:'e.g. Fire Door Replacement Work',
 dtNote:'Note: The list shows {p}% here, but the manual Progress slider is 0.',
 dtNoComment:'—',dtNoDesc:'—',
@@ -1074,10 +1076,12 @@ function render(){
   /* v10.15 (2026-11-14): List columns per Rakib — Unit, Task, Status,
      Priority, Tentative Cost, Start Date, Finish Date (= Revised Finish, or
      Due if none), Progress, Payment, Latest Comment. No SL, no Deadline /
-     Days, no Tentative Budget, no Edit column (edit via row-click popup). */
-  const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th></tr>`;
+     Days, no Tentative Budget, no Edit column (edit via row-click popup).
+     v10.32 (2026-11-15): Budget Status + Materials Status added after
+     Tentative Cost, per his request — free text from the Sheet columns. */
+  const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th></tr>`;
   const listRow=r=>{
-    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td></tr>`; };
+    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td></tr>`; };
   /* v3: Group by Unit (v2 sections) or Status (status sections). */
   let sections='';
   if(groupBy==='status'){
@@ -1156,6 +1160,7 @@ function rowsFromCSV(raw){
     out.push({ sl: col(r, ['SL']), unit: canonUnit(col(r, ['Unit'])), name, status: col(r, ['Status']) || 'Open',
       assignee: col(r, ['Assignee']), priority: col(r, ['Priority']),
       bst: col(r, ['Budget Status']),
+      matst: col(r, ['Materials Status']),
       start: col(r, ['Start Date']), due: col(r, ['Due Date']),
       revised: col(r, ['Revised Finish Date', 'Finish Date']), finishwork: col(r, ['Finish Work']),
       prog: pPct(col(r, ['Progress'])), budget: pNum(col(r, ['Tentative Budget (BDT)'])),
@@ -1177,7 +1182,7 @@ function showSkeleton(){
 /* ── v10: the script's getdata rows are already in dashboard shape
    (start/due/revised/finishwork are ISO dates); map them onto D.rows,
    canonicalizing the unit labels the same way the script does. ── */
-function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:r.status||'Open', assignee:r.assignee||'', priority:r.priority||'', bst: r.bst || '', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
+function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:r.status||'Open', assignee:r.assignee||'', priority:r.priority||'', bst: r.bst || '', matst: r.matst || '', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
 /* ── v10: re-run whoami at boot when a token is saved, so the profile chip
    and the per-unit edit lock come back without re-entering the token. ── */
 function whoamiRestore(){ const u=scriptUrl(), t=curToken(); if(!u||!t) return;
@@ -1217,11 +1222,18 @@ async function refreshLive(manual, silent){
         ]);
         /* v10.19: same overlay for Budget Status — the script (pre-v4.11)
            does not return the new "Budget Status" column, so take it from
-           the CSV too, matched by SL + unit, only for script rows. */
+           the CSV too, matched by SL + unit, only for script rows.
+           v10.32: REMOVED for bst/matst — script v4.14 returns both, and
+           the public CSV can lag ~1 min behind a fresh save, so overlaying
+           it clobbered just-saved values with stale ones (probe A12: an
+           edit to APPROVED BY GCEO/CHAIRMEN SIR + ORDERED reverted to the
+           old CSV values after the silent background refresh). The script
+           is the live source for both fields now; the CSV fallback path
+           (no login) still maps them via rowsFromCSV. Progress overlay
+           stays — it repairs the pre-v4.8 "100%"-stored-as-1 corruption. */
         const byKey=new Map(rowsFromCSV(parseCSV(csvTxt)).map(r=>[String(r.sl)+'|'+r.unit, r]));
         D.rows.forEach(r=>{ const c=byKey.get(String(r.sl)+'|'+r.unit); if(!c) return;
-          if(typeof c.prog==='number'&&!isNaN(c.prog)) r.prog=c.prog;
-          if(c.bst!==undefined) r.bst=c.bst||''; });
+          if(typeof c.prog==='number'&&!isNaN(c.prog)) r.prog=c.prog; });
       }catch(e){ /* keep script progress */ }
       D.units=UNITS_ALL;
       D.statuses=[...new Set(D.rows.map(r=>r.status).filter(Boolean))].sort();
@@ -1294,7 +1306,7 @@ function renderDetail(){
 }
 function dtViewHtml(r){
   const dl=odDeadline(r);
-  const fields=[[T('thStatus'),statusChip(r.status)],[T('thUnit'),'<b>'+esc(r.unit)+'</b>'],[T('fPriority'),esc(r.priority)||'—'],[T('fStart'),fmtD(r.start)],[T('fDue'),fmtD(r.due)],[T('fRevised'),fmtD(r.revised)],[T('fFinishWork'),fmtD(r.finishwork)],[T('thDeadline'),dl?fmtD(r.revised||r.due):'—'],[T('fBudget'),fmtM(r.budget||0)],[T('fCost'),fmtM(r.cost||0)],[T('fPayment'),fmtM(r.disb||0)],[T('fTaskId'),esc(r.task_id)||'—']];
+  const fields=[[T('thStatus'),statusChip(r.status)],[T('thUnit'),'<b>'+esc(r.unit)+'</b>'],[T('fPriority'),esc(r.priority)||'—'],[T('fStart'),fmtD(r.start)],[T('fDue'),fmtD(r.due)],[T('fRevised'),fmtD(r.revised)],[T('fFinishWork'),fmtD(r.finishwork)],[T('thDeadline'),dl?fmtD(r.revised||r.due):'—'],[T('fBudget'),fmtM(r.budget||0)],[T('fCost'),fmtM(r.cost||0)],[T('fBst'),esc(r.bst)||'—'],[T('fMatst'),esc(r.matst)||'—'],[T('fPayment'),fmtM(r.disb||0)],[T('fTaskId'),esc(r.task_id)||'—']];
   return `<div class="dtsec"><h4>${T('dtFields')}</h4><div class="dtgrid">${fields.map(f=>`<div><b>${f[0]}</b>${f[1]}</div>`).join('')}</div></div>`+
   `<div class="dtsec"><h4>${T('dtTime')}</h4>${timeSection(r)}</div>`+
   `<div class="dtsec" id="dtStageSec"><h4>${T('dtStage')}</h4><div class="tl-note" style="margin:0 0 4px">${T('stStageSub')}</div><div id="dtStageBody">${stageBodyHtml(r)}</div></div>`+
@@ -1810,7 +1822,7 @@ function wfCsvText(r){
   const L=[];
   L.push(['Task',r.name].map(wfCsvCell).join(','));
   L.push(['Unit',r.unit,'SL',r.sl,'Status',r.status].map(wfCsvCell).join(','));
-  L.push(['Tentative Budget (BDT)',r.budget||0,'Tentative Cost (BDT)',r.cost||0,'Payment (BDT)',r.disb||0,'Progress', (r.prog||0)+'%'].map(wfCsvCell).join(','));
+  L.push(['Tentative Budget (BDT)',r.budget||0,'Tentative Cost (BDT)',r.cost||0,'Payment (BDT)',r.disb||0,'Progress', (r.prog||0)+'%','Budget Status',r.bst||'','Materials Status',r.matst||''].map(wfCsvCell).join(','));
   L.push(['Workflow', wfDoneCount(model)+' / '+WF_STEPS.length+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'')+(legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:'')].map(wfCsvCell).join(','));
   L.push('');
   L.push(['Step No','Step','Who','Date','Days Taken','Next Step Date','Ref / Remark'].map(wfCsvCell).join(','));
@@ -1871,6 +1883,8 @@ function dtEditForm(r){
     <div><label>${T('fStatus')}</label><select id="deStatus" class="efinput">${STATUSES_ALL.map(s=>`<option ${s.toLowerCase()===(r.status||'').toLowerCase()?'selected':''}>${s}</option>`).join('')}</select></div>
     <div><label>${T('fAssignee')}</label><input id="deAssignee" class="efinput" value="${esc(r.assignee)}"></div>
     <div><label>${T('fPriority')}</label><select id="dePriority" class="efinput"><option value=""></option><option ${r.priority==='Urgent'?'selected':''}>Urgent</option><option ${r.priority==='Normal'?'selected':''}>Normal</option></select></div>
+    <div><label>${T('fBst')}</label><input id="deBst" class="efinput" value="${esc(r.bst)}"></div>
+    <div><label>${T('fMatst')}</label><input id="deMatst" class="efinput" value="${esc(r.matst)}"></div>
     <div><label>${T('fStart')}</label><input type="date" id="deStart" class="efinput" value="${toISODate(r.start)}"></div>
     <div><label>${T('fDue')}</label><input type="date" id="deDue" class="efinput" value="${toISODate(r.due)}"></div>
     <div><label>${T('fRevised')}</label><input type="date" id="deRevised" class="efinput" value="${toISODate(r.revised)}"></div>
@@ -1901,6 +1915,8 @@ async function dtSaveEdit(){
     status:document.getElementById('deStatus').value,
     assignee:document.getElementById('deAssignee').value.trim(),
     priority:document.getElementById('dePriority').value,
+    bst:document.getElementById('deBst').value.trim(),
+    matst:document.getElementById('deMatst').value.trim(),
     start:document.getElementById('deStart').value,
     due:document.getElementById('deDue').value,
     revised:document.getElementById('deRevised').value,
@@ -1920,7 +1936,7 @@ async function dtSaveEdit(){
     /* v10.29: fast save — apply the sent values to the local row and
        re-render at once (no blocking full refetch); server values
        converge via a silent background refresh below. */
-    Object.assign(r,{status:q.get('status'),assignee:q.get('assignee'),priority:q.get('priority'),start:q.get('start'),due:q.get('due'),revised:q.get('revised'),finishwork:q.get('finishwork'),prog:Number(q.get('prog'))||0,budget:Number(q.get('budget'))||0,cost:Number(q.get('cost'))||0,disb:Number(q.get('payment'))||0,subtasks:Number(q.get('subtasks'))||0,comment:q.get('comment')||'',desc:q.get('desc')||'',task_id:q.get('task_id')||''});
+    Object.assign(r,{status:q.get('status'),assignee:q.get('assignee'),priority:q.get('priority'),bst:q.get('bst')||'',matst:q.get('matst')||'',start:q.get('start'),due:q.get('due'),revised:q.get('revised'),finishwork:q.get('finishwork'),prog:Number(q.get('prog'))||0,budget:Number(q.get('budget'))||0,cost:Number(q.get('cost'))||0,disb:Number(q.get('payment'))||0,subtasks:Number(q.get('subtasks'))||0,comment:q.get('comment')||'',desc:q.get('desc')||'',task_id:q.get('task_id')||''});
     say(T('msgSaved'),'ok');
     toast(T('toastSaved'),'ok');
     dtEdit=false;
@@ -1997,6 +2013,8 @@ async function fsAddSave(){
     status:document.getElementById('faStatus').value,
     assignee:document.getElementById('faAssignee').value.trim(),
     priority:document.getElementById('faPriority').value,
+    bst:document.getElementById('faBst').value.trim(),
+    matst:document.getElementById('faMatst').value.trim(),
     start:document.getElementById('faStart').value,
     due:document.getElementById('faDue').value,
     revised:document.getElementById('faRevised').value,
@@ -2016,7 +2034,7 @@ async function fsAddSave(){
     if(!j.ok) throw new Error(j.error||'unknown error');
     fsSay(T('msgSaved'),'ok');
     toast(T('toastSaved'),'ok');
-    ['faName','faAssignee','faStart','faDue','faRevised','faFinishWork','faProg','faBudget','faCost','faPayment','faSubtasks','faComment','faDesc','faTaskId'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
+    ['faName','faAssignee','faBst','faMatst','faStart','faDue','faRevised','faFinishWork','faProg','faBudget','faCost','faPayment','faSubtasks','faComment','faDesc','faTaskId'].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
     /* v10.29: show the list at once — the new row lands via a silent
        background refresh instead of a blocking full refetch. */
     fsStatus='all'; setFsTab('list');
