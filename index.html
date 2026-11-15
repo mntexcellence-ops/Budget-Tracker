@@ -500,6 +500,9 @@ th{padding:8px 10px}
           <div class="fb-item" style="min-width:0"><label>&nbsp;</label>
             <label class="fb-check"><input type="checkbox" id="fOverdue" onchange="setOverdue(this.checked)"> <span data-t="overdueOnly"></span></label>
           </div>
+          <div class="fb-item" style="min-width:0"><label>&nbsp;</label>
+            <label class="fb-check"><input type="checkbox" id="f100" onchange="set100(this.checked)"> <span data-t="pct100Only"></span></label>
+          </div>
           <div class="fb-item" style="flex:1 1 200px;min-width:160px"><label data-t="searchH"></label>
             <input type="text" id="qSearch" class="dinput" data-t-ph="searchPh" oninput="syncSearch(this.value,'q')">
           </div>
@@ -640,7 +643,7 @@ const PAL = ['#7b68ee','#5b8def','#4caf50','#f59e0b','#b07fe8','#9aa0a6','#e5484
    [data-th] HTML and [data-t-ph] placeholders; render() uses T()/Tf(). ── */
 const STR = {en:{
 brandTitle:'Budget <span>Tracking</span>',brandSub:'Dekko ISHO Group · All Units — DGL-1 · DGL-2 · DRL · DFL · GGL · AWL · AFL',
-refreshBtn:'⟳ Refresh Data',filters:'⚙ Filters',unitH:'Unit',statusH:'Status',overdueH:'⚠ Overdue',overdueOnly:'Overdue only',
+refreshBtn:'⟳ Refresh Data',filters:'⚙ Filters',unitH:'Unit',statusH:'Status',overdueH:'⚠ Overdue',overdueOnly:'Overdue only',pct100Only:'100% only',
 searchH:'Search Project',searchPh:'Type project name…',resetAll:'Reset all filters',tools:'Tools',addBtn:'➕ Add New Project',
 dark:'🌙 Dark',light:'☀️ Light',selectAll:'Select all',clear:'Clear',
 allUnits:'All units ▾',noUnits:'No units selected ▾',nUnits:'{n} units selected ▾',
@@ -722,7 +725,7 @@ toastSaved:'Saved!',toastSubAdd:'Subtask added',toastSubDone:'Subtask completed'
 cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the Sheet. This cannot be undone.',cfCancel:'Cancel',cfDelete:'Delete',
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 wfTitle:'Workflow Steps',wfSub:'Approval and execution steps for this project — who handled each step, when it moved, and how long it took',
-wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 21 workflow steps are done — a custom step can still be added below.',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfEdit:'Workflow step updated',
+wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfEdit:'Workflow step updated',
 prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracking — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
@@ -755,6 +758,11 @@ let selU = new Set(UNITS_ALL), selS = new Set(STATUSES_ALL);
    fixed list. '' means the row has no budget status yet. */
 let BST_ALL = [], selB = new Set(), BST_KNOWN = new Set();
 let selOverdue = false;
+/* v10.40: "100%" filter — when ON, only tasks with Progress = 100% are
+   shown (same shared filtered dataset as the other filters). Progress
+   100% and Status Complete are related but not the same thing — this
+   filter is by Progress value only, and it is NOT a fifth status. */
+let sel100 = false;
 let selRows = new Set();
 /* v9: the top-bar search and the filter-bar search are one search — typing
    in either updates both and re-renders. */
@@ -765,6 +773,7 @@ function syncSearch(v, src){
   render();
 }
 function setOverdue(v){ selOverdue=v; render(); }
+function set100(v){ sel100=v; render(); }
 const fmtN = v => Math.round(v||0).toLocaleString('en-US');
 const fmtM = v => 'BDT ' + fmtN(v);
 const DMON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -877,6 +886,8 @@ function resetAll(){ UNITS_ALL.forEach(u=>selU.add(u)); STATUSES_ALL.forEach(s=>
   selB.clear(); BST_ALL.forEach(v=>selB.add(v));
   selOverdue=false;
   const fo=document.getElementById('fOverdue'); if(fo) fo.checked=false;
+  sel100=false;
+  const f100=document.getElementById('f100'); if(f100) f100.checked=false;
   const q=document.getElementById('qSearch'); if(q) q.value='';
   const qt=document.getElementById('qTop'); if(qt) qt.value='';
   buildFilters(); render(); }
@@ -914,6 +925,7 @@ function agg(){
   const q=(document.getElementById('qSearch')||{}).value.trim().toLowerCase();
   const rows = D.rows.filter(r => selU.has(r.unit) && selS.has(r.status) && selB.has(r.bst||'')
     && (!selOverdue || isOverdue(r))
+    && (!sel100 || (Number(r.prog)||0)===100)
     && (!q || r.name.toLowerCase().includes(q) || (r.unit||'').toLowerCase().includes(q)));
   let tb=0, tc=0, tp=0, tpay=0, tod=0;
   const byUnit={}, byStatus={}, byStatusN={}, byUnitPay={};
@@ -1181,6 +1193,8 @@ function kpiClick(kind){
   if(kind==='all'){ resetAll(); switchView('list'); return; }
   selS.clear(); selS.add(kind); selOverdue=false;
   const fo=document.getElementById('fOverdue'); if(fo) fo.checked=false;
+  sel100=false;
+  const f100=document.getElementById('f100'); if(f100) f100.checked=false;
   buildFilters(); render(); switchView('list'); }
 /* ── Live Sheet fetch (public export CSV) with embedded snapshot fallback.
    The Sheet has the 17-column header (row 1); the Assignee column is
@@ -1690,34 +1704,38 @@ async function loadStageLog(quiet){
 }
 
 /* ── v10.25/27, v10.34: Workflow Steps — the 21-step chain in two
-   SEPARATE blocks ("Approval Process" 1–9, "After Approval Process"
-   10–21), each with its own print button, plus a Custom / Earlier
+   SEPARATE blocks ("Approval Process" 1–12, "After Approval Process"
+   13–24), each with its own print button, plus a Custom / Earlier
    Steps block; one shared Add Step form below them.
    (v10.33: the user's revised list, 2026-11-15 — "Approval Process" 1–9,
    "After Approval Process" 10–24; v10.35, 2026-11-15: the three PO-approval
    steps 19–21 (CEO SIR / GCEO SIR / CHAIRMAN SIR) were removed at the
    user's request, so the chain is now 21 steps ending PO SEND TO SUPPLIER
-   → MATERIALS RECEIVED → WORK START. The old 28-step chain's PREPARED BY,
+   → MATERIALS RECEIVED → WORK START. v10.40, 2026-11-15: section A is
+   12 steps again (new step 5 CHECKED & APPROVED BY (H/O OPERATION ),
+   old step 9 split into APPROVEED BY GCEO + APPROVEED BY CHAIRMEN SIR,
+   SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL) back as step 12)
+   and section B renumbers 13–24, so the chain is now 24 steps. The old 28-step chain's PREPARED BY,
    APPROVED BY HOD, APPROVED BY IE-HEAD, APPROVED BY COO, CHECKED BY AUDIT,
    SEND TO H/O (ORIGINAL COPY) and RECEIVED H/O (OPERATION DEPARTMENT) are
    gone from the chain, and SEND TO FACTORY now carries "(APPROVED SCAN
    COPY …)" instead of "(SCAN COPY …)"), stored in the WORKFLOW_LOG tab
    via script v4.12 (getworkflow / addworkflow / deleteworkflow /
    editworkflow). Spellings are the user's own — PROCURMENT, APPROVEED
-   and THROW kept verbatim. With no workflow rows yet, all 21 steps show
-   as pending with empty dates. Workflow progress (done / 21) is separate
+   and THROW kept verbatim. With no workflow rows yet, all 24 steps show
+   as pending with empty dates. Workflow progress (done / 24) is separate
    from the task's Progress field and never overwrites it. Days taken is
    computed from the previous dated step (same day = "Same day"); the
    server also stores it and updates the previous row's Next Step Date
    when a step is added. Guest mode (no script/token) keeps adds/edits/
    deletes as a local preview only. ── */
-const WF_SECTIONS=[{name:'Approval Process',steps:['APPROVEED BY CEO (PROJECT/BUDGET/CS)','CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)','BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY (H/O PROCURMENT)','APPROVEED BY GHOM (RECOMANDATION)','APPROVEED BY SR.GM-OPERATON','CHECKED & CONFIRMED BY (H/O AUDIT)','APPROVEED BY CEO (RECOMANDATION)','APPROVEED BY GCEO/CHAIRMEN SIR']},{name:'After Approval Process',steps:['REQUISITION RISE IN EBS','REQUISITION APPROVEED BY HOD','REQUISITION APPROVEED BY IA (INTERNAL AUDIT)','REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)','CS MAKE AND CHECKED & APPROVED BY PROCURMENT','CS CHECKED & APPROVED BY H/O AUDIT','PO CREATE BY PROCURMENT','PO APPROVED BY FINANCE','PO CHECKED & APPROVED BY PROCURMENT HEAD','PO SEND TO SUPPLIER','MATERIALS RECEIVED','WORK START']}];
+const WF_SECTIONS=[{name:'Approval Process',steps:['APPROVEED BY CEO (PROJECT/BUDGET/CS)','CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)','BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY (H/O PROCURMENT)','CHECKED & APPROVED BY (H/O OPERATION )','APPROVEED BY GHOM (RECOMANDATION)','APPROVEED BY SR.GM-OPERATON','CHECKED & CONFIRMED BY (H/O AUDIT)','APPROVEED BY CEO (RECOMANDATION)','APPROVEED BY GCEO','APPROVEED BY CHAIRMEN SIR','SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)']},{name:'After Approval Process',steps:['REQUISITION RISE IN EBS','REQUISITION APPROVEED BY HOD','REQUISITION APPROVEED BY IA (INTERNAL AUDIT)','REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)','CS MAKE AND CHECKED & APPROVED BY PROCURMENT','CS CHECKED & APPROVED BY H/O AUDIT','PO CREATE BY PROCURMENT','PO APPROVED BY FINANCE','PO CHECKED & APPROVED BY PROCURMENT HEAD','PO SEND TO SUPPLIER','MATERIALS RECEIVED','WORK START']}];
 const WF_STEPS=WF_SECTIONS.flatMap(s=>s.steps);
 /* First step number of the second section (1-based) — section header rows
    in the table and the print sheet are drawn before this step and step 1. */
 const WF_SEC2_START=WF_SECTIONS[0].steps.length+1;
 /* Names that were fixed steps in the 26- or 28-step chain but are not in
-   the 21-step chain (v10.33/v10.35/v10.37). Compared case-insensitively in
+   the 24-step chain (v10.33/v10.35/v10.37/v10.40). Compared case-insensitively in
    wfModel(). v10.35 adds the three PO-approval steps the user removed —
    a stored row under one of those names is an earlier step by NAME, not
    by stepno range, because its stored stepno (19–21) now overlaps the
@@ -1725,11 +1743,20 @@ const WF_SEC2_START=WF_SECTIONS[0].steps.length+1;
    user's revised Approval Process replaced — a stored row under one of
    those names is an earlier step by NAME: the APPROVED/APPROVEED
    normalisation must NOT merge them into the new steps ("APPROVED BY
-   GHOM" is not new step 5 "APPROVEED BY GHOM (RECOMANDATION)", and
-   "APPROVED BY CEO" is not new step 8 "APPROVEED BY CEO
+   GHOM" is not new step 6 "APPROVEED BY GHOM (RECOMANDATION)", and
+   "APPROVED BY CEO" is not new step 9 "APPROVEED BY CEO
    (RECOMANDATION)"); only "APPROVED BY GCEO/CHAIRMEN SIR" still matches
-   a fixed step (new step 9). */
-const WF_RETIRED=['PREPARED BY','APPROVED BY HOD','APPROVED BY IE-HEAD','APPROVED BY COO','CHECKED BY AUDIT','SEND TO H/O (ORIGINAL COPY)','RECEIVED H/O (OPERATION DEPARTMENT)','SEND TO FACTORY (SCAN COPY THROW THE MAIL)','PO APPROVED BY GCEO','WORK COMPLETE','SEND TO H/O','SEND TO FACTORY','PO APPROVED BY CEO SIR','PO APPROVED BY GCEO SIR','PO APPROVED BY CHAIRMAN SIR','CHECKED BY AUDIT (PROJECT/BUDGET/CS)','CHECKED & APPROVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY PROCURMENT','CHECKED & CONFIRMED BY H/O AUDIT','APPROVEED BY GHOM','APPROVEED BY CEO'];
+   a fixed step (new step 9). v10.40 adds the old combined name
+   "APPROVEED BY GCEO/CHAIRMEN SIR" — the user split it into new steps 10
+   "APPROVEED BY GCEO" and 11 "APPROVEED BY CHAIRMEN SIR", so a stored row
+   under the combined name is an earlier step by NAME (it matches neither
+   new step: "GCEO/CHAIRMEN SIR" is not "GCEO" and not "CHAIRMEN SIR").
+   NOTE: "SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)" was never
+   in this list — only the older "SEND TO FACTORY (SCAN COPY THROW THE
+   MAIL)" (no APPROVED) is, so stored rows under the older name stay
+   "(Earlier step)" while rows under the APPROVED name map to live step
+   12 by name. */
+const WF_RETIRED=['PREPARED BY','APPROVED BY HOD','APPROVED BY IE-HEAD','APPROVED BY COO','CHECKED BY AUDIT','SEND TO H/O (ORIGINAL COPY)','RECEIVED H/O (OPERATION DEPARTMENT)','SEND TO FACTORY (SCAN COPY THROW THE MAIL)','PO APPROVED BY GCEO','WORK COMPLETE','SEND TO H/O','SEND TO FACTORY','PO APPROVED BY CEO SIR','PO APPROVED BY GCEO SIR','PO APPROVED BY CHAIRMAN SIR','CHECKED BY AUDIT (PROJECT/BUDGET/CS)','CHECKED & APPROVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY PROCURMENT','CHECKED & CONFIRMED BY H/O AUDIT','APPROVEED BY GHOM','APPROVEED BY CEO','APPROVEED BY GCEO/CHAIRMEN SIR'];
 /* v10.33: name matching ignores the user's APPROVED / APPROVEED spelling
    wobble — the old chain wrote "APPROVED BY GHOM / CEO / GCEO-CHAIRMEN",
    the new chain writes them "APPROVEED …", and an old stored row must
@@ -1750,7 +1777,7 @@ function wfRows(){ return dtWf.concat(dtWfLocal); }
    stepno (a row with no usable stepno gets the next free number).
    v10.30: NAME-FIRST matching is now load-bearing, not a fallback — the
    fixed chain was revised from 28 to 24 steps, then to 21 steps (v10.35),
-   so an old stepno alone can point at a different step (old stepno 24 was
+   then to 24 steps (v10.40), so an old stepno alone can point at a different step (old stepno 24 was
    "PO APPROVED BY GCEO SIR" in the 28-step chain and "WORK START" in the
    24-step chain). A row is NEVER relabelled to the step its old stepno
    now points at: if its recorded name matches a fixed step it lands on
@@ -1769,7 +1796,7 @@ function wfRows(){ return dtWf.concat(dtWfLocal); }
    / "(H/O PROCURMENT)" / "INTERNAL AUDIT" suffixes, so the old names
    match nothing) it is shown after the fixed chain as a legacy row,
    under its RECORDED name, tagged "Earlier step".
-   Legacy rows get a model number from the free pool (>= 22) instead of
+   Legacy rows get a model number from the free pool (>= 25) instead of
    their stored stepno, so they can never collide with a fixed step's
    number in edit/delete lookups (model.find by no returns the fixed
    entry first). Their stored stepno is untouched on the row object and
@@ -1784,7 +1811,7 @@ function wfModel(){
     if(i>=0){ byNo[i+1]=w; return; }
     if(!nm) return;
     // Legacy = recorded under a step number the fixed chain now owns
-    // (1–21): it was written when that number meant a different step —
+    // (1–24): it was written when that number meant a different step —
     // OR its name is a retired fixed step from the 26-/28-step chain.
     // The name test matters: "Work Complete" was step 26 of the old
     // chain, so the stepno-range test alone would mistake it for a
@@ -1827,7 +1854,7 @@ function wfDoneCount(model){ return model.filter(m=>!m.custom && m.row && parseD
 function wfCustomCount(model){ return model.filter(m=>m.custom && !m.legacy && m.row).length; }
 function wfLegacyCount(model){ return model.filter(m=>m.legacy && m.row).length; }
 /* v10.34: each block's header carries its own counter — "Approval
-   Process: n / 9" / "After Approval Process: n / 12" (v10.35) — so it
+   Process: n / 12" / "After Approval Process: n / 12" (v10.40) — so it
    stays visible while that block is collapsed. The old combined
    "Workflow: n / 21 + N custom + N earlier" counter is gone. */
 function wfSecCounterHtml(sec){
@@ -1836,11 +1863,11 @@ function wfSecCounterHtml(sec){
   const done=list.filter(m=>m.row&&parseD(m.row.date||'')).length;
   return `<b>${esc(WF_SECTIONS[sec].name)}: ${fmtN(done)} / ${fmtN(list.length)}</b>`;
 }
-/* v10.34: one table per block. `which` is 0 (steps 1–9), 1 (steps 10–21)
+/* v10.34: one table per block. `which` is 0 (steps 1–12), 1 (steps 13–24)
    or 'custom' (custom + earlier rows). The in-table section header rows
    are gone — each block carries its own header above the table. Days /
    Next Step Date are still computed against the FULL model (idx is the
-   full-model index), so step 10's days still count from step 9. */
+   full-model index), so step 13's days still count from step 12. */
 function wfTableHtml(r,which){
   const canE=canEditUnit(r.unit);
   const model=wfModel();
@@ -1877,12 +1904,12 @@ function wfStepSelChange(){
   const sel=document.getElementById('wfStepSel'), inp=document.getElementById('wfCustomName');
   if(sel&&inp) inp.style.display=(sel.value==='custom')?'':'none';
 }
-/* v10.28: next free CUSTOM step number — max(22, maxExistingStepNo + 1),
+/* v10.28: next free CUSTOM step number — max(25, maxExistingStepNo + 1),
    where maxExistingStepNo is the max stepno across all current workflow
    rows (server rows + local preview rows, fixed and custom). wfModel()
-   already normalises every row to a number (fixed names map to 1–21,
-   nameless customs get the next free number), and always lists the 21
-   fixed steps, so max(model nos) >= 21 and the result is always >= 22.
+   already normalises every row to a number (fixed names map to 1–24,
+   nameless customs get the next free number), and always lists the 24
+   fixed steps, so max(model nos) >= 24 and the result is always >= 25.
    Never send a custom add without a stepno: the server's max+1
    auto-assign would give stepno 3 when only fixed steps 1–2 exist. */
 function wfNextCustomNo(){
@@ -1891,13 +1918,13 @@ function wfNextCustomNo(){
 /* ── v10.39: phase-derived Status — the user's rule (2026-11-15): a task
    in the Approval Process phase is "Open"; a task in the After Approval
    Process phase is "In Progress". The phase is derived from the task's
-   workflow rows: any step in section A (canonical stepno 1–9) means
-   Approval; any step in section B (canonical stepno 10–21) means After
-   Approval (section B wins when both exist). Classification is strictly
-   by section: a fixed step by its canonical number; a stored earlier-step
-   row keeps its RECORDED stepno (a retired name whose stored stepno is
-   19–21 was a PO-approval step, i.e. After Approval); a genuine custom
-   step (stepno >= 22) sets no phase. ── */
+   workflow rows: any step in section A (canonical stepno 1–12, v10.40)
+   means Approval; any step in section B (canonical stepno 13–24) means
+   After Approval (section B wins when both exist). Classification is
+   strictly by section: a fixed step by its canonical number; a stored
+   earlier-step row keeps its RECORDED stepno (a retired name whose
+   stored stepno is 13–24 was a PO-approval step, i.e. After Approval);
+   a genuine custom step (stepno >= 25) sets no phase. ── */
 function wfPhase(){
   let hasA=false, hasB=false;
   wfModel().forEach(m=>{
@@ -1905,9 +1932,9 @@ function wfPhase(){
     let n;
     if(!m.custom) n=m.no;
     else if(m.legacy){ n=parseInt(m.row.stepno,10); if(isNaN(n)) return; }
-    else return; /* genuine custom step (>= 22): no phase */
-    if(n>=1&&n<=9) hasA=true;
-    else if(n>=10&&n<=21) hasB=true;
+    else return; /* genuine custom step (>= 25): no phase */
+    if(n>=1&&n<=12) hasA=true;
+    else if(n>=13&&n<=24) hasB=true;
   });
   return hasB?'B':(hasA?'A':null);
 }
@@ -2013,7 +2040,7 @@ async function wfAdd(){
   __wfLastAddAt=Date.now(); window.__wfFormTouched=false;
   const url=scriptUrl(), tok=curToken();
   /* Guest / snapshot mode: local preview only — nothing is sent anywhere.
-     Same numbering as the logged-in path: max(22, maxExisting + 1). */
+     Same numbering as the logged-in path: max(25, maxExisting + 1). */
   if(!url||!tok){
     dtWfLocal.push({sl:r.sl,unit:r.unit,task:r.name,stepno:isCustom?wfNextCustomNo():no,step,who,date,ref,local:true});
     /* v10.39: guest preview — the phase rule is previewed locally too
@@ -2023,8 +2050,8 @@ async function wfAdd(){
     wfRefresh(); toast(T('toastWfAddLocal'),'ok'); return;
   }
   /* v10.28: a custom step is sent WITH an explicit stepno from
-     wfNextCustomNo() (22, 23, …) — v4.12 accepts an explicit stepno when
-     it is positive and not a duplicate. Fixed steps send their own 1–21. */
+     wfNextCustomNo() (25, 26, …) — v4.12 accepts an explicit stepno when
+     it is positive and not a duplicate. Fixed steps send their own 1–24. */
   const stepno=isCustom?wfNextCustomNo():no;
   const key='wfAdd:'+r.sl+':'+stepno+':'+step;
   if(!bgGuard(key)) return;
@@ -2089,7 +2116,7 @@ async function wfSaveEdit(no){
   }
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
   /* v10.30: send the row's STORED stepno, not the model number — a legacy
-     row's model number (>= 22) differs from its stored stepno. */
+     row's model number (>= 25) differs from its stored stepno. */
   const q=new URLSearchParams({token:tok,action:'editworkflow',sl:String(r.sl),unit:r.unit,stepno:String((m.row&&m.row.stepno)||no),who,date,ref});
   /* v10.27: editworkflow renames a step via p.step — send the edited name
      for custom steps (fixed steps keep their canonical name). */
@@ -2149,7 +2176,7 @@ async function wfDel(no){
       wfRefresh();
       const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
-/* ── v10.25/27: workflow CSV export — task header + 21 steps + any custom steps. ── */
+/* ── v10.25/27: workflow CSV export — task header + 24 steps + any custom steps. ── */
 function wfCsvCell(v){ const s=String(v==null?'':v); return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; }
 function wfCsvText(r){
   const model=wfModel();
@@ -2179,8 +2206,8 @@ function wfExportCsv(){
    sheet (.sheet in ~/workspace/ts-spaces/sample-task-workflow/index.html):
    eyebrow, h2 title, 2-column kv2 with dashed rows, flat 6-column table
    (Step | Stage | By | Date | Days | Status), footer note. No signature
-   boxes. EBS Req No. = Ref of step 10 (REQUISITION RISE IN EBS), PO / WO
-   No. = Ref of step 16 (PO CREATE BY PROCURMENT). Section header rows
+   boxes. EBS Req No. = Ref of step 13 (REQUISITION RISE IN EBS), PO / WO
+   No. = Ref of step 19 (PO CREATE BY PROCURMENT). Section header rows
    split the table into the same two sections as the on-screen table. ── */
 /* v10.34: wfPrintSheetHtml(r, sec) — sec 0/1 prints ONLY that section's
    steps (task header + that section's table; the EBS/PO ref fields and
@@ -2196,7 +2223,7 @@ function wfPrintSheetHtml(r,sec){
   const prog=whole?Tf('wfProg',{done,total:WF_STEPS.length})+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'')+(legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:''):`${WF_SECTIONS[sec].name}: ${fmtN(done)} / ${fmtN(list.length)}`;
   const refOf=no=>{ const m=model.find(x=>x.no===no); return (m&&m.row&&m.row.ref)?esc(m.row.ref):'—'; };
   const fields=[[T('prTaskId'), r.task_id?esc(r.task_id):'SL '+esc(r.sl)],[T('thUnit'),esc(r.unit)],[T('prBudget'),fmtM(r.budget||0)],[T('prCost'),fmtM(r.cost||0)]];
-  if(whole) fields.push([T('prEbs'),refOf(10)],[T('prPo'),refOf(16)]);
+  if(whole) fields.push([T('prEbs'),refOf(13)],[T('prPo'),refOf(19)]);
   fields.push([T('fStart'),fmtD(r.start)],[T('thStatus'),esc(r.status)+' · '+esc(prog)]);
   let firstPending=-1;
   list.forEach((m,idx)=>{ if(firstPending<0 && !(m.row&&parseD(m.row.date||''))) firstPending=idx; });
