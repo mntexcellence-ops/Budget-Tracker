@@ -497,11 +497,14 @@ th{padding:8px 10px}
                 <div id="fBst"></div>
               </div></div>
           </div>
-          <div class="fb-item" style="min-width:0"><label>&nbsp;</label>
-            <label class="fb-check"><input type="checkbox" id="fOverdue" onchange="setOverdue(this.checked)"> <span data-t="overdueOnly"></span></label>
+          <div class="fb-item"><label data-t="progH"></label>
+            <div class="dd"><button type="button" class="ddbtn" id="ddProgBtn" onclick="toggleDD('Prog',event)">All progress ▾</button>
+              <div class="ddpanel" id="ddProgPanel" style="display:none">
+                <div id="fProg"></div>
+              </div></div>
           </div>
           <div class="fb-item" style="min-width:0"><label>&nbsp;</label>
-            <label class="fb-check"><input type="checkbox" id="f100" onchange="set100(this.checked)"> <span data-t="pct100Only"></span></label>
+            <label class="fb-check"><input type="checkbox" id="fOverdue" onchange="setOverdue(this.checked)"> <span data-t="overdueOnly"></span></label>
           </div>
           <div class="fb-item" style="flex:1 1 200px;min-width:160px"><label data-t="searchH"></label>
             <input type="text" id="qSearch" class="dinput" data-t-ph="searchPh" oninput="syncSearch(this.value,'q')">
@@ -643,7 +646,7 @@ const PAL = ['#7b68ee','#5b8def','#4caf50','#f59e0b','#b07fe8','#9aa0a6','#e5484
    [data-th] HTML and [data-t-ph] placeholders; render() uses T()/Tf(). ── */
 const STR = {en:{
 brandTitle:'Budget <span>Tracking</span>',brandSub:'Dekko ISHO Group · All Units — DGL-1 · DGL-2 · DRL · DFL · GGL · AWL · AFL',
-refreshBtn:'⟳ Refresh Data',filters:'⚙ Filters',unitH:'Unit',statusH:'Status',overdueH:'⚠ Overdue',overdueOnly:'Overdue only',pct100Only:'100% only',
+refreshBtn:'⟳ Refresh Data',filters:'⚙ Filters',unitH:'Unit',statusH:'Status',overdueH:'⚠ Overdue',overdueOnly:'Overdue only',progH:'Progress',allProg:'All progress ▾',progAll:'All',prog100:'100%',progBelow:'Below 100%',
 searchH:'Search Project',searchPh:'Type project name…',resetAll:'Reset all filters',tools:'Tools',addBtn:'➕ Add New Project',
 dark:'🌙 Dark',light:'☀️ Light',selectAll:'Select all',clear:'Clear',
 allUnits:'All units ▾',noUnits:'No units selected ▾',nUnits:'{n} units selected ▾',
@@ -758,11 +761,13 @@ let selU = new Set(UNITS_ALL), selS = new Set(STATUSES_ALL);
    fixed list. '' means the row has no budget status yet. */
 let BST_ALL = [], selB = new Set(), BST_KNOWN = new Set();
 let selOverdue = false;
-/* v10.40: "100%" filter — when ON, only tasks with Progress = 100% are
-   shown (same shared filtered dataset as the other filters). Progress
-   100% and Status Complete are related but not the same thing — this
-   filter is by Progress value only, and it is NOT a fifth status. */
-let sel100 = false;
+/* v10.42: Progress filter — 'all' | '100' | 'below'. Replaces the v10.40
+   "100% only" checkbox chip (the dropdown's "100%" option covers the same
+   case and adds "Below 100%"). Same shared filtered dataset as the other
+   filters. Progress 100% and Status Complete are related but not the same
+   thing — this filter is by Progress value only, and it is NOT a fifth
+   status. */
+let selProg = 'all';
 let selRows = new Set();
 /* v9: the top-bar search and the filter-bar search are one search — typing
    in either updates both and re-renders. */
@@ -773,7 +778,7 @@ function syncSearch(v, src){
   render();
 }
 function setOverdue(v){ selOverdue=v; render(); }
-function set100(v){ sel100=v; render(); }
+function setProg(v){ selProg=v; render(); }
 const fmtN = v => Math.round(v||0).toLocaleString('en-US');
 const fmtM = v => 'BDT ' + fmtN(v);
 const DMON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
@@ -870,6 +875,11 @@ function buildFilters(){
     `<label class="fitem"><input type="checkbox" ${selS.has(s)?'checked':''} onchange="togS('${esc(s)}',this.checked)"> ${esc(s)}</label>`).join('');
   document.getElementById('fBst').innerHTML = BST_ALL.map(v =>
     `<label class="fitem"><input type="checkbox" ${selB.has(v)?'checked':''} onchange="togB('${jsq(v)}',this.checked)"> ${v==='' ? T('bstBlank') : esc(v)}</label>`).join('');
+  /* v10.42: Progress dropdown options (single-choice radios, same fitem
+     family as the other filter dropdowns). */
+  const progOpts=[['all',T('progAll')],['100',T('prog100')],['below',T('progBelow')]];
+  document.getElementById('fProg').innerHTML = progOpts.map(([v,l]) =>
+    `<label class="fitem"><input type="radio" name="progOpt" ${selProg===v?'checked':''} onchange="setProg('${v}')"> ${l}</label>`).join('');
 }
 function togU(u,on){ on?selU.add(u):selU.delete(u); render(); }
 function togS(s,on){ on?selS.add(s):selS.delete(s); render(); }
@@ -886,13 +896,12 @@ function resetAll(){ UNITS_ALL.forEach(u=>selU.add(u)); STATUSES_ALL.forEach(s=>
   selB.clear(); BST_ALL.forEach(v=>selB.add(v));
   selOverdue=false;
   const fo=document.getElementById('fOverdue'); if(fo) fo.checked=false;
-  sel100=false;
-  const f100=document.getElementById('f100'); if(f100) f100.checked=false;
+  selProg='all';
   const q=document.getElementById('qSearch'); if(q) q.value='';
   const qt=document.getElementById('qTop'); if(qt) qt.value='';
   buildFilters(); render(); }
 function toggleDD(which,ev){ ev.stopPropagation();
-  ['ddUnitPanel','ddStatusPanel','ddBstPanel'].forEach(id=>{ if(id!=='dd'+which+'Panel'){ const o=document.getElementById(id); if(o) o.style.display='none'; } });
+  ['ddUnitPanel','ddStatusPanel','ddBstPanel','ddProgPanel'].forEach(id=>{ if(id!=='dd'+which+'Panel'){ const o=document.getElementById(id); if(o) o.style.display='none'; } });
   const p=document.getElementById('dd'+which+'Panel');
   p.style.display = p.style.display==='none' ? 'block' : 'none'; }
 function pickAll(kind,on){
@@ -901,7 +910,7 @@ function pickAll(kind,on){
   else { selS.clear(); if(on) STATUSES_ALL.forEach(s=>selS.add(s)); }
   buildFilters(); render(); }
 document.addEventListener('click', e=>{ if(!e.target.closest('.dd')){
-  ['ddUnitPanel','ddStatusPanel','ddBstPanel'].forEach(id=>{ const p=document.getElementById(id); if(p) p.style.display='none'; }); } });
+  ['ddUnitPanel','ddStatusPanel','ddBstPanel','ddProgPanel'].forEach(id=>{ const p=document.getElementById(id); if(p) p.style.display='none'; }); } });
 function ddLabel(sel, all, keyAll, keyNone, keyN){
   if(sel.size===all.length) return T(keyAll);
   if(sel.size===0) return T(keyNone);
@@ -925,7 +934,7 @@ function agg(){
   const q=(document.getElementById('qSearch')||{}).value.trim().toLowerCase();
   const rows = D.rows.filter(r => selU.has(r.unit) && selS.has(r.status) && selB.has(r.bst||'')
     && (!selOverdue || isOverdue(r))
-    && (!sel100 || (Number(r.prog)||0)===100)
+    && (selProg==='all' || (selProg==='100' ? (Number(r.prog)||0)===100 : (Number(r.prog)||0)<100))
     && (!q || r.name.toLowerCase().includes(q) || (r.unit||'').toLowerCase().includes(q)));
   let tb=0, tc=0, tp=0, tpay=0, tod=0;
   const byUnit={}, byStatus={}, byStatusN={}, byUnitPay={};
@@ -1085,6 +1094,9 @@ function render(){
   const sb=document.getElementById('ddStatusBtn'); if(sb) sb.textContent=ddLabel(selS, STATUSES_ALL, 'allStatuses', 'noStatuses', 'nStatuses');
   const bb=document.getElementById('ddBstBtn'); if(bb){ const arr=[...selB].map(v=>v==='' ? T('bstBlank') : v);
     bb.textContent = selB.size===BST_ALL.length ? T('allBst') : selB.size===0 ? T('noBst') : arr.length<=2 ? arr.join(', ')+' ▾' : Tf('nBst',{n:selB.size}); }
+  /* v10.42: Progress dropdown closed label — "All progress" by default,
+     otherwise the chosen option. */
+  const pb=document.getElementById('ddProgBtn'); if(pb) pb.textContent = selProg==='all' ? T('allProg') : (selProg==='100' ? T('prog100') : T('progBelow'))+' ▾';
   const nodata='<p style="color:'+thc().nodata+';font-size:12px">'+T('nodata')+'</p>';
   const stCount = s => a.rows.filter(r=>(r.status||'').toLowerCase()===s).length;
   /* v9: each KPI carries its raw numeric target (for the count-up), a
@@ -1194,8 +1206,7 @@ function kpiClick(kind){
   if(kind==='all'){ resetAll(); switchView('list'); return; }
   selS.clear(); selS.add(kind); selOverdue=false;
   const fo=document.getElementById('fOverdue'); if(fo) fo.checked=false;
-  sel100=false;
-  const f100=document.getElementById('f100'); if(f100) f100.checked=false;
+  selProg='all';
   buildFilters(); render(); switchView('list'); }
 /* ── Live Sheet fetch (public export CSV) with embedded snapshot fallback.
    The Sheet has the 17-column header (row 1); the Assignee column is
