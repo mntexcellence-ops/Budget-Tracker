@@ -649,7 +649,7 @@ dark:'🌙 Dark',light:'☀️ Light',selectAll:'Select all',clear:'Clear',
 allUnits:'All units ▾',noUnits:'No units selected ▾',nUnits:'{n} units selected ▾',
 allStatuses:'All statuses ▾',noStatuses:'No statuses selected ▾',nStatuses:'{n} statuses selected ▾',
 bstH:'Budget status',allBst:'All budget statuses ▾',noBst:'No budget status selected ▾',nBst:'{n} budget statuses selected ▾',bstBlank:'(No budget status)',
-kpiTotal:'Total Projects',kpiComplete:'Complete',kpiInProg:'In Progress',kpiOverdue:'Overdue',kpiUnits:'Units',kpiCost:'Total Tentative Cost',
+kpiTotal:'Total Projects',kpiComplete:'Complete',kpiInProg:'In Progress',kpiOpen:'Open',kpiOverdue:'Overdue',kpiUnits:'Units',kpiCost:'Total Tentative Cost',
 chipAll:'all projects',chipOfFiltered:'of filtered',chipUnits:'units',chipNone:'none yet',
 ovCostT:'Tentative Cost by Unit',ovCostS:'Ranked — total tentative cost per unit in the selected filters',
 ovStatusT:'Cost by Status',ovStatusS:'Share of total tentative cost',
@@ -1098,7 +1098,8 @@ function render(){
     {l:T('kpiTotal'), v:fmtN(a.n), raw:a.n, fmt:'num', share:a.n?1:0, shareT:'100% of filtered projects', c:`<span class="chip n">${T('chipAll')}</span>`, ic:'⬢', bg:'#DBEAFE', fg:'#1D4ED8', go:"kpiClick('all')"},
     {l:T('kpiComplete'), v:fmtN(stCount('complete')), raw:stCount('complete'), fmt:'num', share:a.n?stCount('complete')/a.n:0, shareT:pct(stCount('complete'))+' of filtered projects', c:`<span class="chip g">${a.n?(stCount('complete')/a.n*100).toFixed(1)+'% '+T('chipOfFiltered'):''}</span>`, ic:'✓', bg:'#DCF5E5', fg:'#15803D', go:"kpiClick('Complete')"},
     {l:T('kpiInProg'), v:fmtN(stCount('in progress')), raw:stCount('in progress'), fmt:'num', share:a.n?stCount('in progress')/a.n:0, shareT:pct(stCount('in progress'))+' of filtered projects', c:`<span class="chip b">${a.n?(stCount('in progress')/a.n*100).toFixed(1)+'% '+T('chipOfFiltered'):''}</span>`, ic:'🔨', bg:'#DBEAFE', fg:'#1D4ED8', go:"kpiClick('In Progress')"},
-    {l:T('kpiOverdue'), v:fmtN(a.tod), raw:a.tod, fmt:'num', share:a.n?a.tod/a.n:0, shareT:pct(a.tod)+' of filtered projects', c: a.tod?`<span class="chip r">${T('kpiOverdue')}</span>`:`<span class="chip n">${T('chipNone')}</span>`, ic:'⚠', bg:'#FDE3E3', fg:'#DC2626', go:"kpiClick('overdue')"},
+    /* v10.41: OPEN KPI card replaces the Overdue card (same 4th position) — counts Status = Open, indigo accent to read distinct from the sky-blue In Progress card next to it; click filters the list to Open via the generic kpiClick status path. */
+    {l:T('kpiOpen'), v:fmtN(stCount('open')), raw:stCount('open'), fmt:'num', share:a.n?stCount('open')/a.n:0, shareT:pct(stCount('open'))+' of filtered projects', c:`<span class="chip b">${a.n?(stCount('open')/a.n*100).toFixed(1)+'% '+T('chipOfFiltered'):''}</span>`, ic:'📂', bg:'#E0E7FF', fg:'#3730A3', go:"kpiClick('Open')"},
     {l:T('kpiUnits'), v:fmtN(UNITS_ALL.length), raw:UNITS_ALL.length, fmt:'num', share:unitsWithProj/UNITS_ALL.length, shareT:unitsWithProj+' of '+UNITS_ALL.length+' units have projects', c:`<span class="chip n">${UNITS_ALL.length} ${T('chipUnits')}</span>`, ic:'🏭', bg:'#FEF3C7', fg:'#B45309', go:"switchView('unit')"},
     {l:T('kpiCost'), v:fmtM(a.tc), raw:a.tc, fmt:'money', share:a.tc?a.tpay/a.tc:0, shareT:'Payment disbursed: '+(a.tc?(a.tpay/a.tc*100).toFixed(1):'0')+'% of tentative cost', c:`<span class="chip n">${fmtN(a.tb)} ${T('thBudget')}</span>`, ic:'৳', bg:'#DCF5E5', fg:'#15803D', go:"switchView('unit')"},
   ];
