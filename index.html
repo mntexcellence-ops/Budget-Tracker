@@ -390,6 +390,15 @@ th{padding:8px 10px}
 .wfadd select.efinput{flex:2;min-width:220px}
 .wfadd input[type=text]{flex:1;min-width:140px}
 .wfadd input[type=date]{max-width:170px}
+/* ── v10.31: Workflow Steps collapse — same idea as the sidebar collapse:
+   the header (title + counter + chevron) stays visible, the steps table +
+   Add Step form hide when collapsed. The collapsed class lives on the
+   wrapper OUTSIDE #dtStageWfBody, so wfRefresh() never wipes it. ── */
+.wf-head{display:flex;align-items:flex-start;gap:8px;cursor:pointer;user-select:none}
+.wf-chev{font-size:15px;line-height:1.4;color:var(--muted);flex:0 0 auto}
+.wf-head-txt{flex:1 1 auto;min-width:0}
+.wf-count{font-size:13px;white-space:nowrap;flex:0 0 auto;padding-top:1px}
+.wf-wrap.wf-collapsed #dtStageWfBody{display:none}
 /* ── v10.27: A4 print sheet copied from the sample task-workflow sheet
    (~/workspace/ts-spaces/sample-task-workflow/index.html .sheet): white
    sheet, navy table header, kv2 dashed rows, footer note. No signature
@@ -1452,11 +1461,31 @@ function stageSubHtml(){
    v10.9 subtasks block: the 28-step chain is its own step in the loop,
    with the add form and edit/delete controls kept inside it, so the
    steps are shown once, in Stage History, not twice. ── */
+/* ── v10.31: Workflow Steps collapse — persisted per task in localStorage
+   (key wfCollapsed_<sl>). Default expanded; collapsing one task never
+   affects another. The collapsed class lives on the wrapper OUTSIDE
+   #dtStageWfBody, so wfRefresh() never wipes it; stageWfHtml() re-reads
+   the stored state whenever Stage History is re-rendered. ── */
+function wfIsCollapsed(sl){ try{ return localStorage.getItem('wfCollapsed_'+String(sl))==='1'; }catch(e){ return false; } }
+function wfToggleCollapse(){
+  const r=rowBySl(dtRn); if(!r) return;
+  const c=!wfIsCollapsed(r.sl);
+  try{ localStorage.setItem('wfCollapsed_'+String(r.sl), c?'1':'0'); }catch(e){}
+  wfApplyCollapse();
+}
+function wfApplyCollapse(){
+  const wrap=document.getElementById('dtStageWfWrap'); if(!wrap) return;
+  const r=rowBySl(dtRn); const c=r?wfIsCollapsed(r.sl):false;
+  wrap.classList.toggle('wf-collapsed',c);
+  const ch=document.getElementById('dtWfChev'); if(ch) ch.textContent=c?'▸':'▾';
+}
 function stageWfHtml(r){
   /* The heading/subtitle sit OUTSIDE #dtStageWfBody: wfRefresh() rewrites
      that body's innerHTML on every workflow load/add/edit/delete, and
-     anything inside it would be wiped. */
-  return `<div class="tlrow"><div class="tl-subs"><div class="tl-subs-h">${T('wfTitle')}</div><div class="tl-note" style="margin:0 0 4px">${T('wfSub')}</div><div id="dtStageWfBody">${wfBodyHtml(r)}</div></div></div>`;
+     anything inside it would be wiped. The counter lives in the header
+     too, so it stays visible while the table + Add Step form are hidden. */
+  const c=wfIsCollapsed(r.sl);
+  return `<div class="tlrow"><div class="tl-subs wf-wrap${c?' wf-collapsed':''}" id="dtStageWfWrap"><div class="wf-head" onclick="wfToggleCollapse()" role="button" tabindex="0" title="Click to show / hide workflow steps" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();wfToggleCollapse();}"><span class="wf-chev" id="dtWfChev">${c?'▸':'▾'}</span><div class="wf-head-txt"><div class="tl-subs-h">${T('wfTitle')}</div><div class="tl-note" style="margin:0 0 4px">${T('wfSub')}</div></div><span class="wf-count" id="dtWfCount">${wfCounterHtml()}</span></div><div id="dtStageWfBody">${wfBodyHtml(r)}</div></div></div>`;
 }
 function stageBodyHtml(r){
   if(dtStageState==='loading') return `<div style="font-size:13px;color:var(--muted)">${T('stLoading')}</div>`;
@@ -1612,13 +1641,19 @@ function wfNextIso(model, idx){
 function wfDoneCount(model){ return model.filter(m=>!m.custom && m.row && parseD(m.row.date||'')).length; }
 function wfCustomCount(model){ return model.filter(m=>m.custom && !m.legacy && m.row).length; }
 function wfLegacyCount(model){ return model.filter(m=>m.legacy && m.row).length; }
-function wfBodyHtml(r){
-  const canE=canEditUnit(r.unit);
+/* v10.31: the "Workflow: n / 28" counter lives in the collapsible header
+   (outside #dtStageWfBody), so it stays visible while collapsed. */
+function wfCounterHtml(){
   const model=wfModel();
   const done=wfDoneCount(model);
   const customs=wfCustomCount(model);
   const legacy=wfLegacyCount(model);
-  let h=`<div style="font-size:13px;margin-bottom:6px"><b>${Tf('wfProg',{done,total:WF_STEPS.length})}${customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:''}${legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:''}</b></div>`;
+  return `<b>${Tf('wfProg',{done,total:WF_STEPS.length})}${customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:''}${legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:''}</b>`;
+}
+function wfBodyHtml(r){
+  const canE=canEditUnit(r.unit);
+  const model=wfModel();
+  let h='';
   if(dtWfState==='loading'){ h+=`<div style="font-size:13px;color:var(--muted)">${T('wfLoading')}</div>`; return h; }
   h+=`<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfDate')}</th><th>${T('wfDays')}</th><th>${T('wfNext')}</th><th>${T('wfRef')}</th>${canE?'<th></th>':''}</tr>`+
   model.map((m,idx)=>{
@@ -1653,7 +1688,10 @@ function wfStepSelChange(){
 function wfNextCustomNo(){
   return Math.max(WF_STEPS.length, ...wfModel().map(m=>m.no)) + 1;
 }
-function wfRefresh(){ const b=document.getElementById('dtStageWfBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=wfBodyHtml(r); }
+function wfRefresh(){ const b=document.getElementById('dtStageWfBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=wfBodyHtml(r);
+  /* v10.31: keep the header counter in sync after add/edit/delete — the
+     counter lives outside the body, so it is not rewritten with it. */
+  const hc=document.getElementById('dtWfCount'); if(hc) hc.innerHTML=wfCounterHtml(); }
 async function loadWorkflow(){
   const r=rowBySl(dtRn); if(!r) return;
   if(!scriptUrl()){ dtWfState='idle'; wfRefresh(); return; }
