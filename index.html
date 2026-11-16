@@ -13,13 +13,14 @@ body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-se
 /* v10.46: sticky header — stays pinned at the top while scrolling, like the
    sidebar; opaque theme background so scrolled content never shows through. */
 .topbar{position:sticky;top:0;z-index:60;background:var(--bg);border:0;border-radius:0;padding:10px 4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:none;margin-bottom:14px}
-/* v10.47: task names stay on one line — first 25 words + "..." (see shortName),
+/* v10.47: task names stay on one line — first 40 letters + "..." (see shortName;
+   v10.57 changed it from 25 words to 40 letters, project names only),
    full name on hover via title. td cap keeps the 13-column table usable;
    cards/deadline rows use the full width available to them. */
 /* v10.48: date cells never wrap (.dt) so list rows get as short as possible;
-   task-column cap raised 300px → 560px so more of the 25 words show. */
+   task-column cap raised 300px → 560px so more of the name shows. */
 /* v10.49: every list-row text cell is one line now — Unit/Priority/Budget Status
-   nowrap (.dt); Materials Status + Remarks (Latest Comment) use tname() with a
+   nowrap (.dt); Materials Status + Remarks (Latest Comment) use tnameW() with a
    240px cap (.tname.sm) so the full text stays one hover away. The Progress cell
    also gets .dt: its 90px bar + "%" text wrapped to two lines and was the last
    thing holding rows at 54px (measured: hiding it alone drops a row to 37px). */
@@ -840,13 +841,18 @@ function fmtD(v){ v=(v||'').trim(); if(!v) return '—';
   const d=new Date(v); if(!isNaN(d.getTime())) return d.getDate()+' '+DMON[d.getMonth()]+' '+d.getFullYear();
   return v; }
 const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
-/* v10.47: one-line task names. shortName keeps the first 25 words (split on any
-   whitespace) and adds "..." when there are more; exactly 25 words shows whole.
-   tname renders it with the FULL name in title, so hovering shows everything
-   like alt text; clicking the row still opens the full detail popup. */
+/* v10.57: project/task names are 40 LETTERS now (was 25 words, v10.47) —
+   shortName cuts at 40 characters (spaces included) and adds "..." when
+   there are more; exactly 40 shows whole. shortWords keeps the OLD 25-word
+   rule for the NON-name fields only (Materials Status, Latest Comment).
+   tname renders a name with the FULL name in title, so hovering shows
+   everything like alt text; tnameW does the same with the 25-word rule;
+   clicking the row still opens the full detail popup. */
 const escA = s => esc(s).replace(/"/g,'&quot;');
-function shortName(n){ const w=String(n==null?'':n).split(/\s+/).filter(Boolean); return w.length>25 ? w.slice(0,25).join(' ')+'...' : w.join(' '); }
+function shortName(n){ const f=String(n==null?'':n); return f.length>40 ? f.slice(0,40)+'...' : f; }
+function shortWords(n){ const w=String(n==null?'':n).split(/\s+/).filter(Boolean); return w.length>25 ? w.slice(0,25).join(' ')+'...' : w.join(' '); }
 function tname(n,x){ const f=String(n==null?'':n); return `<span class="tname${x?' '+x:''}" title="${escA(f)}">${esc(shortName(f))}</span>`; }
+function tnameW(n,x){ const f=String(n==null?'':n); return `<span class="tname${x?' '+x:''}" title="${escA(f)}">${esc(shortWords(f))}</span>`; }
 /* ── Overdue (Project List only): the deadline is the Revised Finish Date
    when it exists, otherwise the Due Date. Overdue = active (not Complete)
    + deadline passed. Never shown in OVERVIEW cards or in popups. ── */
@@ -1229,10 +1235,11 @@ function render(){
      v10.53 (2026-11-16): board cards back to plain (card background, normal text) — the v10.12 solid status-color cards are gone; the colored column dots stay.
      v10.54 (2026-11-16): board cards compact — tighter padding/margins, title 12px; every card element stays, drag/click unchanged.
      v10.55 (2026-11-16): board columns fit on screen — 4 columns share the board width via minmax(0,1fr) + min-width:0 on columns, so long card titles clip with ellipsis instead of stretching a column to ~1100px.
-     v10.56 (2026-11-16): the 4 solid status-color board cards are back at the owner's request (Open blue, In Progress orange, Writing red, Complete green); compact card sizes (v10.54) and narrow columns (v10.55) stay. */
+     v10.56 (2026-11-16): the 4 solid status-color board cards are back at the owner's request (Open blue, In Progress orange, Writing red, Complete green); compact card sizes (v10.54) and narrow columns (v10.55) stay.
+     v10.57 (2026-11-16): project/task names are 40 letters now (was 25 words) — first 40 characters + "...", full name still on hover; Materials Status and Latest Comment keep the old 25-word rule. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
-    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt">${esc(r.bst)||'—'}</td><td>${r.matst?tname(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tname(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
+    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
   /* v3: Group by Unit (v2 sections) or Status (status sections). */
   let sections='';
   if(groupBy==='status'){
@@ -2784,7 +2791,7 @@ function renderFsTable(){
         `<td><input id="fsRe" class="efinput" value="${esc(r.comment)}" style="min-width:150px"></td>`+
         `<td style="white-space:nowrap"><button class="fsbtn pri" onclick="fsSaveEdit(${r.sl})">${T('saveBtn').replace('💾 ','')}</button> <button class="fsbtn" onclick="fsCancelEdit()">${T('dtClose').replace('✖ ','')}</button></td></tr>`;
       }
-      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tname(r.comment,'sm'):''}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
+      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):''}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
     }).join('')+`</table>`
     : '<p style="color:'+thc().nodata+';font-size:13px">'+T('fsNoProjects')+'</p>';
   setHTML('fsTable', tbl);
