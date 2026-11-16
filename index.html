@@ -14,10 +14,13 @@ body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-se
    sidebar; opaque theme background so scrolled content never shows through. */
 .topbar{position:sticky;top:0;z-index:60;background:var(--bg);border:0;border-radius:0;padding:10px 4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:none;margin-bottom:14px}
 /* v10.47: task names stay on one line — first 25 words + "..." (see shortName),
-   full name on hover via title. td cap 300px keeps the 13-column table usable;
+   full name on hover via title. td cap keeps the 13-column table usable;
    cards/deadline rows use the full width available to them. */
+/* v10.48: date cells never wrap (.dt) so list rows get as short as possible;
+   task-column cap raised 300px → 560px so more of the 25 words show. */
+.dt{white-space:nowrap}
 .tname{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-td .tname{max-width:300px}
+td .tname{max-width:560px}
 .brand{display:flex;align-items:center;gap:12px}
 .top-logo{height:40px;width:auto;display:block;flex:none}
 [data-theme="dark"] .top-logo{filter:brightness(0) invert(1)}
@@ -1194,10 +1197,11 @@ function render(){
      Last Workflow column — no step, who, days or next step.
      v10.45 (2026-11-16): Budget Status dropdown now the owner's full 32-option list, in his order.
      v10.46 (2026-11-16): header bar sticks to the top while scrolling (like the sidebar), opaque theme background.
-     v10.47 (2026-11-16): task names stay on one line — first 25 words + "...", full name on hover (title); click still opens the full detail. */
+     v10.47 (2026-11-16): task names stay on one line — first 25 words + "...", full name on hover (title); click still opens the full detail.
+     v10.48 (2026-11-16): date cells never wrap (rows as short as possible); task-column cap 300px → 560px so more words show. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
-    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
+    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
   /* v3: Group by Unit (v2 sections) or Status (status sections). */
   let sections='';
   if(groupBy==='status'){
@@ -2666,7 +2670,7 @@ function renderFsTable(){
         `<td><input id="fsRe" class="efinput" value="${esc(r.comment)}" style="min-width:150px"></td>`+
         `<td style="white-space:nowrap"><button class="fsbtn pri" onclick="fsSaveEdit(${r.sl})">${T('saveBtn').replace('💾 ','')}</button> <button class="fsbtn" onclick="fsCancelEdit()">${T('dtClose').replace('✖ ','')}</button></td></tr>`;
       }
-      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td>${fmtD(r.start)}</td><td>${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
+      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
     }).join('')+`</table>`
     : '<p style="color:'+thc().nodata+';font-size:13px">'+T('fsNoProjects')+'</p>';
   setHTML('fsTable', tbl);
