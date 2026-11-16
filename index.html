@@ -26,8 +26,10 @@ body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-se
    thing holding rows at 54px (measured: hiding it alone drops a row to 37px). */
 .dt{white-space:nowrap}
 /* v10.58: Project List Budget Status column 4px smaller (13px → 9px) —
-   list only; the filter dropdown and the Edit/Add form stay 13px. */
-.bstcell{font-size:9px}
+   list only; the filter dropdown and the Edit/Add form stay 13px.
+   v10.59: too small to read — back up to a uniform 11px for both
+   columns (Budget Status and Last Workflow). */
+.bstcell{font-size:11px}
 .tname{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 td .tname{max-width:560px}
 td .tname.sm{max-width:240px}
@@ -177,16 +179,18 @@ tr.selrow td{background:#f5f3ff}
 /* v10.43: Last Workflow column — step name clamps to 2 lines, the
    who/days line truncates with ellipsis; 7+ days sitting gets amber.
    v10.58: 4px smaller — step/done 12px → 8px, who/days 11px → 7px, and
-   the empty "—" 13px → 8px via .lwcell. */
-.lwcell{max-width:230px;min-width:150px;font-size:8px}
-.lwstep{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:8px;line-height:1.35}
-.lwsub{font-size:7px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+   the empty "—" 13px → 8px via .lwcell.
+   v10.59: 8px/7px was too small to read — both columns now a uniform
+   11px (step, who/days, done and the empty "—"). */
+.lwcell{max-width:230px;min-width:150px;font-size:11px}
+.lwstep{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:11px;line-height:1.35}
+.lwsub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lw-old{color:#b45309;font-weight:700}
 [data-theme="dark"] .lw-old{color:#f59e0b}
 /* v10.44: a Complete task shows just "Complete" in green in the Last
    Workflow column — no step, who, days or next step; workflow
    maintenance is over for that task. */
-.lw-done{color:#15803d;font-weight:700;font-size:8px}
+.lw-done{color:#15803d;font-weight:700;font-size:11px}
 [data-theme="dark"] .lw-done{color:#22c55e}
 .subrow{display:flex;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px}
 .subrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--brand-b);flex:none}
@@ -1242,7 +1246,8 @@ function render(){
      v10.55 (2026-11-16): board columns fit on screen — 4 columns share the board width via minmax(0,1fr) + min-width:0 on columns, so long card titles clip with ellipsis instead of stretching a column to ~1100px.
      v10.56 (2026-11-16): the 4 solid status-color board cards are back at the owner's request (Open blue, In Progress orange, Writing red, Complete green); compact card sizes (v10.54) and narrow columns (v10.55) stay.
      v10.57 (2026-11-16): project/task names are 40 letters now (was 25 words) — first 40 characters + "...", full name still on hover; Materials Status and Latest Comment keep the old 25-word rule.
-     v10.58 (2026-11-16): Project List Budget Status 13px → 9px and Last Workflow 4px smaller (step/done 12px → 8px, who/days 11px → 7px, empty "—" 8px); list only, filter and Edit form unchanged. */
+     v10.58 (2026-11-16): Project List Budget Status 13px → 9px and Last Workflow 4px smaller (step/done 12px → 8px, who/days 11px → 7px, empty "—" 8px); list only, filter and Edit form unchanged.
+     v10.59 (2026-11-16): Budget Status and Last Workflow both a uniform 11px — the v10.58 sizes (9px/8px/7px) were too small to read; list only. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
