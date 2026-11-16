@@ -173,14 +173,14 @@ tr.selrow td{background:#f5f3ff}
 /* v10.43: Last Workflow column — step name clamps to 2 lines, the
    who/days line truncates with ellipsis; 7+ days sitting gets amber. */
 .lwcell{max-width:230px;min-width:150px}
-.lwstep{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12.5px;line-height:1.35}
-.lwsub{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lwstep{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-size:12px;line-height:1.35}
+.lwsub{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lw-old{color:#b45309;font-weight:700}
 [data-theme="dark"] .lw-old{color:#f59e0b}
 /* v10.44: a Complete task shows just "Complete" in green in the Last
    Workflow column — no step, who, days or next step; workflow
    maintenance is over for that task. */
-.lw-done{color:#15803d;font-weight:700;font-size:12.5px}
+.lw-done{color:#15803d;font-weight:700;font-size:12px}
 [data-theme="dark"] .lw-done{color:#22c55e}
 .subrow{display:flex;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px}
 .subrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--brand-b);flex:none}
@@ -1206,7 +1206,8 @@ function render(){
      v10.47 (2026-11-16): task names stay on one line — first 25 words + "...", full name on hover (title); click still opens the full detail.
      v10.48 (2026-11-16): date cells never wrap (rows as short as possible); task-column cap 300px → 560px so more words show.
      v10.49 (2026-11-16): every list-row text cell is one line — Unit/Priority/Budget Status nowrap; Materials Status + Remarks one line with full text on hover.
-     v10.50 (2026-11-16): on a duplicate-step save error, name the older entry that holds the step number (legacy row) instead of the plain error — the step itself stays offered. */
+     v10.50 (2026-11-16): on a duplicate-step save error, name the older entry that holds the step number (legacy row) instead of the plain error — the step itself stays offered.
+     v10.51 (2026-11-16): Last Workflow text one step smaller — step name 12px, who/days line 11px, "Complete" 12px — so the column reads lighter. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt">${esc(r.bst)||'—'}</td><td>${r.matst?tname(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tname(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
