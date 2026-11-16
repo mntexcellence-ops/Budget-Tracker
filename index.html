@@ -161,6 +161,11 @@ tr.selrow td{background:#f5f3ff}
 .lwsub{font-size:11.5px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .lw-old{color:#b45309;font-weight:700}
 [data-theme="dark"] .lw-old{color:#f59e0b}
+/* v10.44: a Complete task shows just "Complete" in green in the Last
+   Workflow column — no step, who, days or next step; workflow
+   maintenance is over for that task. */
+.lw-done{color:#15803d;font-weight:700;font-size:12.5px}
+[data-theme="dark"] .lw-done{color:#22c55e}
 .subrow{display:flex;gap:10px;align-items:center;padding:8px 2px;border-bottom:1px solid var(--border);font-size:13px}
 .subrow input[type=checkbox]{width:17px;height:17px;accent-color:var(--brand-b);flex:none}
 .subrow .submain{flex:1;min-width:0}
@@ -1167,7 +1172,9 @@ function render(){
      Tentative Cost, per his request — free text from the Sheet columns.
      v10.43 (2026-11-16): Last Workflow added after Latest Comment —
      the task's latest workflow step + days since, from the script's
-     getlastworkflow action (v4.15); "—" when there are no steps yet. */
+     getlastworkflow action (v4.15); "—" when there are no steps yet.
+     v10.44 (2026-11-16): a Complete task shows just "Complete" in the
+     Last Workflow column — no step, who, days or next step. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -2100,6 +2107,9 @@ async function loadLastWf(quiet){
   render();
 }
 function lastWfCell(r){
+  /* v10.44: a Complete task shows just "Complete" — no step, who, days or
+     next step, even when it has no workflow rows at all. */
+  if((r.status||'').toLowerCase()==='complete') return '<div class="lw-done" title="Complete">Complete</div>';
   const e=lastWfMap[String(r.sl)];
   if(!e) return '—';
   const step=String(e.step||'').trim();
