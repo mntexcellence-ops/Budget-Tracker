@@ -286,8 +286,12 @@ th{padding:8px 10px}
 /* v10.8: Group by + View as sit on ONE line (wrap on small screens). */
 .gbrow{display:flex;gap:8px 28px;flex-wrap:wrap;align-items:center;margin:6px 0 10px}
 .gbrow .gbwrap{margin:0}
-.board{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:start}
-.bdcol{background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:10px;min-height:180px}
+/* ── v10.55: board columns must shrink below their content — `1fr` is
+   `minmax(auto,1fr)`, so one long nowrap card title forced each column to
+   ~1100px and the board scrolled sideways. `minmax(0,1fr)` lets the 4
+   columns share the board width and long titles clip with ellipsis. ── */
+.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.bdcol{background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:10px;min-height:180px;min-width:0}
 [data-theme="dark"] .bdcol{background:#232323}
 .bdcol.over{border-color:var(--brand-b);background:#f0edff}
 [data-theme="dark"] .bdcol.over{background:#332f4d}
@@ -329,14 +333,14 @@ th{padding:8px 10px}
 .cmrow .cmh{font-size:11.5px;color:var(--muted);margin-bottom:2px}
 .cmadd{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap}
 .cmadd input[type=text]{flex:1;min-width:200px}
-@media(max-width:1100px){.layout{grid-template-columns:264px 1fr}.board{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:1100px){.layout{grid-template-columns:264px 1fr}.board{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:900px){
 .layout{grid-template-columns:1fr}
 .cside{position:fixed;left:0;top:0;bottom:0;width:264px;z-index:90;border-radius:0;transform:translateX(-105%);transition:transform .25s;overflow:auto}
 .cside.open{transform:none}
 #sbToggle{display:inline-block}
 .wscol{display:none}
-.board{grid-template-columns:1fr}
+.board{grid-template-columns:minmax(0,1fr)}
 }
 @media(max-width:680px){.calday{min-height:64px}.calchip{font-size:10px}}
 /* ── v9: premium design system — top bar, KPI share bars, toasts, grid, skeleton ── */
@@ -1214,7 +1218,8 @@ function render(){
      v10.51 (2026-11-16): Last Workflow text one step smaller — step name 12px, who/days line 11px, "Complete" 12px — so the column reads lighter.
      v10.52 (2026-11-16): Stage History is one journey — Started → Open (Approval steps inside) → In Progress (After Approval steps + Subtasks inside) → Work Done; the standalone Subtasks section is gone, its checklist now lives inside In Progress.
      v10.53 (2026-11-16): board cards back to plain (card background, normal text) — the v10.12 solid status-color cards are gone; the colored column dots stay.
-     v10.54 (2026-11-16): board cards compact — tighter padding/margins, title 12px; every card element stays, drag/click unchanged. */
+     v10.54 (2026-11-16): board cards compact — tighter padding/margins, title 12px; every card element stays, drag/click unchanged.
+     v10.55 (2026-11-16): board columns fit on screen — 4 columns share the board width via minmax(0,1fr) + min-width:0 on columns, so long card titles clip with ellipsis instead of stretching a column to ~1100px. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt">${esc(r.bst)||'—'}</td><td>${r.matst?tname(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tname(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
