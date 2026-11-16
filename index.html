@@ -394,6 +394,10 @@ th{padding:8px 10px}
 .tlrow{position:relative;padding:7px 0}
 .tlrow:before{content:'';position:absolute;left:-19px;top:13px;width:10px;height:10px;border-radius:50%;background:var(--brand-b);border:2px solid var(--card)}
 .tlrow.cur:before{background:#4caf50}
+/* ── v10.52: a journey stage not reached yet — hollow dot, muted head;
+   the nested blocks inside it stay full-strength so steps can still be added. ── */
+.tlrow.upcoming:before{background:var(--card);border-color:var(--muted)}
+.tlrow.upcoming .tl-stage-head{opacity:.55}
 .tl-meta{font-size:12px;color:var(--muted);margin-top:3px;line-height:1.5}
 .tl-note{font-size:12px;color:var(--muted);margin:8px 0 2px}
 /* ── v10.9: subtasks inside the current stage (Stage History) ── */
@@ -763,7 +767,7 @@ wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDa
 prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracking — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
-stSince:'since {d} · {n} days',stTotalDur:'Total duration: {n} days',stLoading:'⏳ Loading stage history…',stDoneOn:'done on {d}',stSubInStage:'Subtasks in this stage',stSubDoneWord:'done',stSubStarted:'Started {d}',stSubFinished:'Finished {d}',stSubTook:'Took {n} days',stSubSameDay:'Same day',stSubPending:'Pending {n} days',stSubToday:'Started today',stSubOverdue:'{n} days overdue',stSubDue:'Due {d}',stSubNoStart:'Start date not recorded'
+stSince:'since {d} · {n} days',stTotalDur:'Total duration: {n} days',stLoading:'⏳ Loading stage history…',stDoneOn:'done on {d}',stWorkDone:'Work Done',stNotYet:'Not reached yet',stSubInStage:'Subtasks in this stage',stSubDoneWord:'done',stSubStarted:'Started {d}',stSubFinished:'Finished {d}',stSubTook:'Took {n} days',stSubSameDay:'Same day',stSubPending:'Pending {n} days',stSubToday:'Started today',stSubOverdue:'{n} days overdue',stSubDue:'Due {d}',stSubNoStart:'Start date not recorded'
 }};
 const LANG='en';
 const T = k => (STR[LANG]||STR.en)[k] || STR.en[k] || k;
@@ -1207,7 +1211,8 @@ function render(){
      v10.48 (2026-11-16): date cells never wrap (rows as short as possible); task-column cap 300px → 560px so more words show.
      v10.49 (2026-11-16): every list-row text cell is one line — Unit/Priority/Budget Status nowrap; Materials Status + Remarks one line with full text on hover.
      v10.50 (2026-11-16): on a duplicate-step save error, name the older entry that holds the step number (legacy row) instead of the plain error — the step itself stays offered.
-     v10.51 (2026-11-16): Last Workflow text one step smaller — step name 12px, who/days line 11px, "Complete" 12px — so the column reads lighter. */
+     v10.51 (2026-11-16): Last Workflow text one step smaller — step name 12px, who/days line 11px, "Complete" 12px — so the column reads lighter.
+     v10.52 (2026-11-16): Stage History is one journey — Started → Open (Approval steps inside) → In Progress (After Approval steps + Subtasks inside) → Work Done; the standalone Subtasks section is gone, its checklist now lives inside In Progress. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt">${esc(r.bst)||'—'}</td><td>${r.matst?tname(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tname(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -1450,7 +1455,6 @@ function dtViewHtml(r){
   return `<div class="dtsec"><h4>${T('dtFields')}</h4><div class="dtgrid">${fields.map(f=>`<div><b>${f[0]}</b>${f[1]}</div>`).join('')}</div></div>`+
   `<div class="dtsec"><h4>${T('dtTime')}</h4>${timeSection(r)}</div>`+
   `<div class="dtsec" id="dtStageSec"><h4>${T('dtStage')}</h4><div class="tl-note" style="margin:0 0 4px">${T('stStageSub')}</div><div id="dtStageBody">${stageBodyHtml(r)}</div></div>`+
-  `<div class="dtsec" id="dtSubSec"><h4>${T('dtSubtasks')}</h4><div id="dtSubBody">${subBodyHtml(r)}</div></div>`+
   `<div class="dtsec" id="dtCmSec"><h4>${T('dtComments')}</h4><div id="dtCmBody">${cmBodyHtml(r)}</div></div>`+
   `<div class="dtsec"><h4>${T('dtProgress')}</h4><div style="font-size:13px"><span class="pbar" style="width:160px"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span> <b>${r.prog||0}%</b>${r.prog_note?`<br><span style="font-size:11.5px;color:var(--muted)">${Tf('dtNote',{p:r.prog||0})}</span>`:''}</div></div>`+
   `<div class="dtsec"><h4>${T('dtComment')}</h4><div style="font-size:13px">${r.comment?esc(r.comment)+(r.comment_by?` <span style="color:var(--muted)">— ${esc(r.comment_by)}${r.comment_date?', '+fmtD(r.comment_date):''}</span>`:''):T('dtNoComment')}</div></div>`+
@@ -1617,11 +1621,6 @@ function stageInfo(r){
 function stageHeadHtml(r){ const s=stageInfo(r);
   return `<div id="dtStageHead" style="font-size:12px;color:var(--muted);margin-top:4px">${esc(r.status)} · ${Tf('stInStage',{n:fmtN(s.days)})}</div>`;
 }
-/* ── v10.9: subtasks inside the current stage — when each subtask started,
-   when it finished, how many days it took, and for open ones how many days
-   it has been pending in this stage. Created dates are stamped by script
-   v4.5; older subtasks have none, so their start shows as "not recorded"
-   and pending is measured against the due date instead. ── */
 /* ── v10.10: one shared subtask meta line — start date, end date and days
    taken (done) or pending days (open). Used by the subtask list and by
    Stage History, so both always agree. ── */
@@ -1644,22 +1643,11 @@ function subMeta(s){
   if(!created&&!dueD) parts.push(T('stSubNoStart'));
   return parts.join(' · ');
 }
-function stageSubHtml(){
-  if(dtSubsState==='loading') return `<div class="tl-subs"><div class="tl-sub-meta">${T('stLoading')}</div></div>`;
-  if(!dtSubs.length) return '';
-  const doneN=dtSubs.filter(s=>s.done).length;
-  const rows=dtSubs.map(s=>`<div class="tl-sub"><div class="tl-sub-name ${s.done?'tl-sub-done':''}">${s.done?'✓':'○'} ${esc(s.subtask)}</div><div class="tl-sub-meta">${subMeta(s)}</div></div>`).join('');
-  return `<div class="tl-subs"><div class="tl-subs-h">${T('stSubStep')} — ${doneN} / ${dtSubs.length} ${T('stSubDoneWord')}</div>${rows}</div>`;
-}
-/* ── v10.26: Workflow Steps inside Stage History — same pattern as the
-   v10.9 subtasks block: the 21-step chain is its own step in the loop,
-   with the add form and edit/delete controls kept inside it, so the
-   steps are shown once, in Stage History, not twice. ── */
 /* ── v10.34: each workflow block collapses independently — one stored
    state per section per task (wfCollapsed_<sl>_approval / _after /
    _custom). Default expanded; collapsing one task or one section never
    affects another. The collapsed class lives on each block's wrapper
-   OUTSIDE its body div, so wfRefresh() never wipes it; stageWfHtml()
+   OUTSIDE its body div, so wfRefresh() never wipes it; stageBodyHtml()
    re-reads the stored state whenever Stage History is re-rendered.
    (The v10.31 single key wfCollapsed_<sl> is no longer read.) ── */
 function wfSecSuffix(sec){ return sec==='approval'?'A':sec==='after'?'B':'C'; }
@@ -1700,8 +1688,30 @@ function wfCustomBlockHtml(r){
   const c=wfIsCollapsedSec(r.sl,'custom');
   return `<div class="tl-subs wf-wrap wf-sec${c?' wf-collapsed':''}" id="dtStageWfWrapC" style="${has?'':'display:none'}"><div class="wf-head" onclick="wfToggleCollapseSec('custom')" role="button" tabindex="0" title="Click to show / hide" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();wfToggleCollapseSec('custom');}"><span class="wf-chev" id="dtWfChevC">${c?'▸':'▾'}</span><div class="wf-head-txt"><div class="tl-subs-h">${T('wfCustomTitle')}</div></div><span class="wf-count" id="dtWfCountC">${wfCustomCountHtml()}</span></div><div class="wf-sec-body" id="dtStageWfBodyC">${wfTableHtml(r,'custom')}</div></div>`;
 }
-function stageWfHtml(r){
-  return `<div class="tlrow"><div class="tl-subs"><div class="wf-head-txt"><div class="tl-subs-h">${T('wfTitle')}</div><div class="tl-note" style="margin:0 0 4px">${T('wfSub')}</div></div>${wfSectionBlockHtml(r,0)}${wfSectionBlockHtml(r,1)}${wfCustomBlockHtml(r)}<div id="dtStageWfForm">${wfAddFormHtml(r)}</div></div></div>`;
+/* ── v10.52: Stage History is one journey — Started → Open (Approval
+   Process steps inside) → In Progress (After Approval steps +
+   Subtasks inside) → Work Done. The three workflow blocks keep their
+   ids (dtStageWfWrapA/B/C, dtStageWfBodyA/B/C, dtWfCountA/B/C,
+   dtWfChevA/B/C) and the Add Step form keeps its id (dtStageWfForm),
+   so wfRefresh() still rewrites the bodies on every workflow
+   load/add/edit/delete — the headings and the form live OUTSIDE the
+   per-block body divs, and anything inside them would be wiped.
+   The subtask checklist (subBodyHtml, id dtSubBody) now lives inside
+   the In Progress entry only — the standalone Subtasks section is gone
+   — so subRefresh() keeps working unchanged. ── */
+function stageEntryHtml(status,label,meta,cls,nested){
+  return `<div class="tlrow ${cls}"><div class="tl-stage-head" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(status)}<span style="font-size:13px">${label}</span></div>${meta?`<div class="tl-meta">${meta}</div>`:''}${nested||''}</div>`;
+}
+/* Approval block — nested under the Open stage entry. */
+function openBlocksHtml(r){ return wfSectionBlockHtml(r,0); }
+/* After Approval block → Subtasks (editable checklist) → Custom /
+   Earlier block → the ONE shared Add Step form — nested under the
+   In Progress stage entry, in that order. */
+function progBlocksHtml(r){
+  return wfSectionBlockHtml(r,1)
+    +`<div class="tl-subs"><div class="tl-subs-h">${T('dtSubtasks')}</div><div id="dtSubBody">${subBodyHtml(r)}</div></div>`
+    +wfCustomBlockHtml(r)
+    +`<div id="dtStageWfForm">${wfAddFormHtml(r)}</div>`;
 }
 function stageBodyHtml(r){
   if(dtStageState==='loading') return `<div style="font-size:13px;color:var(--muted)">${T('stLoading')}</div>`;
@@ -1710,49 +1720,106 @@ function stageBodyHtml(r){
   const totalDays = (()=>{ const st=parseD(r.start); if(!st) return null;
     const end=parseD(r.finishwork)||todayMid();
     return Math.max(0,Math.floor((end-st)/86400000)); })();
-  /* ── v10.18: the Stage History is a complete step-by-step loop, as
-     asked: Started → In Progress → Subtasks → (any other stage) →
-     Completed → End Date. The old seeded view claimed the task had been
-     in its CURRENT stage since the start date (a just-completed task read
-     "Completed · 1,485 days"), and buried the subtasks inside that row.
-     Subtasks are now their own step, and the End Date closes the loop. ── */
+  /* ── v10.52: Stage History is one journey, as asked: Started → Open
+     (Approval Process steps nested inside Open) → In Progress (After
+     Approval steps + Subtasks nested inside In Progress) → Work Done
+     (Completed + End Date). Stages not reached yet show as upcoming
+     (muted, "Not reached yet") so the full journey is always visible;
+     the phase rule (v10.39) is untouched — this is display only. The
+     old order (Started → In Progress → Workflow Steps → Subtasks →
+     Completed → End Date) and the standalone Subtasks section are gone.
+     (v10.18: the old seeded view claimed the task had been in its
+     CURRENT stage since the start date — a just-completed task read
+     "Completed · 1,485 days". That claim is gone too: past stages show
+     no duration the log cannot support.) ── */
   const st=parseD(r.start);
   const compD=compDateOf(r);
   const endD=endDateOf(r);
   const isComp=(r.status||'').toLowerCase()==='complete';
   const isProg=(r.status||'').toLowerCase()==='in progress';
-  const subsStep=(()=>{ const shtml=stageSubHtml(); return shtml?`<div class="tlrow">${shtml}</div>`:''; })();
-  /* ── v10.26: Workflow Steps sit between the status rows and the
-     subtasks step: Started → In Progress → Workflow Steps → Subtasks →
-     (other stages) → Completed → End Date. ── */
-  const wfStep=stageWfHtml(r);
-  const endStep=endD?`<div class="tlrow"><div style="font-size:13px"><b>${T('stEndDate')}</b> — ${fmtD(r.finishwork||r.revised||r.due)}</div></div>`:'';
-  if(dtStageLog.length){
+  const isOpen=(r.status||'').toLowerCase()==='open';
+  const isWriting=(r.status||'').toLowerCase()==='writing';
+  const openBlocks=openBlocksHtml(r);
+  const progBlocks=progBlocksHtml(r);
+  const endHtml=endD?`<div class="tl-subs"><div style="font-size:13px"><b>${T('stEndDate')}</b> — ${fmtD(r.finishwork||r.revised||r.due)}</div></div>`:'';
+  const startStep=`<div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`;
+  const curTag=` · ${T('stCurrentStage')}`;  if(dtStageLog.length){
     /* ── v10.24: keep the task's Start Date as the first step of the loop —
        the logged view showed only the status-change rows, so the original
        start date was lost from the timeline. Same "Started" row as the
        seeded view, so both views always open with it. ── */
-    const startStep=`<div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`;
-    h+=`<div class="tl">`+startStep+dtStageLog.map(e=>{
+    /* ── v10.52: the nested blocks ride on the log rows themselves —
+       the Approval block goes right after the LATEST row that enters
+       Open, After Approval + Subtasks + Custom + form right after the
+       LATEST row that enters In Progress, the End Date right after the
+       LATEST row that enters Complete. A stage the log never enters
+       gets a synthetic entry: Open right after Started (current when
+       the task is Open, upcoming while Writing, past otherwise);
+       In Progress after the current-stage row when not yet reached
+       (upcoming), or just before the Complete entry when the task is
+       Complete but skipped it (past); Work Done after the current-stage
+       row when not complete (upcoming). Every log row is kept. ── */
+    const toStage=e=>String(e.to||'').trim().toLowerCase();
+    let lastOpen=-1,lastProg=-1,lastComp=-1;
+    dtStageLog.forEach((e,i)=>{ const t=toStage(e);
+      if(t==='open') lastOpen=i; else if(t==='in progress') lastProg=i; else if(t==='complete') lastComp=i; });
+    const items=[startStep];
+    let compRowIdx=-1;
+    dtStageLog.forEach((e,i)=>{
       const fromTxt=e.from==='—'?T('stStarted'):esc(e.from);
-      return `<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div></div>`;
-    }).join('')+wfStep+subsStep+
-    `<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div></div>${endStep}</div>`;
-  } else {
-    let steps=`<div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`;
-    if(isProg){
-      steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('In Progress')}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
-      steps+=wfStep+subsStep;
-    } else if(isComp){
-      const n=st&&compD?Math.max(0,Math.floor((compD-st)/86400000)):0;
-      steps+=`<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('In Progress')}<span style="font-size:13px">${T('kpiInProg')}</span></div><div class="tl-meta">${st&&compD?fmtD(r.start)+' → '+fmtD(r.finishwork||r.revised)+' · '+Tf('stDaysIn',{n:fmtN(n),f:T('kpiInProg')}):(st?fmtD(r.start):T('tmNoStart'))}</div></div>`;
-      steps+=wfStep+subsStep;
-      steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip('Complete')}<span style="font-size:13px">${T('thComplete')}</span></div><div class="tl-meta">${compD?Tf('stDoneOn',{d:fmtD(r.finishwork||r.revised)}):T('stCurrentStage')}</div></div>`;
-    } else {
-      steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
-      steps+=wfStep+subsStep;
+      let row=`<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div>`;
+      if(i===lastOpen) row+=openBlocks;
+      if(i===lastProg) row+=progBlocks;
+      if(i===lastComp){ row+=endHtml; compRowIdx=items.length; }
+      row+='</div>';
+      items.push(row);
+    });
+    if(lastOpen===-1){
+      const cls=isOpen?'cur':(isWriting?'upcoming':'');
+      const meta=isOpen?Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)}):'';
+      items.splice(1,0,stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),meta,cls,openBlocks));
     }
-    steps+=endStep;
+    /* Current-stage row, as before — the nested blocks ride on it when
+       it IS the latest entry of its stage (In Progress with no log row,
+       or Complete with no log row). */
+    let curNested='';
+    if(lastProg===-1&&isProg) curNested+=progBlocks;
+    if(lastComp===-1&&isComp) curNested+=endHtml;
+    const curRow=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div>${curNested}</div>`;
+    items.push(curRow);
+    if(lastProg===-1&&isComp){
+      const targetIdx=lastComp!==-1?compRowIdx:items.indexOf(curRow);
+      items.splice(targetIdx<0?items.length:targetIdx,0,stageEntryHtml('In Progress',T('kpiInProg'),'','',progBlocks));
+    }
+    if(lastProg===-1&&!isProg&&!isComp)
+      items.push(stageEntryHtml('In Progress',T('kpiInProg'),T('stNotYet'),'upcoming',progBlocks));
+    if(lastComp===-1&&!isComp)
+      items.push(stageEntryHtml('Complete',T('stWorkDone'),T('stNotYet'),'upcoming',endHtml));
+    h+=`<div class="tl">${items.join('')}</div>`;
+  } else {
+    /* ── v10.52: seeded journey — the same four stages, synthesised:
+       Open is current when the task is Open, past once it moved on,
+       upcoming while still Writing; In Progress is current when In
+       Progress, past (start → done) when Complete, upcoming while
+       still Open or Writing; Work Done is current when Complete,
+       upcoming otherwise — never a fake date. A Writing task keeps
+       its current-stage row directly after Started, then the four
+       journey stages follow; there is no Writing journey stage. ── */
+    let steps=startStep;
+    if(isWriting){
+      steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
+    }
+    const openCls=isOpen?'cur':(isWriting?'upcoming':'');
+    const openMeta=isOpen?(st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')):(isWriting?T('stNotYet'):'');
+    steps+=stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),openMeta,openCls,openBlocks);
+    let progMeta='',progCls='';
+    if(isProg){ progCls='cur'; progMeta=st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart'); }
+    else if(isComp){ const n=st&&compD?Math.max(0,Math.floor((compD-st)/86400000)):0;
+      progMeta=st&&compD?fmtD(r.start)+' → '+fmtD(r.finishwork||r.revised)+' · '+Tf('stDaysIn',{n:fmtN(n),f:T('kpiInProg')}):(st?fmtD(r.start):T('tmNoStart')); }
+    else { progCls='upcoming'; progMeta=T('stNotYet'); }
+    steps+=stageEntryHtml('In Progress',T('kpiInProg')+(isProg?curTag:''),progMeta,progCls,progBlocks);
+    const doneMeta=isComp?(compD?Tf('stDoneOn',{d:fmtD(r.finishwork||r.revised)}):T('stCurrentStage')):T('stNotYet');
+    steps+=stageEntryHtml('Complete',T('stWorkDone')+(isComp?curTag:''),doneMeta,isComp?'cur':'upcoming',endHtml);
     h+=`<div class="tl">${steps}</div>`+`<div class="tl-note">${T('stSeedNote')}</div>`;
   }
   if(totalDays!==null) h+=`<div class="tl-note">${Tf('stTotalDur',{n:fmtN(totalDays)})}</div>`;
