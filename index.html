@@ -10,7 +10,9 @@
 [data-theme="dark"] input{color-scheme:dark}
 body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);font-size:14px;padding:14px;transition:background .25s,color .25s}
 .app{max-width:1460px;margin:0 auto}
-.topbar{background:transparent;border:0;border-radius:0;padding:10px 4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:none;margin-bottom:14px}
+/* v10.46: sticky header — stays pinned at the top while scrolling, like the
+   sidebar; opaque theme background so scrolled content never shows through. */
+.topbar{position:sticky;top:0;z-index:60;background:var(--bg);border:0;border-radius:0;padding:10px 4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:none;margin-bottom:14px}
 .brand{display:flex;align-items:center;gap:12px}
 .top-logo{height:40px;width:auto;display:block;flex:none}
 [data-theme="dark"] .top-logo{filter:brightness(0) invert(1)}
@@ -1178,7 +1180,8 @@ function render(){
      getlastworkflow action (v4.15); "—" when there are no steps yet.
      v10.44 (2026-11-16): a Complete task shows just "Complete" in the
      Last Workflow column — no step, who, days or next step.
-     v10.45 (2026-11-16): Budget Status dropdown now the owner's full 32-option list, in his order. */
+     v10.45 (2026-11-16): Budget Status dropdown now the owner's full 32-option list, in his order.
+     v10.46 (2026-11-16): header bar sticks to the top while scrolling (like the sidebar), opaque theme background. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
