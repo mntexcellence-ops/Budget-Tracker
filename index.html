@@ -300,15 +300,12 @@ th{padding:8px 10px}
 .bdcard .meta b{color:var(--body)}
 /* ── v10.12: colorful board (reference design) — solid status-color cards,
    white text, colored column dots. Open=blue, In Progress=orange,
-   Writing=red, Complete=green. ── */
+   Writing=red, Complete=green.
+   v10.53 (2026-11-16): cards reverted to plain (card background, normal
+   text) at the owner's request — the solid-color cards are gone; the
+   colored column dots stay. ── */
 .bdcol-dot{width:11px;height:11px;border-radius:50%;display:inline-block;flex:none}
-.bdcard-c{color:#fff;border-color:transparent}
-.bdcard-c h5{color:#fff}
-.bdcard-c .meta{color:rgba(255,255,255,.88)}
-.bdcard-c .pbar{background:rgba(255,255,255,.35)}
-.bdcard-c .pbar i{background:#fff}
-.bdtag{display:inline-block;font-size:11px;font-weight:700;background:rgba(255,255,255,.22);color:#fff;border-radius:5px;padding:2px 7px;margin-bottom:7px}
-.bdfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:rgba(255,255,255,.92);margin-top:9px}
+.bdfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11.5px;color:var(--muted);margin-top:9px}
 .bdcard .pbar{width:100%;margin-top:7px}
 .calhead{display:flex;gap:8px;align-items:center;margin-bottom:10px}
 .calhead b{font-size:15px;min-width:170px;text-align:center}
@@ -1212,7 +1209,8 @@ function render(){
      v10.49 (2026-11-16): every list-row text cell is one line — Unit/Priority/Budget Status nowrap; Materials Status + Remarks one line with full text on hover.
      v10.50 (2026-11-16): on a duplicate-step save error, name the older entry that holds the step number (legacy row) instead of the plain error — the step itself stays offered.
      v10.51 (2026-11-16): Last Workflow text one step smaller — step name 12px, who/days line 11px, "Complete" 12px — so the column reads lighter.
-     v10.52 (2026-11-16): Stage History is one journey — Started → Open (Approval steps inside) → In Progress (After Approval steps + Subtasks inside) → Work Done; the standalone Subtasks section is gone, its checklist now lives inside In Progress. */
+     v10.52 (2026-11-16): Stage History is one journey — Started → Open (Approval steps inside) → In Progress (After Approval steps + Subtasks inside) → Work Done; the standalone Subtasks section is gone, its checklist now lives inside In Progress.
+     v10.53 (2026-11-16): board cards back to plain (card background, normal text) — the v10.12 solid status-color cards are gone; the colored column dots stay. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt">${esc(r.bst)||'—'}</td><td>${r.matst?tname(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tname(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -2907,8 +2905,8 @@ function renderBoard(){
       <div class="bdcol-h"><span style="display:flex;align-items:center;gap:8px"><span class="bdcol-dot" style="background:${cc}"></span>${esc(s)}</span><span class="cnt">${cards.length}</span></div>`+
       (cards.map(r=>{ const dl=odDeadline(r);
         const dstr=dl?fmtDShort(r.revised||r.due):(r.start?fmtDShort(r.start):'—');
-        return `<div class="bdcard bdcard-c" draggable="true" ondragstart="bdDragStart(event,${r.sl})" onclick="bdCardClick(event,${r.sl})" style="background:${statusColor(r.status)}">
-          <span class="bdtag">#${esc(r.unit)}</span>
+        return `<div class="bdcard" draggable="true" ondragstart="bdDragStart(event,${r.sl})" onclick="bdCardClick(event,${r.sl})">
+          <span class="chip n">#${esc(r.unit)}</span>
           <h5>${tname(r.name)}</h5>
           <div class="meta">Completed: ${r.prog||0}%</div>
           <span class="pbar"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span>
