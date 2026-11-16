@@ -600,7 +600,7 @@ th{padding:8px 10px}
       <div><label data-t="fStatus"></label><select id="faStatus" class="efinput"><option>In Progress</option><option>Complete</option><option>Writing</option><option>Open</option></select></div>
       <div><label data-t="fAssignee"></label><input id="faAssignee" class="efinput"></div>
       <div><label data-t="fPriority"></label><select id="faPriority" class="efinput"><option value=""></option><option>Urgent</option><option>Normal</option></select></div>
-      <div><label data-t="fBst"></label><select id="faBst" class="efinput"><option value=""></option><option>PREPARED BY</option><option>APPROVEED BY HOD</option><option>APPROVEED BY GHOM</option><option>APPROVEED BY IE-HEAD</option><option>APPROVEED BY COO</option><option>APPROVEED BY CEO</option><option>APPROVEED BY GCEO/CHAIRMEN SIR</option></select></div>
+      <div><label data-t="fBst"></label><select id="faBst" class="efinput"><option value=""></option><option>PREPARED BY</option><option>APPROVEED BY HOD</option><option>APPROVEED BY GHOM</option><option>APPROVEED BY IE-HEAD</option><option>APPROVEED BY COO</option><option>APPROVEED BY CEO (PROJECT/BUDGET/CS)</option><option>CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)</option><option>BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)</option><option>CHECKED & APPROVED BY (H/O PROCURMENT)</option><option>CHECKED & APPROVED BY (H/O OPERATION )</option><option>APPROVEED BY GHOM (RECOMANDATION)</option><option>APPROVEED BY SR.GM-OPERATON</option><option>CHECKED & CONFIRMED BY (H/O AUDIT)</option><option>APPROVEED BY CEO (RECOMANDATION)</option><option>APPROVEED BY GCEO</option><option>APPROVEED BY CHAIRMEN SIR</option><option>SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)</option><option>REQUISITION RISE IN EBS</option><option>REQUISITION APPROVEED BY HOD</option><option>REQUISITION APPROVEED BY IA (INTERNAL AUDIT)</option><option>REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)</option><option>CS MAKE AND CHECKED & APPROVED BY PROCURMENT</option><option>CS CHECKED & APPROVED BY H/O AUDIT</option><option>PO CREATE BY PROCURMENT</option><option>PO APPROVED BY FINANCE</option><option>PO CHECKED & APPROVED BY PROCURMENT HEAD</option><option>PO APPROVED BY CEO SIR</option><option>PO APPROVED BY GCEO SIR</option><option>PO APPROVED BY CHAIRMAN SIR</option><option>PO SEND TO SUPPLIER</option><option>MATERIALS RECEIVED</option><option>WORK START</option></select></div>
       <div><label data-t="fMatst"></label><input id="faMatst" class="efinput"></div>
       <div><label data-t="fStart"></label><input type="date" id="faStart" class="efinput"></div>
       <div><label data-t="fDue"></label><input type="date" id="faDue" class="efinput"></div>
@@ -644,7 +644,10 @@ function canonUnit(u){ const k=String(u||'').trim().toUpperCase();
   return String(u||'').trim(); }
 window.__canonUnit=canonUnit;
 const STATUSES_ALL = ['In Progress','Complete','Writing','Open'];
-const BST_OPTIONS = ['PREPARED BY','APPROVEED BY HOD','APPROVEED BY GHOM','APPROVEED BY IE-HEAD','APPROVEED BY COO','APPROVEED BY CEO','APPROVEED BY GCEO/CHAIRMEN SIR'];
+/* v10.45 (2026-11-16): Budget Status options now the owner's full 32-step list, in his order —
+   the same steps as the workflow chain plus the PO-approval SIR steps; spellings verbatim
+   (RECOMANDATION / OPERATON / PROCURMENT, trailing space in item 10). */
+const BST_OPTIONS = ['PREPARED BY','APPROVEED BY HOD','APPROVEED BY GHOM','APPROVEED BY IE-HEAD','APPROVEED BY COO','APPROVEED BY CEO (PROJECT/BUDGET/CS)','CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)','BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)','CHECKED & APPROVED BY (H/O PROCURMENT)','CHECKED & APPROVED BY (H/O OPERATION )','APPROVEED BY GHOM (RECOMANDATION)','APPROVEED BY SR.GM-OPERATON','CHECKED & CONFIRMED BY (H/O AUDIT)','APPROVEED BY CEO (RECOMANDATION)','APPROVEED BY GCEO','APPROVEED BY CHAIRMEN SIR','SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)','REQUISITION RISE IN EBS','REQUISITION APPROVEED BY HOD','REQUISITION APPROVEED BY IA (INTERNAL AUDIT)','REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)','CS MAKE AND CHECKED & APPROVED BY PROCURMENT','CS CHECKED & APPROVED BY H/O AUDIT','PO CREATE BY PROCURMENT','PO APPROVED BY FINANCE','PO CHECKED & APPROVED BY PROCURMENT HEAD','PO APPROVED BY CEO SIR','PO APPROVED BY GCEO SIR','PO APPROVED BY CHAIRMAN SIR','PO SEND TO SUPPLIER','MATERIALS RECEIVED','WORK START'];
 /* v10.36: Budget Status dropdown options, in the owner's order. An out-of-list stored value is appended
    as an extra selected option, so opening Edit and saving never wipes it. */
 function bstOptionsHtml(cur){
@@ -1174,7 +1177,8 @@ function render(){
      the task's latest workflow step + days since, from the script's
      getlastworkflow action (v4.15); "—" when there are no steps yet.
      v10.44 (2026-11-16): a Complete task shows just "Complete" in the
-     Last Workflow column — no step, who, days or next step. */
+     Last Workflow column — no step, who, days or next step.
+     v10.45 (2026-11-16): Budget Status dropdown now the owner's full 32-option list, in his order. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
