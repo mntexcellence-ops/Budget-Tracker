@@ -1205,7 +1205,8 @@ function render(){
      v10.46 (2026-11-16): header bar sticks to the top while scrolling (like the sidebar), opaque theme background.
      v10.47 (2026-11-16): task names stay on one line — first 25 words + "...", full name on hover (title); click still opens the full detail.
      v10.48 (2026-11-16): date cells never wrap (rows as short as possible); task-column cap 300px → 560px so more words show.
-     v10.49 (2026-11-16): every list-row text cell is one line — Unit/Priority/Budget Status nowrap; Materials Status + Remarks one line with full text on hover. */
+     v10.49 (2026-11-16): every list-row text cell is one line — Unit/Priority/Budget Status nowrap; Materials Status + Remarks one line with full text on hover.
+     v10.50 (2026-11-16): on a duplicate-step save error, name the older entry that holds the step number (legacy row) instead of the plain error — the step itself stays offered. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt">${esc(r.bst)||'—'}</td><td>${r.matst?tname(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tname(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -2168,6 +2169,27 @@ async function loadWorkflow(quiet){
   }catch(e){ dtWf=[]; }
   dtWfState='idle'; wfRefresh();
 }
+/* v10.50: the script (v4.15) rejects a step by NUMBER, so a fixed step
+   whose name was never recorded can still fail when an OLDER row already
+   holds its number — e.g. step 1 "APPROVEED BY CEO (PROJECT/BUDGET/CS)"
+   vs a legacy "PREPARED BY" row recorded under stepno 1. The form
+   correctly still offers that step (disabling it by number would hide it
+   forever), so on a duplicate error we name the old entry that blocks it
+   instead. v4.16 (name-based duplicate check) will unblock the add.
+   Returns the specific message, or null when the plain error should stay
+   (the step name is already recorded, or no legacy row holds this number). */
+function wfDupBlockerMsg(no, step){
+  const model=wfModel();
+  const fixed=model.find(m=>!m.custom && m.no===no);
+  if(fixed && fixed.row) return null; /* name already recorded: plain error */
+  const old=model.find(m=>m.custom && m.legacy && m.row && parseInt(m.row.stepno,10)===no);
+  if(!old) return null;
+  const nm=String((old.row&&old.row.step)||old.name||'').trim();
+  const who=String((old.row&&old.row.who)||'').trim();
+  const dt=(old.row&&old.row.date)?fmtD(old.row.date):'';
+  const det='"'+nm+'"'+(who?' — '+who:'')+(dt?', '+dt:'');
+  return 'Step No '+String(no)+' is already used by an earlier entry — '+det+'. That old entry holds this step number, so "'+step+'" cannot be saved yet; a script update will unblock it.';
+}
 async function wfAdd(){
   const r=rowBySl(dtRn); if(!r) return;
   const sel=document.getElementById('wfStepSel'); if(!sel) return;
@@ -2256,7 +2278,7 @@ async function wfAdd(){
          (no status write was sent yet). */
       if(wantStatus) wfUndoPhaseStatus(r,prevStatus,wantStatus);
       wfRefresh();
-      const mm=document.getElementById('wfMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
+      const mm=document.getElementById('wfMsg'); if(mm){ const dup=(!isCustom && /already exists/i.test(e.message||''))?wfDupBlockerMsg(no,step):null; mm.textContent=dup||Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
 function wfEdit(no){ dtWfEdit=no; wfRefresh(); }
 function wfCancelEdit(){ dtWfEdit=null; wfRefresh(); }
