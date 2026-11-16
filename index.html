@@ -13,6 +13,11 @@ body{font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-se
 /* v10.46: sticky header — stays pinned at the top while scrolling, like the
    sidebar; opaque theme background so scrolled content never shows through. */
 .topbar{position:sticky;top:0;z-index:60;background:var(--bg);border:0;border-radius:0;padding:10px 4px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;box-shadow:none;margin-bottom:14px}
+/* v10.47: task names stay on one line — first 25 words + "..." (see shortName),
+   full name on hover via title. td cap 300px keeps the 13-column table usable;
+   cards/deadline rows use the full width available to them. */
+.tname{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+td .tname{max-width:300px}
 .brand{display:flex;align-items:center;gap:12px}
 .top-logo{height:40px;width:auto;display:block;flex:none}
 [data-theme="dark"] .top-logo{filter:brightness(0) invert(1)}
@@ -809,6 +814,13 @@ function fmtD(v){ v=(v||'').trim(); if(!v) return '—';
   const d=new Date(v); if(!isNaN(d.getTime())) return d.getDate()+' '+DMON[d.getMonth()]+' '+d.getFullYear();
   return v; }
 const esc = s => String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+/* v10.47: one-line task names. shortName keeps the first 25 words (split on any
+   whitespace) and adds "..." when there are more; exactly 25 words shows whole.
+   tname renders it with the FULL name in title, so hovering shows everything
+   like alt text; clicking the row still opens the full detail popup. */
+const escA = s => esc(s).replace(/"/g,'&quot;');
+function shortName(n){ const w=String(n==null?'':n).split(/\s+/).filter(Boolean); return w.length>25 ? w.slice(0,25).join(' ')+'...' : w.join(' '); }
+function tname(n){ const f=String(n==null?'':n); return `<span class="tname" title="${escA(f)}">${esc(shortName(f))}</span>`; }
 /* ── Overdue (Project List only): the deadline is the Revised Finish Date
    when it exists, otherwise the Due Date. Overdue = active (not Complete)
    + deadline passed. Never shown in OVERVIEW cards or in popups. ── */
@@ -1143,7 +1155,7 @@ function render(){
   const dlRows=[...a.rows].filter(r=>odActive(r)&&odDeadline(r)).sort((x,y)=>odDeadline(x)-odDeadline(y)).slice(0,5);
   setHTML('chDeadlines', dlRows.length? dlRows.map(r=>{ const d=odDays(r);
     const when = d>0 ? `<span class="odtxt">${Tf('tmOverdueBy',{n:d})}</span>` : d===0 ? `<span class="badge soon">${T('tmDueToday')}</span>` : `<span style="color:var(--muted);font-size:12px">${Tf('tmDaysLeft',{n:-d})}</span>`;
-    return `<div class="dlrow" onclick="openDetail(${r.sl})"><div style="flex:1;min-width:0"><b>${esc(r.name)}</b><div class="dl-sub">${esc(r.unit)} · ${fmtD(r.revised||r.due)}</div></div>${when}</div>`; }).join('')
+    return `<div class="dlrow" onclick="openDetail(${r.sl})"><div style="flex:1;min-width:0"><b>${tname(r.name)}</b><div class="dl-sub">${esc(r.unit)} · ${fmtD(r.revised||r.due)}</div></div>${when}</div>`; }).join('')
     : `<p style="color:${thc().nodata};font-size:12px">${T('nodata')}</p>`);
   /* v9: Projects by Start Month — real counts grouped by Start Date
      month/year, chronological; months with no projects simply don't appear. */
@@ -1165,7 +1177,7 @@ function render(){
   const top10=[...a.rows].sort((x,y)=>(y.cost||0)-(x.cost||0)).slice(0,10);
   setHTML('tblTop', top10.length?
     `<table><tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th class="num">${T('thCost')} (BDT)</th><th class="num">${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th></tr>`+
-    top10.map(r=>`<tr><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${r.prog||0}%</td><td class="num">${fmtN(r.disb||0)}</td></tr>`).join('')+`</table>`:nodata);
+    top10.map(r=>`<tr><td><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${r.prog||0}%</td><td class="num">${fmtN(r.disb||0)}</td></tr>`).join('')+`</table>`:nodata);
   const sub=document.getElementById('tblListSub'); if(sub) sub.textContent=Tf('listS',{n:a.n});
   /* v2: one section per unit — the Unit filter shows/hides whole sections.
      A unit with no rows at all (DGL-2) still gets its own section. */
@@ -1181,10 +1193,11 @@ function render(){
      v10.44 (2026-11-16): a Complete task shows just "Complete" in the
      Last Workflow column — no step, who, days or next step.
      v10.45 (2026-11-16): Budget Status dropdown now the owner's full 32-option list, in his order.
-     v10.46 (2026-11-16): header bar sticks to the top while scrolling (like the sidebar), opaque theme background. */
+     v10.46 (2026-11-16): header bar sticks to the top while scrolling (like the sidebar), opaque theme background.
+     v10.47 (2026-11-16): task names stay on one line — first 25 words + "...", full name on hover (title); click still opens the full detail. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
-    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
+    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td>${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.revised||r.due)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
   /* v3: Group by Unit (v2 sections) or Status (status sections). */
   let sections='';
   if(groupBy==='status'){
@@ -2643,7 +2656,7 @@ function renderFsTable(){
     `<table><tr><th></th><th>${T('thSL')}</th><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('thStart')}</th><th>${T('thDeadline')}</th><th>${T('thDays')}</th><th>${T('thProgress')}</th><th class="num">${T('thBudget')} (BDT)</th><th class="num">${T('thCost')} (BDT)</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('thRemarks')}</th><th></th></tr>`+
     pairs.map(r=>{
       if(String(r.sl)===String(fsEditSl)){
-        return `<tr id="fsEditRow"><td></td><td>${esc(r.sl)}</td><td><b>${r.unit}</b></td><td>${esc(r.name)}</td>`+
+        return `<tr id="fsEditRow"><td></td><td>${esc(r.sl)}</td><td><b>${r.unit}</b></td><td>${tname(r.name)}</td>`+
         `<td><select id="fsSt" class="efinput" style="min-width:120px">${stOpts.map(s=>`<option ${s.toLowerCase()===(r.status||'').toLowerCase()?'selected':''}>${s}</option>`).join('')}</select></td>`+
         `<td><input type="date" id="feStart" class="efinput" value="${toISODate(r.start)}"></td><td><input type="date" id="feDue" class="efinput" value="${toISODate(r.due)}" title="Due Date"><input type="date" id="feRevised" class="efinput" value="${toISODate(r.revised)}" title="Revised Finish Date" style="margin-top:4px"></td><td>${daysCell(r)}</td>`+
         `<td><input type="number" step="any" min="0" max="100" id="fsPr" class="efinput" value="${r.prog||0}" style="width:80px"> %</td>`+
@@ -2653,7 +2666,7 @@ function renderFsTable(){
         `<td><input id="fsRe" class="efinput" value="${esc(r.comment)}" style="min-width:150px"></td>`+
         `<td style="white-space:nowrap"><button class="fsbtn pri" onclick="fsSaveEdit(${r.sl})">${T('saveBtn').replace('💾 ','')}</button> <button class="fsbtn" onclick="fsCancelEdit()">${T('dtClose').replace('✖ ','')}</button></td></tr>`;
       }
-      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td><b>${r.unit}</b></td><td>${esc(r.name)}</td><td>${statusChip(r.status)}</td><td>${fmtD(r.start)}</td><td>${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
+      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td>${fmtD(r.start)}</td><td>${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td>${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${esc(r.comment)}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
     }).join('')+`</table>`
     : '<p style="color:'+thc().nodata+';font-size:13px">'+T('fsNoProjects')+'</p>';
   setHTML('fsTable', tbl);
@@ -2732,7 +2745,7 @@ function renderListGrid(a){
   g.innerHTML = a.rows.length ? a.rows.map(r=>{ const dl=odDeadline(r);
     return `<div class="pcard ${isOverdue(r)?'od':''}" onclick="openDetail(${r.sl})">
       <div class="pc-top"><span class="chip n">${esc(r.unit)}</span>${statusChip(r.status)}<input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onclick="event.stopPropagation()" onchange="toggleSel(${r.sl},this.checked)"></div>
-      <h4>${esc(r.name)}</h4>
+      <h4>${tname(r.name)}</h4>
       <div class="pc-meta">${T('thDeadline')}: ${dl?fmtD(r.revised||r.due):'—'}${odBadge(r)?' '+odBadge(r):''}</div>
       <div class="pc-prog"><span class="pbar"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span><span>${r.prog||0}%</span></div>
       <div class="pc-foot"><span>${T('thCost')}: <b>${fmtM(r.cost||0)}</b></span><span>${T('thBudget')}: <b>${fmtM(r.budget||0)}</b></span></div>
@@ -2795,7 +2808,7 @@ function renderBoard(){
         const dstr=dl?fmtDShort(r.revised||r.due):(r.start?fmtDShort(r.start):'—');
         return `<div class="bdcard bdcard-c" draggable="true" ondragstart="bdDragStart(event,${r.sl})" onclick="bdCardClick(event,${r.sl})" style="background:${statusColor(r.status)}">
           <span class="bdtag">#${esc(r.unit)}</span>
-          <h5>${esc(r.name)}</h5>
+          <h5>${tname(r.name)}</h5>
           <div class="meta">Completed: ${r.prog||0}%</div>
           <span class="pbar"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span>
           <div class="bdfoot"><span>📅 ${dstr}</span><span>${(r.subtasks?('☑ '+r.subtasks):'')}${isOverdue(r)?' · '+Tf('badgeOverdue',{d:odDays(r)}):''}</span></div>
