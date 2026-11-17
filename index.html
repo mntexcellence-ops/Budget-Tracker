@@ -1783,53 +1783,59 @@ function stageBodyHtml(r){
        the logged view showed only the status-change rows, so the original
        start date was lost from the timeline. Same "Started" row as the
        seeded view, so both views always open with it. ── */
-    /* ── v10.52: the nested blocks ride on the log rows themselves —
-       the Approval block goes right after the LATEST row that enters
-       Open, After Approval + Subtasks + Custom + form right after the
-       LATEST row that enters In Progress, the End Date right after the
-       LATEST row that enters Complete. A stage the log never enters
-       gets a synthetic entry: Open right after Started (current when
-       the task is Open, upcoming while Writing, past otherwise);
-       In Progress after the current-stage row when not yet reached
-       (upcoming), or just before the Complete entry when the task is
-       Complete but skipped it (past); Work Done after the current-stage
-       row when not complete (upcoming). Every log row is kept. ── */
+    /* ── v10.60: the log rows are grouped by destination stage in
+       canonical journey order — Started → Open → In Progress →
+       Work Done — instead of raw chronological order. A task that
+       moved In Progress → Open (an Approval step added after an
+       After-Approval step) used to show its In Progress block
+       (After Approval + Subtasks) ABOVE its Open block (Approval
+       Process); now the Open block always sits above the In Progress
+       block, and every log row is still kept, in chronological order
+       inside its own stage group. The nested blocks ride on the
+       LATEST row that enters their stage; a stage the log never
+       enters gets a synthetic entry as before. ── */
     const toStage=e=>String(e.to||'').trim().toLowerCase();
-    let lastOpen=-1,lastProg=-1,lastComp=-1;
-    dtStageLog.forEach((e,i)=>{ const t=toStage(e);
-      if(t==='open') lastOpen=i; else if(t==='in progress') lastProg=i; else if(t==='complete') lastComp=i; });
-    const items=[startStep];
-    let compRowIdx=-1;
-    dtStageLog.forEach((e,i)=>{
+    const logRowHtml=(e,nested)=>{
       const fromTxt=e.from==='—'?T('stStarted'):esc(e.from);
-      let row=`<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div>`;
-      if(i===lastOpen) row+=openBlocks;
-      if(i===lastProg) row+=progBlocks;
-      if(i===lastComp){ row+=endHtml; compRowIdx=items.length; }
-      row+='</div>';
-      items.push(row);
-    });
-    if(lastOpen===-1){
+      return `<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div>${nested||''}</div>`;
+    };
+    const groups={other:[],open:[],prog:[],comp:[]};
+    dtStageLog.forEach(e=>{ const t=toStage(e);
+      if(t==='open') groups.open.push(e);
+      else if(t==='in progress') groups.prog.push(e);
+      else if(t==='complete') groups.comp.push(e);
+      else groups.other.push(e); });
+    const items=[startStep];
+    groups.other.forEach(e=>items.push(logRowHtml(e)));
+    if(groups.open.length){
+      groups.open.forEach((e,k)=>items.push(logRowHtml(e,k===groups.open.length-1?openBlocks:'')));
+    } else {
       const cls=isOpen?'cur':(isWriting?'upcoming':'');
       const meta=isOpen?Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)}):'';
-      items.splice(1,0,stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),meta,cls,openBlocks));
+      items.push(stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),meta,cls,openBlocks));
     }
-    /* Current-stage row, as before — the nested blocks ride on it when
-       it IS the latest entry of its stage (In Progress with no log row,
-       or Complete with no log row). */
-    let curNested='';
-    if(lastProg===-1&&isProg) curNested+=progBlocks;
-    if(lastComp===-1&&isComp) curNested+=endHtml;
-    const curRow=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div>${curNested}</div>`;
-    items.push(curRow);
-    if(lastProg===-1&&isComp){
-      const targetIdx=lastComp!==-1?compRowIdx:items.indexOf(curRow);
-      items.splice(targetIdx<0?items.length:targetIdx,0,stageEntryHtml('In Progress',T('kpiInProg'),'','',progBlocks));
-    }
-    if(lastProg===-1&&!isProg&&!isComp)
+    if(groups.prog.length){
+      groups.prog.forEach((e,k)=>items.push(logRowHtml(e,k===groups.prog.length-1?progBlocks:'')));
+    } else if(isProg){
+      items.push(stageEntryHtml('In Progress',T('kpiInProg')+curTag,Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)}),'cur',progBlocks));
+    } else if(isComp){
+      items.push(stageEntryHtml('In Progress',T('kpiInProg'),'','',progBlocks));
+    } else {
       items.push(stageEntryHtml('In Progress',T('kpiInProg'),T('stNotYet'),'upcoming',progBlocks));
-    if(lastComp===-1&&!isComp)
+    }
+    if(groups.comp.length){
+      groups.comp.forEach((e,k)=>items.push(logRowHtml(e,k===groups.comp.length-1?endHtml:'')));
+    } else if(isComp){
+      items.push(stageEntryHtml('Complete',T('stWorkDone')+curTag,compD?Tf('stDoneOn',{d:fmtD(r.finishwork||r.revised)}):T('stCurrentStage'),'cur',endHtml));
+    } else {
       items.push(stageEntryHtml('Complete',T('stWorkDone'),T('stNotYet'),'upcoming',endHtml));
+    }
+    /* Current-stage row, as before — it carries the "since · days" the
+       transition rows do not, and it stays last so the spine ends on
+       where the task is now. It never hosts nested blocks any more:
+       the stage groups host them. */
+    const curRow=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)})}</div></div>`;
+    items.push(curRow);
     h+=`<div class="tl">${items.join('')}</div>`;
   } else {
     /* ── v10.52: seeded journey — the same four stages, synthesised:
