@@ -1249,7 +1249,8 @@ function render(){
      v10.58 (2026-11-16): Project List Budget Status 13px → 9px and Last Workflow 4px smaller (step/done 12px → 8px, who/days 11px → 7px, empty "—" 8px); list only, filter and Edit form unchanged.
      v10.59 (2026-11-16): Budget Status and Last Workflow both a uniform 11px — the v10.58 sizes (9px/8px/7px) were too small to read; list only.
      v10.60 (2026-11-17): Stage History always renders in canonical stage order Started → Open (Approval Process inside) → In Progress (After Approval + Subtasks inside) → Work Done, instead of log-date order.
-     v10.61 (2026-11-17): status "Writing" renamed to "Wating" (owner's spelling) everywhere — chip, board column, filters, Edit/Add forms, detail popup, Stage History; old "Writing" rows from the Sheet and STATUS_LOG are normalized to "Wating" on load, writes send "Wating". */
+     v10.61 (2026-11-17): status "Writing" renamed to "Wating" (owner's spelling) everywhere — chip, board column, filters, Edit/Add forms, detail popup, Stage History; old "Writing" rows from the Sheet and STATUS_LOG are normalized to "Wating" on load, writes send "Wating".
+     v10.62 (2026-11-17): Stage History shows 1 row per section — each destination-stage group keeps only its LATEST log row (greatest Date, ties → later log row); rows that end in Wating are not shown at all. Older rows stay in STATUS_LOG — only the display collapses. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -1796,8 +1797,9 @@ function stageBodyHtml(r){
        After-Approval step) used to show its In Progress block
        (After Approval + Subtasks) ABOVE its Open block (Approval
        Process); now the Open block always sits above the In Progress
-       block, and every log row is still kept, in chronological order
-       inside its own stage group. The nested blocks ride on the
+       block, and (v10.62) each stage group now shows only its latest
+       row — older rows stay in STATUS_LOG and are hidden from display.
+       The nested blocks ride on the
        LATEST row that enters their stage; a stage the log never
        enters gets a synthetic entry as before. ── */
     const toStage=e=>String(e.to||'').trim().toLowerCase();
@@ -1807,10 +1809,23 @@ function stageBodyHtml(r){
     };
     const groups={other:[],open:[],prog:[],comp:[]};
     dtStageLog.forEach(e=>{ const t=toStage(e);
+      if(t==='wating') return; // v10.62: rows that END in Wating are never shown in Stage History (from-Wating rows still show, with their truthful from-label)
       if(t==='open') groups.open.push(e);
       else if(t==='in progress') groups.prog.push(e);
       else if(t==='complete') groups.comp.push(e);
       else groups.other.push(e); });
+    /* ── v10.62: 1 row per section — each destination-stage group keeps
+       only its LATEST log row (greatest Date; ties → later row in log
+       order). The older rows stay in STATUS_LOG — only the display
+       collapses. The nested blocks ride on the group's single (latest)
+       row via the existing k===length-1 check below, and the kept row
+       keeps its STORED "days in X" value as-is. ── */
+    const latestOf=arr=>arr.reduce((best,e,i)=>{
+      if(!best) return {e,i};
+      const tE=(parseD(e.date)||new Date(0)).getTime(), tB=(parseD(best.e.date)||new Date(0)).getTime();
+      return (tE>tB||(tE===tB&&i>best.i))?{e,i}:best;
+    },null).e;
+    ['other','open','prog','comp'].forEach(k=>{ if(groups[k].length) groups[k]=[latestOf(groups[k])]; });
     const items=[startStep];
     groups.other.forEach(e=>items.push(logRowHtml(e)));
     if(groups.open.length){
