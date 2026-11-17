@@ -786,7 +786,7 @@ toastSaved:'Saved!',toastSubAdd:'Subtask added',toastSubDone:'Subtask completed'
 cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the Sheet. This cannot be undone.',cfCancel:'Cancel',cfDelete:'Delete',
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 wfTitle:'Workflow Steps',wfSub:'Approval and execution steps for this project — who handled each step, when it moved, and how long it took',
-wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',lwToday:'Today',lwAgo1:'1d ago',lwAgo:'{n}d ago',lwAllDone:'All done',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfEdit:'Workflow step updated',
+wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',lwToday:'Today',lwAgo1:'1d ago',lwAgo:'{n}d ago',lwAllDone:'All done',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddFlip:'Workflow step added — status set to {st}',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfDelFlip:'Workflow step deleted — status set to {st}',toastWfEdit:'Workflow step updated',
 prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracking — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
@@ -1250,7 +1250,8 @@ function render(){
      v10.59 (2026-11-16): Budget Status and Last Workflow both a uniform 11px — the v10.58 sizes (9px/8px/7px) were too small to read; list only.
      v10.60 (2026-11-17): Stage History always renders in canonical stage order Started → Open (Approval Process inside) → In Progress (After Approval + Subtasks inside) → Work Done, instead of log-date order.
      v10.61 (2026-11-17): status "Writing" renamed to "Wating" (owner's spelling) everywhere — chip, board column, filters, Edit/Add forms, detail popup, Stage History; old "Writing" rows from the Sheet and STATUS_LOG are normalized to "Wating" on load, writes send "Wating".
-     v10.62 (2026-11-17): Stage History shows 1 row per section — each destination-stage group keeps only its LATEST log row (greatest Date, ties → later log row); rows that end in Wating are not shown at all. Older rows stay in STATUS_LOG — only the display collapses. */
+     v10.62 (2026-11-17): Stage History shows 1 row per section — each destination-stage group keeps only its LATEST log row (greatest Date, ties → later log row); rows that end in Wating are not shown at all. Older rows stay in STATUS_LOG — only the display collapses.
+     v10.63 (2026-11-17): Subtask section shows a progress bar (done/total subtasks) so subtask completion is visible at a glance; parent Progress stays manual (owner's decision — never derived from subtasks). Workflow step add/delete toast now names the status change when the phase rule flips the task status. */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -1514,6 +1515,11 @@ function subBodyHtml(r){
   else if(dtSubsState==='loading'){ h+=`<div style="font-size:13px;color:var(--muted)">${T('stLoading')}</div>`; return h; }
   const done=dtSubs.filter(s=>s.done).length;
   h+=`<div style="font-size:13px;margin-bottom:4px"><b>${Tf('stDone',{done,total:dtSubs.length})}</b></div>`;
+  /* v10.63: subtask progress bar — parent Progress stays manual (owner's
+     decision); this bar shows only subtask completion, done/total, from
+     the same dtSubs state as the count above, so it moves live with
+     toggle/add/delete via subRefresh. Shown only when subtasks exist. */
+  if(dtSubs.length){ const pct=Math.round(done/dtSubs.length*100); h+=`<div style="margin:2px 0 6px"><span class="pbar" style="width:220px"><i style="width:${pct}%"></i></span> <b>${pct}%</b></div>`; }
   if(!dtSubs.length){ h+=`<div style="font-size:13px;color:var(--muted)">${T('stEmpty')}</div>`; }
   else h+=dtSubs.map(s=>{
     /* v10.10: inline edit form for this row (name + start date + due date). */
@@ -2385,7 +2391,9 @@ async function wfAdd(){
   const wantStatus=wfPhaseStatus(r);
   const prevStatus=wantStatus?wfApplyPhaseStatus(r):null;
   wfRefresh();
-  toast(T('toastWfAdd'),'ok');
+  /* v10.63: name the phase flip in the toast when the step actually
+     changed the status; otherwise keep the plain toast. */
+  toast(wantStatus?Tf('toastWfAddFlip',{st:wantStatus}):T('toastWfAdd'),'ok');
   const q=new URLSearchParams({token:tok,action:'addworkflow',sl:String(r.sl),unit:r.unit,task:r.name,step,who,date,ref});
   q.set('stepno',String(stepno));
   bgWrite(url,q,
@@ -2495,7 +2503,9 @@ async function wfDel(no){
      only After Approval step drops the task back to Open. */
   const wantStatus=wfPhaseStatus(r);
   const prevStatus=wantStatus?wfApplyPhaseStatus(r):null;
-  wfRefresh(); toast(T('toastWfDel'),'ok');
+  /* v10.63: name the phase flip in the toast when the delete actually
+     changed the status; otherwise keep the plain toast. */
+  wfRefresh(); toast(wantStatus?Tf('toastWfDelFlip',{st:wantStatus}):T('toastWfDel'),'ok');
   bgWrite(url,q,
     ()=>{ if(!wantStatus){ loadWorkflow(true); loadLastWf(true); return; }
       /* v10.39: write the phase status ONLY after the delete saved,
