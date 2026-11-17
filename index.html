@@ -72,8 +72,8 @@ td .tname.sm{max-width:240px}
 [data-theme="dark"] .chip.b{background:#16294D;color:#7FB0FF}
 [data-theme="dark"] .chip.y{background:#3A2E12;color:#FCD34D}
 .stpill{display:inline-block;font-size:11px;font-weight:600;color:#fff;padding:2px 10px;border-radius:999px;white-space:nowrap}
-.st-open{background:#9aa0a6}.st-inprog{background:#5b8def}.st-writing{background:#b07fe8}.st-complete{background:#4caf50}
-[data-theme="dark"] .st-open{background:#a8adb3}[data-theme="dark"] .st-inprog{background:#6b9dff}[data-theme="dark"] .st-writing{background:#c09bf0}[data-theme="dark"] .st-complete{background:#5cb85c}
+.st-open{background:#9aa0a6}.st-inprog{background:#5b8def}.st-wating{background:#b07fe8}.st-complete{background:#4caf50}
+[data-theme="dark"] .st-open{background:#a8adb3}[data-theme="dark"] .st-inprog{background:#6b9dff}[data-theme="dark"] .st-wating{background:#c09bf0}[data-theme="dark"] .st-complete{background:#5cb85c}
 .avt{display:inline-flex;align-items:center;justify-content:center;border-radius:50%;color:#fff;font-weight:700;vertical-align:middle;flex:none}
 .avstack{display:inline-flex;margin-right:6px;vertical-align:middle}
 .avstack .avt{margin-left:-6px;border:2px solid var(--card)}
@@ -317,7 +317,7 @@ th{padding:8px 10px}
 .bdcard .meta b{color:var(--body)}
 /* ── v10.12: colorful board (reference design) — solid status-color cards,
    white text, colored column dots. Open=blue, In Progress=orange,
-   Writing=red, Complete=green.
+   Wating=red, Complete=green.
    v10.53 (2026-11-16): cards reverted to plain (card background, normal
    text) at the owner's request — the solid-color cards are gone; the
    colored column dots stay.
@@ -640,7 +640,7 @@ th{padding:8px 10px}
     <div class="efgrid">
       <div><label data-t="fUnit"></label><select id="faUnit" class="efinput"></select></div>
       <div style="grid-column:span 2"><label data-t="fTask"></label><input id="faName" class="efinput" data-t-ph="fTaskPh"></div>
-      <div><label data-t="fStatus"></label><select id="faStatus" class="efinput"><option>In Progress</option><option>Complete</option><option>Writing</option><option>Open</option></select></div>
+      <div><label data-t="fStatus"></label><select id="faStatus" class="efinput"><option>In Progress</option><option>Complete</option><option>Wating</option><option>Open</option></select></div>
       <div><label data-t="fAssignee"></label><input id="faAssignee" class="efinput"></div>
       <div><label data-t="fPriority"></label><select id="faPriority" class="efinput"><option value=""></option><option>Urgent</option><option>Normal</option></select></div>
       <div><label data-t="fBst"></label><select id="faBst" class="efinput"><option value=""></option><option>PREPARED BY</option><option>APPROVEED BY HOD</option><option>APPROVEED BY GHOM</option><option>APPROVEED BY IE-HEAD</option><option>APPROVEED BY COO</option><option>APPROVEED BY CEO (PROJECT/BUDGET/CS)</option><option>CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)</option><option>BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)</option><option>CHECKED & APPROVED BY (H/O PROCURMENT)</option><option>CHECKED & APPROVED BY (H/O OPERATION )</option><option>APPROVEED BY GHOM (RECOMANDATION)</option><option>APPROVEED BY SR.GM-OPERATON</option><option>CHECKED & CONFIRMED BY (H/O AUDIT)</option><option>APPROVEED BY CEO (RECOMANDATION)</option><option>APPROVEED BY GCEO</option><option>APPROVEED BY CHAIRMEN SIR</option><option>SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)</option><option>REQUISITION RISE IN EBS</option><option>REQUISITION APPROVEED BY HOD</option><option>REQUISITION APPROVEED BY IA (INTERNAL AUDIT)</option><option>REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)</option><option>CS MAKE AND CHECKED & APPROVED BY PROCURMENT</option><option>CS CHECKED & APPROVED BY H/O AUDIT</option><option>PO CREATE BY PROCURMENT</option><option>PO APPROVED BY FINANCE</option><option>PO CHECKED & APPROVED BY PROCURMENT HEAD</option><option>PO APPROVED BY CEO SIR</option><option>PO APPROVED BY GCEO SIR</option><option>PO APPROVED BY CHAIRMAN SIR</option><option>PO SEND TO SUPPLIER</option><option>MATERIALS RECEIVED</option><option>WORK START</option></select></div>
@@ -669,7 +669,7 @@ const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1LVyKMJRTGdK0Kc3hT
    the /exec URL is embedded here by rebuilding). When set, Setup asks only
    for the 6-digit token — the URL field comes prefilled and read-only. ── */
 const EMBEDDED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2lMcNSwjxVajtJZBcocD6eM9d8P09GDdLs3-AsEgzTTN2MIW216a-xBua73GJDDs/exec';
-let D = {"rows": [{"sl": 1, "unit": "DGL-1", "name": "Levis Structural issue", "status": "In Progress", "assignee": "", "priority": "", "bst": "", "matst": "", "start": "2022-10-21", "due": "", "revised": "2026-11-13", "finishwork": "", "prog": 100, "budget": 0, "cost": 0, "disb": 13300000, "subtasks": 0, "comment": "Work Done", "comment_by": "", "comment_date": "", "desc": "To proceed URM wall with retrofit, total 6 building", "task_id": "", "prog_note": ""}], "units": ["DGL-1", "DGL-2", "DRL", "DFL", "GGL", "AWL", "AFL"], "statuses": ["In Progress", "Complete", "Writing", "Open"], "assignees": [], "updated": "2026-11-12"};
+let D = {"rows": [{"sl": 1, "unit": "DGL-1", "name": "Levis Structural issue", "status": "In Progress", "assignee": "", "priority": "", "bst": "", "matst": "", "start": "2022-10-21", "due": "", "revised": "2026-11-13", "finishwork": "", "prog": 100, "budget": 0, "cost": 0, "disb": 13300000, "subtasks": 0, "comment": "Work Done", "comment_by": "", "comment_date": "", "desc": "To proceed URM wall with retrofit, total 6 building", "task_id": "", "prog_note": ""}], "units": ["DGL-1", "DGL-2", "DRL", "DFL", "GGL", "AWL", "AFL"], "statuses": ["In Progress", "Complete", "Wating", "Open"], "assignees": [], "updated": "2026-11-12"};
 const UNITS_ALL = ['DGL-1','DGL-2','DRL','DFL','GGL','AWL','AFL'];
 /* ── v10: canonical units — the same rules as the script (7 separate
    units: AWL and AFL are separate, DAL/DFL is now DFL; a legacy
@@ -686,7 +686,7 @@ function canonUnit(u){ const k=String(u||'').trim().toUpperCase();
   if(k==='DRL') return 'DRL'; if(k==='GGL') return 'GGL';
   return String(u||'').trim(); }
 window.__canonUnit=canonUnit;
-const STATUSES_ALL = ['In Progress','Complete','Writing','Open'];
+const STATUSES_ALL = ['In Progress','Complete','Wating','Open'];
 /* v10.45 (2026-11-16): Budget Status options now the owner's full 32-step list, in his order —
    the same steps as the workflow chain plus the PO-approval SIR steps; spellings verbatim
    (RECOMANDATION / OPERATON / PROCURMENT, trailing space in item 10). */
@@ -758,7 +758,7 @@ liveEmpty:'⚪ Sheet is empty — showing the snapshot. Import the data into the
 fsTitleAll:'All Projects',fsTotals:'{n} project(s) · Total cost {c} · Total budget {b} · Total payment {p}',
 fsNoProjects:'No projects in this status yet. If a project gets this status in the Sheet, it will appear here automatically.',
 fsAddTitle:'➕ Add New Project',fsAddTotals:'New project will be added to the bottom of the Sheet.',
-stComplete:'Completed',stInProg:'In Progress',stWriting:'Writing',stOpen:'Open',
+stComplete:'Completed',stInProg:'In Progress',stWating:'Wating',stOpen:'Open',
 thDays:'Days',
 secProjects:'{n} projects',secComplete:'{n} complete',secInProg:'{n} in progress',secOverdue:'{n} overdue',secNoProjects:'No projects yet',
 daysUnit:'d',
@@ -990,7 +990,7 @@ function statusChip(s){
   const k=(s||'').toLowerCase();
   if(k==='complete') return '<span class="stpill st-complete">'+T('stComplete')+'</span>';
   if(k==='in progress') return '<span class="stpill st-inprog">'+T('stInProg')+'</span>';
-  if(k==='writing') return '<span class="stpill st-writing">'+T('stWriting')+'</span>';
+  if(k==='writing'||k==='wating') return '<span class="stpill st-wating">'+T('stWating')+'</span>';
   if(k==='open') return '<span class="stpill st-open">'+T('stOpen')+'</span>';
   return '<span class="stpill st-open">'+esc(s||'—')+'</span>';
 }
@@ -1244,10 +1244,12 @@ function render(){
      v10.53 (2026-11-16): board cards back to plain (card background, normal text) — the v10.12 solid status-color cards are gone; the colored column dots stay.
      v10.54 (2026-11-16): board cards compact — tighter padding/margins, title 12px; every card element stays, drag/click unchanged.
      v10.55 (2026-11-16): board columns fit on screen — 4 columns share the board width via minmax(0,1fr) + min-width:0 on columns, so long card titles clip with ellipsis instead of stretching a column to ~1100px.
-     v10.56 (2026-11-16): the 4 solid status-color board cards are back at the owner's request (Open blue, In Progress orange, Writing red, Complete green); compact card sizes (v10.54) and narrow columns (v10.55) stay.
+     v10.56 (2026-11-16): the 4 solid status-color board cards are back at the owner's request (Open blue, In Progress orange, Wating red, Complete green); compact card sizes (v10.54) and narrow columns (v10.55) stay.
      v10.57 (2026-11-16): project/task names are 40 letters now (was 25 words) — first 40 characters + "...", full name still on hover; Materials Status and Latest Comment keep the old 25-word rule.
      v10.58 (2026-11-16): Project List Budget Status 13px → 9px and Last Workflow 4px smaller (step/done 12px → 8px, who/days 11px → 7px, empty "—" 8px); list only, filter and Edit form unchanged.
-     v10.59 (2026-11-16): Budget Status and Last Workflow both a uniform 11px — the v10.58 sizes (9px/8px/7px) were too small to read; list only. */
+     v10.59 (2026-11-16): Budget Status and Last Workflow both a uniform 11px — the v10.58 sizes (9px/8px/7px) were too small to read; list only.
+     v10.60 (2026-11-17): Stage History always renders in canonical stage order Started → Open (Approval Process inside) → In Progress (After Approval + Subtasks inside) → Work Done, instead of log-date order.
+     v10.61 (2026-11-17): status "Writing" renamed to "Wating" (owner's spelling) everywhere — chip, board column, filters, Edit/Add forms, detail popup, Stage History; old "Writing" rows from the Sheet and STATUS_LOG are normalized to "Wating" on load, writes send "Wating". */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -1316,6 +1318,10 @@ function normH(h){ return (h||'').toUpperCase().replace(/[\s.\-]/g,''); }
 function pNum(v){ v=(v||'').toString().replace(/,/g,'').replace(/ /g,'').trim(); if(!v) return 0;
   const n=parseFloat(v); return isNaN(n)?0:n; }
 function pPct(v){ v=(v||'').toString().replace('%','').trim(); const n=parseFloat(v); return isNaN(n)?0:n; }
+/* ── v10.61: the owner renamed status "Writing" to "Wating" (his spelling).
+   The Sheet and old STATUS_LOG rows still store "Writing" — normalize at
+   the data boundary so old rows keep working; writes always send "Wating". ── */
+function normStatus(s){ const v=String(s||'').trim(); return v.toLowerCase()==='writing'?'Wating':v; }
 function rowsFromCSV(raw){
   if(!raw.length) return [];
   const header=raw[0].map(normH);
@@ -1327,7 +1333,7 @@ function rowsFromCSV(raw){
     const name=col(r, ['Task']);
     const unit=col(r, ['Unit']);
     if(!name && !unit) continue;
-    out.push({ sl: col(r, ['SL']), unit: canonUnit(col(r, ['Unit'])), name, status: col(r, ['Status']) || 'Open',
+    out.push({ sl: col(r, ['SL']), unit: canonUnit(col(r, ['Unit'])), name, status: normStatus(col(r, ['Status'])) || 'Open',
       assignee: col(r, ['Assignee']), priority: col(r, ['Priority']),
       bst: col(r, ['Budget Status']),
       matst: col(r, ['Materials Status']),
@@ -1352,7 +1358,7 @@ function showSkeleton(){
 /* ── v10: the script's getdata rows are already in dashboard shape
    (start/due/revised/finishwork are ISO dates); map them onto D.rows,
    canonicalizing the unit labels the same way the script does. ── */
-function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:r.status||'Open', assignee:r.assignee||'', priority:r.priority||'', bst: r.bst || '', matst: r.matst || '', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
+function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:normStatus(r.status)||'Open', assignee:r.assignee||'', priority:r.priority||'', bst: r.bst || '', matst: r.matst || '', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
 /* ── v10: re-run whoami at boot when a token is saved, so the profile chip
    and the per-unit edit lock come back without re-entering the token. ── */
 function whoamiRestore(){ const u=scriptUrl(), t=curToken(); if(!u||!t) return;
@@ -1773,7 +1779,7 @@ function stageBodyHtml(r){
   const isComp=(r.status||'').toLowerCase()==='complete';
   const isProg=(r.status||'').toLowerCase()==='in progress';
   const isOpen=(r.status||'').toLowerCase()==='open';
-  const isWriting=(r.status||'').toLowerCase()==='writing';
+  const isWating=(r.status||'').toLowerCase()==='wating';
   const openBlocks=openBlocksHtml(r);
   const progBlocks=progBlocksHtml(r);
   const endHtml=endD?`<div class="tl-subs"><div style="font-size:13px"><b>${T('stEndDate')}</b> — ${fmtD(r.finishwork||r.revised||r.due)}</div></div>`:'';
@@ -1810,7 +1816,7 @@ function stageBodyHtml(r){
     if(groups.open.length){
       groups.open.forEach((e,k)=>items.push(logRowHtml(e,k===groups.open.length-1?openBlocks:'')));
     } else {
-      const cls=isOpen?'cur':(isWriting?'upcoming':'');
+      const cls=isOpen?'cur':(isWating?'upcoming':'');
       const meta=isOpen?Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)}):'';
       items.push(stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),meta,cls,openBlocks));
     }
@@ -1840,18 +1846,18 @@ function stageBodyHtml(r){
   } else {
     /* ── v10.52: seeded journey — the same four stages, synthesised:
        Open is current when the task is Open, past once it moved on,
-       upcoming while still Writing; In Progress is current when In
+       upcoming while still Wating; In Progress is current when In
        Progress, past (start → done) when Complete, upcoming while
-       still Open or Writing; Work Done is current when Complete,
-       upcoming otherwise — never a fake date. A Writing task keeps
+       still Open or Wating; Work Done is current when Complete,
+       upcoming otherwise — never a fake date. A Wating task keeps
        its current-stage row directly after Started, then the four
-       journey stages follow; there is no Writing journey stage. ── */
+       journey stages follow; there is no Wating journey stage. ── */
     let steps=startStep;
-    if(isWriting){
+    if(isWating){
       steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
     }
-    const openCls=isOpen?'cur':(isWriting?'upcoming':'');
-    const openMeta=isOpen?(st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')):(isWriting?T('stNotYet'):'');
+    const openCls=isOpen?'cur':(isWating?'upcoming':'');
+    const openMeta=isOpen?(st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')):(isWating?T('stNotYet'):'');
     steps+=stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),openMeta,openCls,openBlocks);
     let progMeta='',progCls='';
     if(isProg){ progCls='cur'; progMeta=st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart'); }
@@ -1875,7 +1881,7 @@ async function loadStageLog(quiet){
   try{
     const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getstatuslog',token:curToken(),sl:String(r.sl),cb:Date.now()}),{redirect:'follow'});
     const j=await res.json();
-    dtStageLog=(j&&j.ok&&Array.isArray(j.log)) ? j.log.filter(e=>String(e.sl)===String(r.sl)) : [];
+    dtStageLog=(j&&j.ok&&Array.isArray(j.log)) ? j.log.filter(e=>String(e.sl)===String(r.sl)).map(e=>({ ...e, from:normStatus(e.from), to:normStatus(e.to) })) : [];
   }catch(e){ dtStageLog=[]; }
   dtStageState='idle'; stageRefresh();
 }
@@ -2118,7 +2124,7 @@ function wfPhase(){
 /* The status the phase rule wants for this task, or null when no change
    applies: no workflow steps at all, the status already matches the
    phase, or the task is Complete (a task at 100%/Complete is never
-   overdue and must stay Complete) or Writing — only Open / In Progress
+   overdue and must stay Complete) or Wating — only Open / In Progress
    tasks are ever moved. */
 function wfPhaseStatus(r){
   const ph=wfPhase(); if(!ph) return null;
@@ -2670,7 +2676,7 @@ function canEditUnit(u){ const a=allowedUnit(); return !a || a==='ALL' || a.toUp
 function statusName(s){ const k=(s||'').toLowerCase();
   if(k==='complete') return T('stComplete');
   if(k==='in progress') return T('stInProg');
-  if(k==='writing') return T('stWriting');
+  if(k==='writing'||k==='wating') return T('stWating');
   if(k==='open') return T('stOpen');
   return s; }
 function fsTitle(){ if(fsStatus==='all') return T('fsTitleAll'); return statusName(fsStatus); }
@@ -2856,10 +2862,10 @@ async function fsSaveEdit(sl){
       fsSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
 }
 /* ── v3: left sidebar, Board, Calendar, Group-by, Comments. ── */
-const STATUS_ORDER=['Open','In Progress','Writing','Complete'];
+const STATUS_ORDER=['Open','In Progress','Wating','Complete'];
 /* v10.12: board colors from the reference design — To Do blue, In Progress
-   orange, Review red, Completed green. Writing takes the Review red. */
-const STATUS_COLORS={'Open':'#2563eb','In Progress':'#f59e0b','Writing':'#ef4444','Complete':'#22c55e'};
+   orange, Review red, Completed green. Wating takes the Review red. */
+const STATUS_COLORS={'Open':'#2563eb','In Progress':'#f59e0b','Wating':'#ef4444','Complete':'#22c55e'};
 function statusColor(s){ return STATUS_COLORS[s]||'#7b68ee'; }
 /* Short card date like the reference ("Sep 08"). */
 function fmtDShort(v){ const d=parseD(v); if(!d) return '—'; return DMON[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0'); }
