@@ -786,7 +786,7 @@ toastSaved:'Saved!',toastSubAdd:'Subtask added',toastSubDone:'Subtask completed'
 cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the Sheet. This cannot be undone.',cfCancel:'Cancel',cfDelete:'Delete',
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 wfTitle:'Workflow Steps',wfSub:'Approval and execution steps for this project — who handled each step, when it moved, and how long it took',
-wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Date',wfDays:'Days Taken',wfNext:'Next Step Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',lwToday:'Today',lwAgo1:'1d ago',lwAgo:'{n}d ago',lwAllDone:'All done',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddFlip:'Workflow step added — status set to {st}',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfDelFlip:'Workflow step deleted — status set to {st}',toastWfEdit:'Workflow step updated',
+wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Delivery Date',wfDays:'Number of Days',wfReceived:'Received Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',lwToday:'Today',lwAgo1:'1d ago',lwAgo:'{n}d ago',lwAllDone:'All done',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddFlip:'Workflow step added — status set to {st}',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfDelFlip:'Workflow step deleted — status set to {st}',toastWfEdit:'Workflow step updated',
 prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracking — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
@@ -1253,7 +1253,8 @@ function render(){
      v10.62 (2026-11-17): Stage History shows 1 row per section — each destination-stage group keeps only its LATEST log row (greatest Date, ties → later log row); rows that end in Wating are not shown at all. Older rows stay in STATUS_LOG — only the display collapses.
      v10.63 (2026-11-17): Subtask section shows a progress bar (done/total subtasks) so subtask completion is visible at a glance; parent Progress stays manual (owner's decision — never derived from subtasks). Workflow step add/delete toast now names the status change when the phase rule flips the task status.
      v10.64 (2026-11-17): snapshot-first instant load — the embedded snapshot is re-frozen from the live Sheet (67 tasks, 17 Nov 2026); the boot live fetch runs silent (no skeleton, the snapshot stays visible until live data lands); a unit login's first paint shows only that unit's snapshot rows.
-     v10.65 (2026-11-18): speed fix — the logged-in live render no longer waits for the CSV progress overlay (it runs in the background after the first render and re-renders only if a prog value changed); the Last Workflow fetch now runs in parallel with the main fetch instead of one round trip after it; snapshot re-frozen from the live Sheet (68 tasks, 18 Nov 2026). */
+     v10.65 (2026-11-18): speed fix — the logged-in live render no longer waits for the CSV progress overlay (it runs in the background after the first render and re-renders only if a prog value changed); the Last Workflow fetch now runs in parallel with the main fetch instead of one round trip after it; snapshot re-frozen from the live Sheet (68 tasks, 18 Nov 2026).
+     v10.66 (2026-11-18): workflow tables are per-line two-date — each step shows its own Received Date (the previous dated step's Delivery Date in chain order; first dated step shows '—') and Delivery Date (the step's own stored date), with Number of Days from the stored Days Taken; the old Next Step Date column is gone (its value was the next row's Delivery Date). Same columns in the print sheet and the CSV export; the Add/Edit Step form is unchanged (Received is derived, never entered). */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -2066,17 +2067,17 @@ function wfDaysText(model, idx){
   const n=Math.max(0,Math.floor((parseD(row.date)-prev)/86400000));
   return n===0?T('stSubSameDay'):Tf('wfDaysN',{n:fmtN(n)});
 }
-function wfNextText(model, idx){
+/* v10.66: Received Date — the Delivery Date of the nearest EARLIER dated
+   step in chain order (the file moves from one stage to the next, so a
+   step's Received is the previous step's Delivery). The first dated step,
+   or a step whose earlier steps all lack dates, shows '—'. */
+function wfReceivedText(model, idx){
   const row=model[idx].row; if(!row) return '—';
-  /* The next-step date is derived from the next dated step — that is what
-     the server stores when a step is added, and deriving it here also heals
-     a stale stored value (e.g. a step inserted between two dated steps). */
-  const iso=wfNextIso(model, idx); return iso?fmtD(iso):'—';
+  const iso=wfReceivedIso(model, idx); return iso?fmtD(iso):'—';
 }
-function wfNextIso(model, idx){
+function wfReceivedIso(model, idx){
   const row=model[idx].row; if(!row) return '';
-  for(let j=idx+1;j<model.length;j++){ const nd=parseD((model[j].row||{}).date||''); if(nd) return model[j].row.date; }
-  if(row.nextdate) return row.nextdate;
+  for(let j=idx-1;j>=0;j--){ const pd=parseD((model[j].row||{}).date||''); if(pd) return model[j].row.date; }
   return '';
 }
 function wfDoneCount(model){ return model.filter(m=>!m.custom && m.row && parseD(m.row.date||'')).length; }
@@ -2094,24 +2095,24 @@ function wfSecCounterHtml(sec){
 }
 /* v10.34: one table per block. `which` is 0 (steps 1–12), 1 (steps 13–24)
    or 'custom' (custom + earlier rows). The in-table section header rows
-   are gone — each block carries its own header above the table. Days /
-   Next Step Date are still computed against the FULL model (idx is the
-   full-model index), so step 13's days still count from step 12. */
+   are gone — each block carries its own header above the table. Received
+   Date / Days are still computed against the FULL model (idx is the
+   full-model index), so step 13's Received still comes from step 12. */
 function wfTableHtml(r,which){
   const canE=canEditUnit(r.unit);
   const model=wfModel();
   if(dtWfState==='loading'){ return `<div style="font-size:13px;color:var(--muted)">${T('wfLoading')}</div>`; }
   const rows=model.filter(m=>which==='custom'?m.custom:!m.custom&&((which===0&&m.no<=WF_SECTIONS[0].steps.length)||(which===1&&m.no>WF_SECTIONS[0].steps.length)));
-  return `<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfDate')}</th><th>${T('wfDays')}</th><th>${T('wfNext')}</th><th>${T('wfRef')}</th>${canE?'<th></th>':''}</tr>`+
+  return `<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfReceived')}</th><th>${T('wfDate')}</th><th>${T('wfDays')}</th><th>${T('wfRef')}</th>${canE?'<th></th>':''}</tr>`+
   rows.map((m)=>{
     const idx=model.indexOf(m);
     const w=m.row, dated=w&&parseD(w.date||'');
     if(canE&&dtWfEdit===m.no){
       const nameCell=m.custom?`<input type="text" id="wfEName" class="efinput" style="min-width:140px" value="${esc(m.name)}">`:esc(m.name);
-      return `<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${nameCell}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}"></td><td>—</td><td>—</td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
+      return `<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${nameCell}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td>—</td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}"></td><td>—</td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
     }
     const acts=canE&&w?`<button class="subedit" title="${T('wfEdit')}" onclick="wfEdit(${m.no})">✏️</button><button class="subdel" title="${T('wfDel')}" onclick="wfDel(${m.no})">✕</button>`:'';
-    return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.legacy?` <span style="font-size:11px;color:var(--muted)">(${T('wfLegacy')})</span>`:m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${wfDaysText(model,idx)}</td><td>${wfNextText(model,idx)}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${canE?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
+    return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.legacy?` <span style="font-size:11px;color:var(--muted)">(${T('wfLegacy')})</span>`:m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${wfReceivedText(model,idx)}</td><td>${dated?fmtD(w.date):'—'}</td><td>${wfDaysText(model,idx)}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${canE?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
   }).join('')+`</table></div>`;
 }
 /* v10.34: the Add Step form is ONE shared form below all three blocks
@@ -2562,9 +2563,9 @@ function wfCsvText(r){
   L.push(['Tentative Budget (BDT)',r.budget||0,'Tentative Cost (BDT)',r.cost||0,'Payment (BDT)',r.disb||0,'Progress', (r.prog||0)+'%','Budget Status',r.bst||'','Materials Status',r.matst||''].map(wfCsvCell).join(','));
   L.push(['Workflow', wfDoneCount(model)+' / '+WF_STEPS.length+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'')+(legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:'')].map(wfCsvCell).join(','));
   L.push('');
-  L.push(['Step No','Step','Who','Date','Days Taken','Next Step Date','Ref / Remark'].map(wfCsvCell).join(','));
+  L.push(['Step No','Step','Who','Received Date','Delivery Date','Number of Days','Ref / Remark'].map(wfCsvCell).join(','));
   model.forEach((m,idx)=>{ const w=m.row;
-    L.push([m.no,m.name,w&&w.who?w.who:'',w&&parseD(w.date||'')?w.date:'',wfDaysText(model,idx)==='—'?'':wfDaysText(model,idx),wfNextIso(model,idx),w&&w.ref?w.ref:''].map(wfCsvCell).join(',')); });
+    L.push([m.no,m.name,w&&w.who?w.who:'',wfReceivedIso(model,idx),w&&parseD(w.date||'')?w.date:'',wfDaysText(model,idx)==='—'?'':wfDaysText(model,idx),w&&w.ref?w.ref:''].map(wfCsvCell).join(',')); });
   return L.join('\r\n');
 }
 function wfExportCsv(){
@@ -2578,8 +2579,8 @@ function wfExportCsv(){
 }
 /* ── v10.27: A4 print sheet — rebuilt to match the sample task-workflow
    sheet (.sheet in ~/workspace/ts-spaces/sample-task-workflow/index.html):
-   eyebrow, h2 title, 2-column kv2 with dashed rows, flat 6-column table
-   (Step | Stage | By | Date | Days | Status), footer note. No signature
+   eyebrow, h2 title, 2-column kv2 with dashed rows, flat 7-column table
+   (Step | Stage | By | Received Date | Delivery Date | Number of Days | Status), footer note. No signature
    boxes. EBS Req No. = Ref of step 13 (REQUISITION RISE IN EBS), PO / WO
    No. = Ref of step 19 (PO CREATE BY PROCURMENT). Section header rows
    split the table into the same two sections as the on-screen table. ── */
@@ -2606,17 +2607,17 @@ function wfPrintSheetHtml(r,sec){
     /* Days still count against the FULL model, so a section print keeps
        the same day counts as the whole print. */
     const fullIdx=model.indexOf(m);
-    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,fullIdx))}</td><td>${esc(st)}</td></tr>`; }).join('');
+    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,fullIdx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,fullIdx))}</td><td>${esc(st)}</td></tr>`; }).join('');
   const secRow=whole
     ? ''
-    : `<tr class="prsec"><td colspan="6">${esc(WF_SECTIONS[sec].name)}</td></tr>`;
+    : `<tr class="prsec"><td colspan="7">${esc(WF_SECTIONS[sec].name)}</td></tr>`;
   const wholeRows=model.map((m,idx)=>{ const w=m.row, dated=w&&parseD(w.date||'');
     const st=dated?T('prDone'):(idx===firstPending?T('prInProg'):T('wfPending'));
-    const sec2=(!m.custom&&(m.no===1||m.no===WF_SEC2_START))?`<tr class="prsec"><td colspan="6">${esc(m.no===1?WF_SECTIONS[0].name:WF_SECTIONS[1].name)}</td></tr>`:'';
-    return sec2+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,idx))}</td><td>${esc(st)}</td></tr>`; }).join('');
+    const sec2=(!m.custom&&(m.no===1||m.no===WF_SEC2_START))?`<tr class="prsec"><td colspan="7">${esc(m.no===1?WF_SECTIONS[0].name:WF_SECTIONS[1].name)}</td></tr>`:'';
+    return sec2+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,idx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,idx))}</td><td>${esc(st)}</td></tr>`; }).join('');
   return `<div class="co">Dekko Group · Task &amp; Budget Approval Sheet</div><h2>${esc(r.name)}</h2>`+
   `<div class="kv2">${fields.map(f=>`<div><span>${esc(f[0])}</span><b>${f[1]}</b></div>`).join('')}</div>`+
-  `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>Date</th><th>Days</th><th>${esc(T('thStatus'))}</th></tr>`+
+  `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>${esc(T('wfReceived'))}</th><th>${esc(T('wfDate'))}</th><th>${esc(T('wfDays'))}</th><th>${esc(T('thStatus'))}</th></tr>`+
   (whole?wholeRows:secRow+rowsHtml)+`</table>`+
   `<p class="pr-foot">${esc(Tf('prFooter',{d:fmtD(toISODate(todayMid()))}))}</p>`;
 }
