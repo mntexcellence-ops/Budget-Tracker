@@ -1714,9 +1714,13 @@ async function subDel(subrow){
    clickable row only, NOT a chain step: it never touches wfModel, the
    step counters or the phase rule. Reads: master / step token see all
    rows, unit token only its own unit. Writes: master + own-unit token
-   only — never a step token, never a guest. ── */
-const LC_HEADERS=['GOODS STATUS','LC ISSUE DATE','CURRENCY','VALUE','UNIT','SUPPLIER','ITEM DESCRIPTION','PORT OF SHIPMENT','L/C SHPT DT.','ACTUAL SHIP DATE','B/L QTY','UNIT OF QTY','Tentative ETD','Tentative ETA','F.VESSEL NAME','ETA CTG PORT','ETA FACTORY','BTB L/C NO.','IN-HOUSE','REMARKS'];
-const LC_FIELDS=[{k:'goodsStatus',type:'text'},{k:'lcIssueDate',type:'date'},{k:'currency',type:'text'},{k:'value',type:'number'},{k:'lcUnit',type:'text'},{k:'supplier',type:'text'},{k:'itemDesc',type:'text'},{k:'portOfShipment',type:'text'},{k:'lcShptDt',type:'date'},{k:'actualShipDate',type:'date'},{k:'blQty',type:'number'},{k:'unitOfQty',type:'text'},{k:'tentEtd',type:'date'},{k:'tentEta',type:'date'},{k:'vesselName',type:'text'},{k:'etaCtgPort',type:'text'},{k:'etaFactory',type:'text'},{k:'btbLcNo',type:'text'},{k:'inHouse',type:'text'},{k:'remarks',type:'text'}];
+   only — never a step token, never a guest.
+   v10.71: every LC row carries a TYPE ('LC' | 'TT' | 'LOCAL') — first
+   column of the popup table / CSV / print, and the first field of the
+   add/edit form (dropdown, default LC; script v4.23). A row with no
+   type shows blank there, like any other empty LC cell. ── */
+const LC_HEADERS=['TYPE','GOODS STATUS','LC ISSUE DATE','CURRENCY','VALUE','UNIT','SUPPLIER','ITEM DESCRIPTION','PORT OF SHIPMENT','L/C SHPT DT.','ACTUAL SHIP DATE','B/L QTY','UNIT OF QTY','Tentative ETD','Tentative ETA','F.VESSEL NAME','ETA CTG PORT','ETA FACTORY','BTB L/C NO.','IN-HOUSE','REMARKS'];
+const LC_FIELDS=[{k:'type',type:'select'},{k:'goodsStatus',type:'text'},{k:'lcIssueDate',type:'date'},{k:'currency',type:'text'},{k:'value',type:'number'},{k:'lcUnit',type:'text'},{k:'supplier',type:'text'},{k:'itemDesc',type:'text'},{k:'portOfShipment',type:'text'},{k:'lcShptDt',type:'date'},{k:'actualShipDate',type:'date'},{k:'blQty',type:'number'},{k:'unitOfQty',type:'text'},{k:'tentEtd',type:'date'},{k:'tentEta',type:'date'},{k:'vesselName',type:'text'},{k:'etaCtgPort',type:'text'},{k:'etaFactory',type:'text'},{k:'btbLcNo',type:'text'},{k:'inHouse',type:'text'},{k:'remarks',type:'text'}];
 const LC_DATE_KEYS={lcIssueDate:1,lcShptDt:1,actualShipDate:1,tentEtd:1,tentEta:1};
 const lcBySl={};
 const lcState={}; /* sl -> 'loading' | 'ready' | 'guest' | 'failed' */
@@ -1793,7 +1797,14 @@ function lcRender(){
 function lcFormHtml(r){
   const ed=(dtLcEdit!=='new')?lcRowsFor(r.sl).find(x=>x.row===dtLcEdit):null;
   const v=k=>{ const x=ed?ed[k]:''; if(x==null) return ''; return LC_DATE_KEYS[k]?toISODate(x):String(x); };
-  const f=LC_FIELDS.map((fd,i)=>`<div><label>${esc(LC_HEADERS[i])}${fd.k==='itemDesc'?' *':''}</label><input type="${fd.type}" id="lcF_${fd.k}" class="efinput" value="${esc(v(fd.k))}"></div>`).join('');
+  const f=LC_FIELDS.map((fd,i)=>{
+    if(fd.type==='select'){
+      const cur=v(fd.k)||'LC';
+      const opts=['LC','TT','LOCAL'].map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+      return `<div><label>${esc(LC_HEADERS[i])}</label><select id="lcF_${fd.k}" class="efinput">${opts}</select></div>`;
+    }
+    return `<div><label>${esc(LC_HEADERS[i])}${fd.k==='itemDesc'?' *':''}</label><input type="${fd.type}" id="lcF_${fd.k}" class="efinput" value="${esc(v(fd.k))}"></div>`;
+  }).join('');
   return `<div class="dtsec"><h4>${ed?T('lcEdit'):T('lcAdd')}</h4><div class="efgrid">${f}</div><div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="entrybtn" onclick="lcSave()">${T('dtSave')}</button><button class="entrybtn off" onclick="lcCancelEdit()">${T('cfCancel')}</button></div><div id="lcMsg" class="fsmsg" style="padding:6px 0"></div></div>`;
 }
 function lcStartAdd(){ const r=rowBySl(dtRn); if(!r) return; if(!canLcWrite(r)){ toast(isStepMode()?stepNoteText():T('lcGuestNote'),'err'); return; } dtLcEdit='new'; lcRender(); }
