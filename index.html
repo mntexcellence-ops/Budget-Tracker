@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Budget Tracking — DEKKO ISHO Group</title>
+<title>Budget Tracker — DEKKO ISHO Group</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#f8f8f8;--card:#FFFFFF;--border:#e8e8e8;--text:#292d34;--body:#4a4a4a;--muted:#80868b;--faint:#9aa0a6;--soft:#f9f9f9;--soft2:#f5f5f5;--shadow:rgba(0,0,0,.06);--shadow-md:0 4px 14px rgba(0,0,0,.09);--shadow-lg:0 12px 32px rgba(0,0,0,.16);--radius:8px;--brand:#7b68ee;--brand-b:#6a5ae0;--side:#ffffff}
@@ -475,6 +475,21 @@ th{padding:8px 10px}
 #printSheet td{padding:10px 12px;border-top:1px solid #dde3ea;vertical-align:top;text-align:left}
 #printSheet tr.prsec td{background:#eef1f6;color:#19233f;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:12px}
 #printSheet .pr-foot{font-size:11.5px;color:#5f6f86;margin-top:22px}
+/* v10.70: LC popup + Download All / Print All print sections. */
+.lcmodal{position:fixed;inset:0;background:var(--card);z-index:200;overflow:auto;padding:0}
+.lcwrap{max-width:1400px;margin:0 auto;padding:0 18px 40px}
+.lcscroll{overflow-x:auto;padding:12px 0}
+.lctable{border-collapse:collapse;width:100%;font-size:12.5px}
+.lctable th,.lctable td{border:1px solid var(--border);padding:6px 8px;text-align:left;white-space:nowrap}
+.lctable th{background:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+tr.lc-row{cursor:pointer}
+tr.lc-row:hover td{background:var(--soft)}
+#printSheet table.lcprint{font-size:10px}
+#printSheet table.lcprint th,#printSheet table.lcprint td{padding:5px 6px}
+#printSheet table.allprint{font-size:11px}
+#printSheet table.allprint th,#printSheet table.allprint td{padding:6px 8px}
+#printSheet .allprint-sec{page-break-before:always}
+#printSheet .allprint-sec:first-child{page-break-before:auto}
 @media(max-width:560px){#printSheet{padding:22px 18px}#printSheet .kv2{grid-template-columns:1fr}}
 @media print{
   @page{size:A4;margin:12mm}
@@ -581,7 +596,7 @@ th{padding:8px 10px}
       </div>
       <div id="view-list" class="view">
         <section class="grid">
-          <div class="card s12"><h3><i>▤</i><span data-t="listT"></span></h3><div class="s" id="tblListSub"></div><div class="gbrow"><div class="gbwrap"><span data-t="groupByL"></span><div class="efseg" style="width:230px"><button id="gbUnit" class="on" onclick="setGroupBy('unit')" data-t="groupUnit"></button><button id="gbStatus" onclick="setGroupBy('status')" data-t="groupStatus"></button></div></div><div class="gbwrap"><span data-t="viewAsL"></span><div class="efseg" style="width:230px"><button id="lvTable" class="on" onclick="setListMode('table')" data-t="viewTable"></button><button id="lvGrid" onclick="setListMode('grid')" data-t="viewGrid"></button></div></div></div><div class="tblscroll" id="tblList"></div><div id="listGrid" style="display:none"></div></div>
+          <div class="card s12"><h3><i>▤</i><span data-t="listT"></span></h3><div class="s" id="tblListSub"></div><div class="gbrow"><div class="gbwrap"><span data-t="groupByL"></span><div class="efseg" style="width:230px"><button id="gbUnit" class="on" onclick="setGroupBy('unit')" data-t="groupUnit"></button><button id="gbStatus" onclick="setGroupBy('status')" data-t="groupStatus"></button></div></div><div class="gbwrap"><span data-t="viewAsL"></span><div class="efseg" style="width:230px"><button id="lvTable" class="on" onclick="setListMode('table')" data-t="viewTable"></button><button id="lvGrid" onclick="setListMode('grid')" data-t="viewGrid"></button></div></div><div class="gbwrap"><button class="fsbtn" onclick="downloadAllCsv()" title="All visible tasks, grouped by unit, ignoring list filters" data-t="dlAll"></button><button class="fsbtn" onclick="printAll()" title="All visible tasks, grouped by unit, ignoring list filters" data-t="prAll"></button></div></div><div class="tblscroll" id="tblList"></div><div id="listGrid" style="display:none"></div></div>
         </section>
       </div>
       <div id="view-board" class="view">
@@ -716,7 +731,7 @@ const PAL = ['#7b68ee','#5b8def','#4caf50','#f59e0b','#b07fe8','#9aa0a6','#e5484
 /* ── i18n: every label in EN + BN. applyLang() updates [data-t] text,
    [data-th] HTML and [data-t-ph] placeholders; render() uses T()/Tf(). ── */
 const STR = {en:{
-brandTitle:'Budget <span>Tracking</span>',brandSub:'Dekko ISHO Group · All Units — DGL-1 · DGL-2 · DRL · DFL · GGL · AWL · AFL',
+brandTitle:'Budget <span>Tracker</span>',brandSub:'Dekko ISHO Group · All Units — DGL-1 · DGL-2 · DRL · DFL · GGL · AWL · AFL',
 refreshBtn:'⟳ Refresh Data',filters:'⚙ Filters',unitH:'Unit',statusH:'Status',overdueH:'⚠ Overdue',overdueOnly:'Overdue only',progH:'Progress',allProg:'All progress ▾',progAll:'All',prog100:'100%',progBelow:'Below 100%',
 searchH:'Search Project',searchPh:'Type project name…',resetAll:'Reset all filters',tools:'Tools',addBtn:'➕ Add New Project',
 dark:'🌙 Dark',light:'☀️ Light',selectAll:'Select all',clear:'Clear',
@@ -724,6 +739,7 @@ allUnits:'All units ▾',noUnits:'No units selected ▾',nUnits:'{n} units selec
 allStatuses:'All statuses ▾',noStatuses:'No statuses selected ▾',nStatuses:'{n} statuses selected ▾',
 bstH:'Budget status',allBst:'All budget statuses ▾',noBst:'No budget status selected ▾',nBst:'{n} budget statuses selected ▾',bstBlank:'(No budget status)',
 kpiTotal:'Total Projects',kpiComplete:'Complete',kpiInProg:'In Progress',kpiWating:'Wating',kpiOverdue:'Overdue',kpiUnits:'Units',kpiCost:'Total Tentative Cost',stepNote:'Step token — you can view all data, but edit only your own workflow step.',stepChip:'Step {n} · {name}',
+stepNote3:'Step token — you can view all data, edit only your own workflow step, and add/edit projects.',dlAll:'⬇ Download All',prAll:'🖨️ Print All',allPrintH:'Budget Tracker — All Projects · {d}',allPrintUnit:'Unit — {u} ({n} projects)',lcTitle:'LC — Letter of Credit',lcHint:'Letter of Credit',lcAdd:'➕ Add LC Entry',lcDownload:'⬇ Download CSV',lcPrint:'🖨️ Print',lcEmpty:'No LC entries yet — add one',lcGuestNote:'Log in to add or edit LC entries.',lcCount:'{n} entries',lcEdit:'Edit LC entry',lcDelete:'Delete LC entry',lcConfirmDelete:'Delete LC entry?',lcConfirmDeleteB:'This LC entry will be removed from the Sheet. This cannot be undone.',lcItemRequired:'ITEM DESCRIPTION is required for an LC entry.',lcLoading:'⏳ Loading LC entries…',lcLoadFail:'Could not load LC entries — please refresh and try again.',lcSaved:'LC entry saved',lcDeleted:'LC entry deleted',
 chipAll:'all projects',chipOfFiltered:'of filtered',chipUnits:'units',chipNone:'none yet',
 ovCostT:'Tentative Cost by Unit',ovCostS:'Ranked — total tentative cost per unit in the selected filters',
 ovStatusT:'Cost by Status',ovStatusS:'Share of total tentative cost',
@@ -754,9 +770,9 @@ dtNote:'Note: The list shows {p}% here, but the manual Progress slider is 0.',
 dtNoComment:'—',dtNoDesc:'—',
 setupBtn:'⚙️ Setup',closeBtn:'✖ Close',fsTabList:'📋 Project List',fsTabAdd:'➕ New Project',
 setupH:'Apps Script Web app URL — for THIS sheet only. Deploy the entry script, then paste the URL here once. Saved on this device only.',
-setupHEmbedded:'The script URL is built into this dashboard — enter only your 6-digit token below.',
-setupUrlL:'Web app URL (ends with /exec)',setupPassL:'6-digit token — master token = all units; your unit token = own unit only',
-setupPassPh:'Your 6-digit token',setupRemember:'Remember token on this device',setupSaveBtn:'💾 Save Setup',
+setupHEmbedded:'The script URL is built into this dashboard — enter only your token below (6-digit master/unit token, or 4-digit step token).',
+setupUrlL:'Web app URL (ends with /exec)',setupPassL:'Token — 6-digit master/unit token, or 4-digit step token',
+setupPassPh:'Your token',setupRemember:'Remember token on this device',setupSaveBtn:'💾 Save Setup',
 addH:'Add a new project — it will be added to the bottom of the Sheet (SL is assigned automatically). To delete a project, use the Sheet.',
 addFoot:'Setup: open ⚙️ Setup and enter your password — owner password = all units, unit password = own unit only. A unit password works for one unit only — the server enforces it.',
 saveBtn:'💾 Save New Project',
@@ -800,7 +816,7 @@ cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the She
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 wfTitle:'Workflow Steps',wfSub:'Approval and execution steps for this project — who handled each step, when it moved, and how long it took',
 wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Delivery Date',wfDays:'Number of Days',wfReceived:'Received Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',lwToday:'Today',lwAgo1:'1d ago',lwAgo:'{n}d ago',lwAllDone:'All done',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddFlip:'Workflow step added — status set to {st}',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfDelFlip:'Workflow step deleted — status set to {st}',toastWfEdit:'Workflow step updated',
-prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracking — Workflow Sheet · {d}',
+prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prBudget:'Tentative Budget',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracker — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
 stSince:'since {d} · {n} days',stTotalDur:'Total duration: {n} days',stLoading:'⏳ Loading stage history…',stDoneOn:'done on {d}',stWorkDone:'Work Done',stNotYet:'Not reached yet',stSubInStage:'Subtasks in this stage',stSubDoneWord:'done',stSubStarted:'Started {d}',stSubFinished:'Finished {d}',stSubTook:'Took {n} days',stSubSameDay:'Same day',stSubPending:'Pending {n} days',stSubToday:'Started today',stSubOverdue:'{n} days overdue',stSubDue:'Due {d}',stSubNoStart:'Start date not recorded'
@@ -812,7 +828,7 @@ function applyLang(){
   document.querySelectorAll('[data-t]').forEach(e=>{ e.textContent=T(e.getAttribute('data-t')); });
   document.querySelectorAll('[data-th]').forEach(e=>{ e.innerHTML=T(e.getAttribute('data-th')); });
   document.querySelectorAll('[data-t-ph]').forEach(e=>{ e.placeholder=T(e.getAttribute('data-t-ph')); });
-  document.title = 'Budget Tracking — DEKKO ISHO Group';
+  document.title = 'Budget Tracker — DEKKO ISHO Group';
   const bt=document.getElementById('btnModeTop'); if(bt) bt.textContent = darkMode?'☀️':'🌙';
 }
 
@@ -1515,7 +1531,7 @@ async function refreshLive(manual, silent, boot){
 let dtRn=null, dtEdit=false, dtSubs=[], dtSubsState='idle', dtSubEdit=null;
 function rowBySl(sl){ return D.rows.find(r=>String(r.sl)===String(sl)); }
 function openDetail(sl){
-  dtRn=sl; dtEdit=false; dtSubs=[]; dtSubsState='idle'; dtSubEdit=null; dtStageLog=[]; dtStageState='idle'; dtWf=[]; dtWfState='idle'; dtWfEdit=null; dtWfLocal=[];
+  dtRn=sl; dtEdit=false; dtSubs=[]; dtSubsState='idle'; dtSubEdit=null; dtStageLog=[]; dtStageState='idle'; dtWf=[]; dtWfState='idle'; dtWfEdit=null; dtWfLocal=[]; dtLcEdit=null;
   const r=rowBySl(sl); if(!r) return;
   if(!document.getElementById('dtModal')){
     const w=document.createElement('div');
@@ -1527,15 +1543,16 @@ function openDetail(sl){
   loadComments();
   loadStageLog();
   loadWorkflow();
+  loadLc();
   document.getElementById('dtModal').style.display='flex';
   document.body.style.overflow='hidden';
   window.scrollTo(0,0);
 }
-function closeDetail(){ const m=document.getElementById('dtModal'); if(m) m.style.display='none'; document.body.style.overflow=''; dtRn=null; dtEdit=false; dtSubs=[]; dtSubEdit=null; dtCm=[]; dtStageLog=[]; dtWf=[]; dtWfEdit=null; dtWfLocal=[]; }
+function closeDetail(){ const m=document.getElementById('dtModal'); if(m) m.style.display='none'; document.body.style.overflow=''; dtRn=null; dtEdit=false; dtSubs=[]; dtSubEdit=null; dtCm=[]; dtStageLog=[]; dtWf=[]; dtWfEdit=null; dtWfLocal=[]; dtLcEdit=null; }
 function renderDetail(){
   const r=rowBySl(dtRn); if(!r) return closeDetail();
   const canE=canEditUnit(r.unit);
-  const head=`<div class="dthead"><div style="flex:1;min-width:220px"><h2>${esc(r.name)}</h2><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${statusChip(r.status)}<span class="chip n">${esc(r.unit)}</span><span class="chip n">SL ${esc(r.sl)}</span></div>${stageHeadHtml(r)}${isStepMode()?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(T('stepNote'))}</div>`:''}</div>${!dtEdit?`<button class="fsbtn" onclick="wfPrint()" title="${T('wfPrint')}">${T('wfPrint')}</button><button class="fsbtn" onclick="wfExportCsv()" title="${T('wfExport')}">${T('wfExport')}</button>`:''}${canE&&!dtEdit?`<button class="fsbtn pri" onclick="dtStartEdit()">${T('dtEdit')}</button>`:''}<button class="xbtn" onclick="closeDetail()">${T('dtClose')}</button></div>`;
+  const head=`<div class="dthead"><div style="flex:1;min-width:220px"><h2>${esc(r.name)}</h2><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${statusChip(r.status)}<span class="chip n">${esc(r.unit)}</span><span class="chip n">SL ${esc(r.sl)}</span></div>${stageHeadHtml(r)}${isStepMode()?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(stepNoteText())}</div>`:''}</div>${!dtEdit?`<button class="fsbtn" onclick="wfPrint()" title="${T('wfPrint')}">${T('wfPrint')}</button><button class="fsbtn" onclick="wfExportCsv()" title="${T('wfExport')}">${T('wfExport')}</button>`:''}${(canE||canProjectEdit3())&&!dtEdit?`<button class="fsbtn pri" onclick="dtStartEdit()">${T('dtEdit')}</button>`:''}<button class="xbtn" onclick="closeDetail()">${T('dtClose')}</button></div>`;
   if(dtEdit){ document.getElementById('dtBody').innerHTML=`<div class="dtwrap">${head}${dtEditForm(r)}</div>`; return; }
   document.getElementById('dtBody').innerHTML=`<div class="dtwrap">${head}${dtViewHtml(r)}</div>`;
 }
@@ -1690,6 +1707,171 @@ async function subDel(subrow){
     ()=>{ loadSubs(true); },
     (e)=>{ dtSubs.splice(Math.min(idx,dtSubs.length),0,s); subRefresh(); stageRefresh();
       const m=document.getElementById('subMsg'); if(m){ m.textContent=Tf('msgSaveFail',{e:e.message}); m.className='fsmsg err'; } bgFailToast(e); });
+}
+/* ── v10.70: LC (Letter of Credit) entries — per-task LC tracking table.
+   The Sheet holds them in an LC tab, keyed by SL (script v4.22: getlc /
+   addlc / editlc / deletelc). The LC row in the workflow table is a
+   clickable row only, NOT a chain step: it never touches wfModel, the
+   step counters or the phase rule. Reads: master / step token see all
+   rows, unit token only its own unit. Writes: master + own-unit token
+   only — never a step token, never a guest. ── */
+const LC_HEADERS=['GOODS STATUS','LC ISSUE DATE','CURRENCY','VALUE','UNIT','SUPPLIER','ITEM DESCRIPTION','PORT OF SHIPMENT','L/C SHPT DT.','ACTUAL SHIP DATE','B/L QTY','UNIT OF QTY','Tentative ETD','Tentative ETA','F.VESSEL NAME','ETA CTG PORT','ETA FACTORY','BTB L/C NO.','IN-HOUSE','REMARKS'];
+const LC_FIELDS=[{k:'goodsStatus',type:'text'},{k:'lcIssueDate',type:'date'},{k:'currency',type:'text'},{k:'value',type:'number'},{k:'lcUnit',type:'text'},{k:'supplier',type:'text'},{k:'itemDesc',type:'text'},{k:'portOfShipment',type:'text'},{k:'lcShptDt',type:'date'},{k:'actualShipDate',type:'date'},{k:'blQty',type:'number'},{k:'unitOfQty',type:'text'},{k:'tentEtd',type:'date'},{k:'tentEta',type:'date'},{k:'vesselName',type:'text'},{k:'etaCtgPort',type:'text'},{k:'etaFactory',type:'text'},{k:'btbLcNo',type:'text'},{k:'inHouse',type:'text'},{k:'remarks',type:'text'}];
+const LC_DATE_KEYS={lcIssueDate:1,lcShptDt:1,actualShipDate:1,tentEtd:1,tentEta:1};
+const lcBySl={};
+const lcState={}; /* sl -> 'loading' | 'ready' | 'guest' | 'failed' */
+let dtLcEdit=null; /* null = no form, 'new' = add form, row number = editing */
+function lcRowsFor(sl){ return lcBySl[String(sl)]||[]; }
+function lcCountText(sl){ return lcState[String(sl)]==='ready'?Tf('lcCount',{n:fmtN(lcRowsFor(sl).length)}):'—'; }
+function canLcWrite(r){ return !isStepMode()&&!!allowedUnit()&&canEditUnit(r.unit); }
+function lcCellVal(x,fd){ const v=x[fd.k]; return v==null?'':String(v); }
+function lcCellDisp(x,fd){ const v=lcCellVal(x,fd); if(!v) return '—'; return LC_DATE_KEYS[fd.k]?fmtD(v):esc(v); }
+async function loadLc(){
+  const r=rowBySl(dtRn); if(!r) return;
+  const sl=String(r.sl);
+  if(!scriptUrl()){ lcState[sl]='guest'; return; }
+  if(!curToken()){ lcState[sl]='guest'; return; }
+  lcState[sl]='loading';
+  try{
+    const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getlc',token:curToken(),cb:Date.now()}),{redirect:'follow'});
+    const j=await res.json();
+    if(!(j&&j.ok&&Array.isArray(j.rows))) throw new Error((j&&j.error)||'getlc failed');
+    const fresh=j.rows.filter(x=>String(x.sl)===sl);
+    /* v10.38 pattern: keep optimistic local rows the server has not
+       returned yet — deduped by ITEM DESCRIPTION. */
+    const pending=lcRowsFor(sl).filter(x=>x.local && !fresh.some(f=>String(f.itemDesc||'').trim().toLowerCase()===String(x.itemDesc||'').trim().toLowerCase()));
+    lcBySl[sl]=fresh.concat(pending);
+    lcState[sl]='ready';
+  }catch(e){ if(lcState[sl]==='loading') lcState[sl]='failed'; }
+  if(String(dtRn)!==sl) return;
+  wfRefresh();
+  const lm=document.getElementById('lcModal');
+  if(lm&&lm.style.display==='block') lcRender();
+}
+/* Clickable LC row for the workflow table (section B only): sits between
+   step 22 and 23, shows the entry count ('—' while loading / on failure). */
+function lcRowHtml(r){
+  const acts=(canEditUnit(r.unit)||isStepMode())?'<td></td>':'';
+  return `<tr class="lc-row" onclick="openLcPopup()" role="button" tabindex="0" title="${esc(T('lcTitle'))}" onkeydown="if(event.key==='Enter'){openLcPopup()}"><td class="wfstep-no">LC</td><td><b>LC</b> <span style="font-size:11px;color:var(--muted)">(${esc(T('lcHint'))})</span></td><td colspan="3" style="color:var(--muted)">${esc(lcCountText(r.sl))}</td><td colspan="2" style="text-align:right">›</td>${acts}</tr>`;
+}
+/* Count-only LC line for the workflow print sheet, after step 22. */
+function lcPrintRow(r){
+  return `<tr><td>LC</td><td>${esc(T('lcHint'))}</td><td colspan="4">${esc(lcCountText(r.sl))}</td><td>—</td></tr>`;
+}
+function openLcPopup(){
+  const r=rowBySl(dtRn); if(!r) return;
+  dtLcEdit=null;
+  let m=document.getElementById('lcModal');
+  if(!m){ m=document.createElement('div'); m.id='lcModal'; m.className='lcmodal'; document.body.appendChild(m); }
+  lcRender();
+  m.style.display='block';
+  document.body.style.overflow='hidden';
+}
+function closeLcPopup(){ const m=document.getElementById('lcModal'); if(m) m.style.display='none'; const dm=document.getElementById('dtModal'); document.body.style.overflow=(dm&&dm.style.display==='flex')?'hidden':''; dtLcEdit=null; }
+function lcRender(){
+  const r=rowBySl(dtRn); if(!r) return closeLcPopup();
+  const m=document.getElementById('lcModal'); if(!m) return;
+  const rows=lcRowsFor(r.sl);
+  const canW=canLcWrite(r);
+  const st=lcState[String(r.sl)];
+  let h=`<div class="lcwrap"><div class="dthead"><div style="flex:1;min-width:220px"><h2>${esc(T('lcTitle'))}</h2><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="chip n">${esc(r.unit)}</span><span class="chip n">SL ${esc(r.sl)}</span><span class="chip n">${esc(r.name)}</span></div></div>${canW?`<button class="fsbtn pri" onclick="lcStartAdd()">${T('lcAdd')}</button>`:''}<button class="fsbtn" onclick="lcDownloadCsv()" title="${T('lcDownload')}">${T('lcDownload')}</button><button class="fsbtn" onclick="lcPrint()" title="${T('lcPrint')}">${T('lcPrint')}</button><button class="xbtn" onclick="closeLcPopup()">${T('dtClose')}</button></div>`;
+  if(dtLcEdit!==null) h+=lcFormHtml(r);
+  if(st==='ready'){
+    if(!rows.length) h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcEmpty')}</div>`;
+    else h+=`<div class="lcscroll"><table class="lctable"><tr>${LC_HEADERS.map(x=>`<th>${esc(x)}</th>`).join('')}${canW?'<th></th>':''}</tr>`+
+      rows.map(x=>`<tr>${LC_FIELDS.map(fd=>`<td>${lcCellDisp(x,fd)}</td>`).join('')}${canW&&!x.local?`<td style="white-space:nowrap"><button class="subedit" title="${T('lcEdit')}" onclick="lcStartEdit(${x.row})">✏️</button><button class="subdel" title="${T('lcDelete')}" onclick="lcDel(${x.row})">✕</button></td>`:canW?'<td></td>':''}</tr>`).join('')+`</table></div>`;
+  } else if(st==='guest'){
+    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcEmpty')}</div><div style="padding-bottom:18px;font-size:12.5px;color:var(--muted)">${T('lcGuestNote')}</div>`;
+  } else if(st==='failed'){
+    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcLoadFail')}</div>`;
+  } else {
+    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcLoading')}</div>`;
+  }
+  h+=`</div>`;
+  m.innerHTML=h;
+}
+function lcFormHtml(r){
+  const ed=(dtLcEdit!=='new')?lcRowsFor(r.sl).find(x=>x.row===dtLcEdit):null;
+  const v=k=>{ const x=ed?ed[k]:''; if(x==null) return ''; return LC_DATE_KEYS[k]?toISODate(x):String(x); };
+  const f=LC_FIELDS.map((fd,i)=>`<div><label>${esc(LC_HEADERS[i])}${fd.k==='itemDesc'?' *':''}</label><input type="${fd.type}" id="lcF_${fd.k}" class="efinput" value="${esc(v(fd.k))}"></div>`).join('');
+  return `<div class="dtsec"><h4>${ed?T('lcEdit'):T('lcAdd')}</h4><div class="efgrid">${f}</div><div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="entrybtn" onclick="lcSave()">${T('dtSave')}</button><button class="entrybtn off" onclick="lcCancelEdit()">${T('cfCancel')}</button></div><div id="lcMsg" class="fsmsg" style="padding:6px 0"></div></div>`;
+}
+function lcStartAdd(){ const r=rowBySl(dtRn); if(!r) return; if(!canLcWrite(r)){ toast(isStepMode()?stepNoteText():T('lcGuestNote'),'err'); return; } dtLcEdit='new'; lcRender(); }
+function lcStartEdit(row){ const r=rowBySl(dtRn); if(!r) return; if(!canLcWrite(r)){ toast(isStepMode()?stepNoteText():T('lcGuestNote'),'err'); return; } dtLcEdit=row; lcRender(); }
+function lcCancelEdit(){ dtLcEdit=null; lcRender(); }
+async function lcSave(){
+  const r=rowBySl(dtRn); if(!r) return;
+  if(!canLcWrite(r)){ toast(isStepMode()?stepNoteText():T('lcGuestNote'),'err'); return; }
+  const vals={};
+  LC_FIELDS.forEach(fd=>{ vals[fd.k]=((document.getElementById('lcF_'+fd.k)||{}).value||'').trim(); });
+  const m=document.getElementById('lcMsg');
+  const say=(t,c)=>{ if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } };
+  if(!vals.itemDesc){ say(T('lcItemRequired'),'err'); return; }
+  const url=scriptUrl(), tok=curToken();
+  if(!url||!tok){ say(T('msgNoScript'),'err'); return; }
+  const isNew=dtLcEdit==='new';
+  const rowNo=isNew?null:dtLcEdit;
+  const key='lcSave:'+r.sl+':'+(isNew?'new':rowNo);
+  if(!bgGuard(key)) return;
+  const sl=String(r.sl);
+  if(isNew){
+    const local=Object.assign({sl,unit:r.unit,task:r.name,local:true},vals);
+    lcBySl[sl]=lcRowsFor(sl).concat([local]);
+    dtLcEdit=null; lcRender(); wfRefresh(); toast(T('lcSaved'),'ok');
+    const q=new URLSearchParams({token:tok,action:'addlc',sl,unit:r.unit,task:r.name});
+    LC_FIELDS.forEach(fd=>q.set(fd.k,vals[fd.k]));
+    bgWrite(url,q,
+      ()=>{ bgRelease(key); loadLc(); },
+      (e)=>{ bgRelease(key); lcBySl[sl]=lcRowsFor(sl).filter(x=>x!==local); lcRender(); wfRefresh(); say(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
+  } else {
+    const live=lcRowsFor(sl).find(x=>x.row===rowNo); if(!live){ bgRelease(key); return; }
+    const prev=Object.assign({},live);
+    Object.assign(live,vals);
+    dtLcEdit=null; lcRender(); wfRefresh(); toast(T('lcSaved'),'ok');
+    const q=new URLSearchParams({token:tok,action:'editlc',sl,row:String(rowNo)});
+    LC_FIELDS.forEach(fd=>q.set(fd.k,vals[fd.k]));
+    bgWrite(url,q,
+      ()=>{ bgRelease(key); loadLc(); },
+      (e)=>{ bgRelease(key); const t=lcRowsFor(sl).find(x=>x.row===rowNo)||live; Object.assign(t,prev); lcRender(); wfRefresh(); say(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
+  }
+}
+async function lcDel(row){
+  const r=rowBySl(dtRn); if(!r) return;
+  if(!canLcWrite(r)){ toast(isStepMode()?stepNoteText():T('lcGuestNote'),'err'); return; }
+  const ok=await confirmDlg(T('lcConfirmDelete'), T('lcConfirmDeleteB'));
+  if(!ok) return;
+  const url=scriptUrl(), tok=curToken();
+  if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
+  const sl=String(r.sl);
+  const rows=lcRowsFor(sl);
+  const target=rows.find(x=>x.row===row); if(!target||target.local) return;
+  const idx=rows.indexOf(target);
+  lcBySl[sl]=rows.filter(x=>x!==target);
+  lcRender(); wfRefresh(); toast(T('lcDeleted'),'ok');
+  const q=new URLSearchParams({token:tok,action:'deletelc',sl,row:String(row)});
+  bgWrite(url,q,
+    ()=>{ loadLc(); },
+    (e)=>{ const arr=lcRowsFor(sl); arr.splice(Math.min(idx,arr.length),0,target); lcBySl[sl]=arr; lcRender(); wfRefresh(); bgFailToast(e); });
+}
+function lcDownloadCsv(){
+  const r=rowBySl(dtRn); if(!r) return;
+  const L=[LC_HEADERS.map(wfCsvCell).join(',')];
+  lcRowsFor(r.sl).forEach(x=>{ L.push(LC_FIELDS.map(fd=>wfCsvCell(lcCellVal(x,fd))).join(',')); });
+  const blob=new Blob([L.join('\r\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='LC_SL'+r.sl+'_'+toISODate(todayMid())+'.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function lcPrint(){
+  const r=rowBySl(dtRn); if(!r) return;
+  const rows=lcRowsFor(r.sl);
+  let sh=document.getElementById('printSheet');
+  if(!sh){ sh=document.createElement('div'); sh.id='printSheet'; document.body.appendChild(sh); }
+  sh.innerHTML=`<div class="co">Dekko Group · Budget Tracker</div><h2>${esc(r.name)}</h2><div class="kv2"><div><span>${esc(T('thUnit'))}</span><b>${esc(r.unit)}</b></div><div><span>SL</span><b>${esc(r.sl)}</b></div><div><span>${esc(T('lcTitle'))}</span><b>${esc(Tf('lcCount',{n:fmtN(rows.length)}))}</b></div><div><span>Date</span><b>${fmtD(toISODate(todayMid()))}</b></div></div><table class="lcprint"><tr>${LC_HEADERS.map(x=>`<th>${esc(x)}</th>`).join('')}</tr>`+
+    rows.map(x=>`<tr>${LC_FIELDS.map(fd=>`<td>${esc(lcCellVal(x,fd))||'—'}</td>`).join('')}</tr>`).join('')+`</table><p class="pr-foot">${esc(Tf('prFooter',{d:fmtD(toISODate(todayMid()))}))}</p>`;
+  window.print();
 }
 /* ── v10: Stage History — how a task moved through the stages, and how long
    each stage lasted. The server logs every status change (STATUS_LOG tab);
@@ -2140,8 +2322,7 @@ function wfTableHtml(r,which){
   const model=wfModel();
   if(dtWfState==='loading'){ return `<div style="font-size:13px;color:var(--muted)">${T('wfLoading')}</div>`; }
   const rows=model.filter(m=>which==='custom'?m.custom:!m.custom&&((which===0&&m.no<=WF_SECTIONS[0].steps.length)||(which===1&&m.no>WF_SECTIONS[0].steps.length)));
-  return `<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfReceived')}</th><th>${T('wfDays')}</th><th>${T('wfDate')}</th><th>${T('wfRef')}</th>${(canE||isStepMode())?'<th></th>':''}</tr>`+
-  rows.map((m)=>{
+  const parts=rows.map((m)=>{
     const idx=model.indexOf(m);
     const w=m.row, dated=w&&parseD(w.date||'');
     if(canRow(m)&&dtWfEdit===m.no){
@@ -2150,7 +2331,11 @@ function wfTableHtml(r,which){
     }
     const acts=canRow(m)&&w?`<button class="subedit" title="${T('wfEdit')}" onclick="wfEdit(${m.no})">✏️</button><button class="subdel" title="${T('wfDel')}" onclick="wfDel(${m.no})">✕</button>`:'';
     return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.legacy?` <span style="font-size:11px;color:var(--muted)">(${T('wfLegacy')})</span>`:m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${wfReceivedText(model,idx)}</td><td>${wfDaysText(model,idx)}</td><td>${dated?fmtD(w.date):'—'}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${(canE||isStepMode())?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
-  }).join('')+`</table></div>`;
+  });
+  /* v10.70: LC row — clickable, between step 22 and 23 in section B only.
+     It is NOT a chain step (no number, no dates, no workflow behavior). */
+  if(which===1){ const i22=rows.findIndex(m=>m.no===22); if(i22>=0) parts.splice(i22+1,0,lcRowHtml(r)); }
+  return `<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfReceived')}</th><th>${T('wfDays')}</th><th>${T('wfDate')}</th><th>${T('wfRef')}</th>${(canE||isStepMode())?'<th></th>':''}</tr>`+parts.join('')+`</table></div>`;
 }
 /* v10.34: the Add Step form is ONE shared form below all three blocks
    (it is not duplicated per section). It is re-rendered by wfRefresh()
@@ -2627,6 +2812,59 @@ function wfExportCsv(){
   document.body.appendChild(a); a.click();
   setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
 }
+/* ── v10.70: Download All / Print All — every task the current login can
+   see (D.rows is already login-scoped at boot / by the script), grouped by
+   unit in D.units order then SL. The list's search and filters are
+   deliberately ignored; the button titles say so. ── */
+function allVisibleRows(){
+  const order={}; (D.units||[]).forEach((u,i)=>{ order[u]=i; });
+  const rows=[...D.rows];
+  rows.sort((a,b)=>{ const ua=(order[a.unit]!==undefined?order[a.unit]:999), ub=(order[b.unit]!==undefined?order[b.unit]:999);
+    if(ua!==ub) return ua-ub; return (parseInt(a.sl,10)||0)-(parseInt(b.sl,10)||0); });
+  return rows;
+}
+const ALL_COLS=['SL','Unit','Task','Status','Budget Status','Materials Status','Start Date','Due Date','Finish Date','Progress','Tentative Budget (BDT)','Tentative Cost (BDT)','Payment (BDT)','Latest Comment'];
+function allCsvText(){
+  const L=[];
+  let curUnit=null;
+  allVisibleRows().forEach(r=>{
+    if(r.unit!==curUnit){ curUnit=r.unit;
+      L.push(['UNIT: '+curUnit].concat(Array(ALL_COLS.length-1).fill('')).map(wfCsvCell).join(','));
+      L.push(ALL_COLS.map(wfCsvCell).join(','));
+    }
+    L.push([r.sl,r.unit,r.name,r.status,r.bst||'',r.matst||'',r.start||'',r.due||'',r.revised||'',(r.prog||0)+'%',r.budget||0,r.cost||0,r.disb||0,r.comment||''].map(wfCsvCell).join(','));
+  });
+  return L.join('\r\n');
+}
+function downloadAllCsv(){
+  const blob=new Blob([allCsvText()],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='Budget_Tracker_All_Projects_'+toISODate(todayMid())+'.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 500);
+}
+function printAllHtml(){
+  const d=fmtD(toISODate(todayMid()));
+  let h=`<div class="co">Dekko Group · Budget Tracker</div><h2>${esc(Tf('allPrintH',{d}))}</h2>`;
+  let curUnit=null, rows=[];
+  const flush=()=>{
+    if(!rows.length) return;
+    h+=`<div class="unitsec allprint-sec"><h3>${esc(Tf('allPrintUnit',{u:curUnit,n:fmtN(rows.length)}))}</h3><table class="allprint"><tr>${ALL_COLS.map(c=>`<th>${esc(c)}</th>`).join('')}</tr>`+
+      rows.map(r=>`<tr><td>${esc(r.sl)}</td><td>${esc(r.unit)}</td><td>${esc(r.name)}</td><td>${esc(r.status)}</td><td>${esc(r.bst)||'—'}</td><td>${esc(r.matst)||'—'}</td><td>${fmtD(r.start)}</td><td>${fmtD(r.due)}</td><td>${fmtD(r.revised)}</td><td>${r.prog||0}%</td><td>${fmtN(r.budget||0)}</td><td>${fmtN(r.cost||0)}</td><td>${fmtN(r.disb||0)}</td><td>${esc(r.comment)||'—'}</td></tr>`).join('')+`</table></div>`;
+    rows=[];
+  };
+  allVisibleRows().forEach(r=>{ if(r.unit!==curUnit){ flush(); curUnit=r.unit; } rows.push(r); });
+  flush();
+  h+=`<p class="pr-foot">${esc(Tf('prFooter',{d}))}</p>`;
+  return h;
+}
+function printAll(){
+  let sh=document.getElementById('printSheet');
+  if(!sh){ sh=document.createElement('div'); sh.id='printSheet'; document.body.appendChild(sh); }
+  sh.innerHTML=printAllHtml();
+  window.print();
+}
 /* ── v10.27: A4 print sheet — rebuilt to match the sample task-workflow
    sheet (.sheet in ~/workspace/ts-spaces/sample-task-workflow/index.html):
    eyebrow, h2 title, 2-column kv2 with dashed rows, flat 7-column table
@@ -2657,14 +2895,14 @@ function wfPrintSheetHtml(r,sec){
     /* Days still count against the FULL model, so a section print keeps
        the same day counts as the whole print. */
     const fullIdx=model.indexOf(m);
-    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,fullIdx))}</td><td>${esc(wfDaysText(model,fullIdx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(st)}</td></tr>`; }).join('');
+    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,fullIdx))}</td><td>${esc(wfDaysText(model,fullIdx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(st)}</td></tr>`+(m.no===22?lcPrintRow(r):''); }).join('');
   const secRow=whole
     ? ''
     : `<tr class="prsec"><td colspan="7">${esc(WF_SECTIONS[sec].name)}</td></tr>`;
   const wholeRows=model.map((m,idx)=>{ const w=m.row, dated=w&&parseD(w.date||'');
     const st=dated?T('prDone'):(idx===firstPending?T('prInProg'):T('wfPending'));
     const sec2=(!m.custom&&(m.no===1||m.no===WF_SEC2_START))?`<tr class="prsec"><td colspan="7">${esc(m.no===1?WF_SECTIONS[0].name:WF_SECTIONS[1].name)}</td></tr>`:'';
-    return sec2+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,idx))}</td><td>${esc(wfDaysText(model,idx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(st)}</td></tr>`; }).join('');
+    return sec2+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,idx))}</td><td>${esc(wfDaysText(model,idx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(st)}</td></tr>`+(m.no===22?lcPrintRow(r):''); }).join('');
   return `<div class="co">Dekko Group · Task &amp; Budget Approval Sheet</div><h2>${esc(r.name)}</h2>`+
   `<div class="kv2">${fields.map(f=>`<div><span>${esc(f[0])}</span><b>${f[1]}</b></div>`).join('')}</div>`+
   `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>${esc(T('wfReceived'))}</th><th>${esc(T('wfDays'))}</th><th>${esc(T('wfDate'))}</th><th>${esc(T('thStatus'))}</th></tr>`+
@@ -2681,7 +2919,7 @@ function wfPrint(sec){
 
 /* ── In-view edit mode: all fields editable except name + unit (row identity).
    Date pickers for all four dates; saves through the existing update action. ── */
-function dtStartEdit(){ const r=rowBySl(dtRn); if(!r) return; if(isStepMode()){ toast(T('stepNote'),'err'); return; } if(!canEditUnit(r.unit)) return; dtEdit=true; renderDetail(); }
+function dtStartEdit(){ const r=rowBySl(dtRn); if(!r) return; if(isStepMode()&&!canProjectEdit3()){ toast(T('stepNote'),'err'); return; } if(!canEditUnit(r.unit)&&!canProjectEdit3()) return; dtEdit=true; renderDetail(); }
 function dtCancelEdit(){ dtEdit=false; renderDetail(); }
 function dtEditForm(r){
   return `<div class="dtsec"><h4>${T('dtEdit')}</h4>
@@ -2716,7 +2954,7 @@ async function dtSaveEdit(){
   const token=curToken();
   const m=document.getElementById('dtMsg');
   const say=(t,c)=>{ if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } };
-  if(isStepMode()){ say(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
+  if(isStepMode()&&!canProjectEdit3()){ say(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
   if(!url){ say(T('msgNoScript'),'err'); toast(T('msgNoScript'),'err'); return; }
   if(!token){ say(T('msgToken'),'err'); toast(T('msgToken'),'err'); return; }
   const vals={status:document.getElementById('deStatus').value,
@@ -2796,6 +3034,12 @@ function myStepName(){ if(!isStepMode()) return '';
   if(window.__stepName) return window.__stepName;
   const s=fsGet('cu-step-name'); if(s) return s;
   const n=myStepNo(); return (n&&WF_STEPS[n-1])?WF_STEPS[n-1]:''; }
+/* v10.70: step 3 (BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)) may also
+   add new projects and edit any project — the only step token with project
+   rights. Board drag, subtasks, comments and other steps' workflow rows
+   stay blocked for every step token, including step 3. */
+function canProjectEdit3(){ return isStepMode()&&myStepNo()===3; }
+function stepNoteText(){ return canProjectEdit3()?T('stepNote3'):T('stepNote'); }
 function statusName(s){ const k=(s||'').toLowerCase();
   if(k==='complete') return T('stComplete');
   if(k==='in progress') return T('stInProg');
@@ -2828,8 +3072,8 @@ function setFsTab(t){ fsTab=t;
     /* v10.69: a step token cannot add projects — show the note and
        disable Save (the form itself stays visible, read-only). */
     const sn=document.getElementById('fsStepNote');
-    if(sn){ sn.style.display=isStepMode()?'block':'none'; if(isStepMode()) sn.textContent=T('stepNote'); }
-    const ab=document.getElementById('fsAddBtn'); if(ab) ab.disabled=isStepMode();
+    if(sn){ sn.style.display=isStepMode()?'block':'none'; if(isStepMode()) sn.textContent=stepNoteText(); }
+    const ab=document.getElementById('fsAddBtn'); if(ab) ab.disabled=isStepMode()&&!canProjectEdit3();
   } else renderFsTable();
 }
 function openAddProject(){ openStatusPopup('all'); setFsTab('add'); }
@@ -2842,8 +3086,8 @@ function fsBuildAddLists(){
   else if(us) us.disabled=false;
 }
 async function fsAddSave(){
-  /* v10.69: a step token cannot add projects. */
-  if(isStepMode()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
+  /* v10.70: step tokens cannot add projects — except step 3. */
+  if(isStepMode()&&!canProjectEdit3()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
   const url=scriptUrl();
   const token=(document.getElementById('fsToken')||{}).value||curToken();
   const unit=document.getElementById('faUnit').value;
@@ -2903,6 +3147,8 @@ async function fsAddSave(){
       fsSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
 }
 document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return;
+  const lm=document.getElementById('lcModal');
+  if(lm && lm.style.display==='block'){ closeLcPopup(); return; }
   const dm=document.getElementById('dtModal');
   if(dm && dm.style.display==='flex') closeDetail();
   else if(document.getElementById('fsModal').style.display==='flex') closeStatusPopup(); });
@@ -2943,7 +3189,7 @@ function renderFsTable(){
         `<td><input id="fsRe" class="efinput" value="${esc(r.comment)}" style="min-width:150px"></td>`+
         `<td style="white-space:nowrap"><button class="fsbtn pri" onclick="fsSaveEdit(${r.sl})">${T('saveBtn').replace('💾 ','')}</button> <button class="fsbtn" onclick="fsCancelEdit()">${T('dtClose').replace('✖ ','')}</button></td></tr>`;
       }
-      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):''}</td><td>${canEditUnit(r.unit)?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
+      return `<tr class="rowclick${selRows.has(String(r.sl))?' selrow':''}" onclick="closeStatusPopup();openDetail(${r.sl})" title="Click for details"><td onclick="event.stopPropagation()"><input type="checkbox" class="rowcb" ${selRows.has(String(r.sl))?'checked':''} onchange="toggleSel(${r.sl},this.checked)"></td><td>${esc(r.sl)}</td><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${odDeadline(r)?fmtD(r.revised||r.due):'—'}</td><td>${daysCell(r)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.budget||0)}</td><td class="num">${fmtN(r.cost||0)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):''}</td><td>${(canEditUnit(r.unit)||canProjectEdit3())?'<button class="fsbtn" onclick="event.stopPropagation();fsEdit('+r.sl+')">'+T('thEdit')+'</button>':''}</td></tr>`;
     }).join('')+`</table>`
     : '<p style="color:'+thc().nodata+';font-size:13px">'+T('fsNoProjects')+'</p>';
   setHTML('fsTable', tbl);
@@ -2955,7 +3201,7 @@ function fsCancelEdit(){ fsEditSl=null; renderFsTable(); }
 async function fsSaveEdit(sl){
   const row=rowBySl(sl);
   if(!row){ fsSay(T('msgRowGone'),'err'); return; }
-  if(isStepMode()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
+  if(isStepMode()&&!canProjectEdit3()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
   const url=scriptUrl();
   const token=(document.getElementById('fsToken')||{}).value||curToken();
   if(!url){ fsSay(T('msgNoScript'),'err'); toggleFsSettings(); return; }
