@@ -298,9 +298,9 @@ th{padding:8px 10px}
 .gbrow .gbwrap{margin:0}
 /* ── v10.55: board columns must shrink below their content — `1fr` is
    `minmax(auto,1fr)`, so one long nowrap card title forced each column to
-   ~1100px and the board scrolled sideways. `minmax(0,1fr)` lets the 4
+   ~1100px and the board scrolled sideways. `minmax(0,1fr)` lets the 3
    columns share the board width and long titles clip with ellipsis. ── */
-.board{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;align-items:start}
+.board{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:start}
 .bdcol{background:#f5f5f5;border:1px solid var(--border);border-radius:8px;padding:10px;min-height:180px;min-width:0}
 [data-theme="dark"] .bdcol{background:#232323}
 .bdcol.over{border-color:var(--brand-b);background:#f0edff}
@@ -316,7 +316,7 @@ th{padding:8px 10px}
 .bdcard .meta{font-size:11.5px;color:var(--muted);line-height:1.4}
 .bdcard .meta b{color:var(--body)}
 /* ── v10.12: colorful board (reference design) — solid status-color cards,
-   white text, colored column dots. Open=blue, In Progress=orange,
+   white text, colored column dots. In Progress=orange,
    Wating=red, Complete=green.
    v10.53 (2026-11-16): cards reverted to plain (card background, normal
    text) at the owner's request — the solid-color cards are gone; the
@@ -637,10 +637,10 @@ th{padding:8px 10px}
   <div class="fsbody"><div style="overflow:auto" id="fsTable"></div>
   <div id="fsAddForm" style="display:none;max-width:960px">
     <div style="font-size:11px;color:var(--muted);margin:2px 0 12px" data-t="addH"></div>
+    <div id="fsStepNote" style="display:none;font-size:12px;color:var(--muted);margin:2px 0 12px"></div>
     <div class="efgrid">
       <div><label data-t="fUnit"></label><select id="faUnit" class="efinput"></select></div>
       <div style="grid-column:span 2"><label data-t="fTask"></label><input id="faName" class="efinput" data-t-ph="fTaskPh"></div>
-      <div><label data-t="fStatus"></label><select id="faStatus" class="efinput"><option>In Progress</option><option>Complete</option><option>Wating</option><option>Open</option></select></div>
       <div><label data-t="fAssignee"></label><input id="faAssignee" class="efinput"></div>
       <div><label data-t="fPriority"></label><select id="faPriority" class="efinput"><option value=""></option><option>Urgent</option><option>Normal</option></select></div>
       <div><label data-t="fBst"></label><select id="faBst" class="efinput"><option value=""></option><option>PREPARED BY</option><option>APPROVEED BY HOD</option><option>APPROVEED BY GHOM</option><option>APPROVEED BY IE-HEAD</option><option>APPROVEED BY COO</option><option>APPROVEED BY CEO (PROJECT/BUDGET/CS)</option><option>CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)</option><option>BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)</option><option>CHECKED & APPROVED BY (H/O PROCURMENT)</option><option>CHECKED & APPROVED BY (H/O OPERATION )</option><option>APPROVEED BY GHOM (RECOMANDATION)</option><option>APPROVEED BY SR.GM-OPERATON</option><option>CHECKED & CONFIRMED BY (H/O AUDIT)</option><option>APPROVEED BY CEO (RECOMANDATION)</option><option>APPROVEED BY GCEO</option><option>APPROVEED BY CHAIRMEN SIR</option><option>SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)</option><option>REQUISITION RISE IN EBS</option><option>REQUISITION APPROVEED BY HOD</option><option>REQUISITION APPROVEED BY IA (INTERNAL AUDIT)</option><option>REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)</option><option>CS MAKE AND CHECKED & APPROVED BY PROCURMENT</option><option>CS CHECKED & APPROVED BY H/O AUDIT</option><option>PO CREATE BY PROCURMENT</option><option>PO APPROVED BY FINANCE</option><option>PO CHECKED & APPROVED BY PROCURMENT HEAD</option><option>PO APPROVED BY CEO SIR</option><option>PO APPROVED BY GCEO SIR</option><option>PO APPROVED BY CHAIRMAN SIR</option><option>PO SEND TO SUPPLIER</option><option>MATERIALS RECEIVED</option><option>WORK START</option></select></div>
@@ -669,7 +669,7 @@ const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1LVyKMJRTGdK0Kc3hT
    the /exec URL is embedded here by rebuilding). When set, Setup asks only
    for the 6-digit token — the URL field comes prefilled and read-only. ── */
 const EMBEDDED_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw2lMcNSwjxVajtJZBcocD6eM9d8P09GDdLs3-AsEgzTTN2MIW216a-xBua73GJDDs/exec';
-let D = {"rows": [{"sl": 1, "unit": "DGL-1", "name": "Estimated Budget For Retrofitting Structure Work at Single storied jhut godown", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "", "start": "2026-04-30", "due": "", "revised": "", "finishwork": "", "prog": 50, "budget": 0, "cost": 214481, "disb": 0, "subtasks": 0, "comment": "Wating For RSC approval.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 2, "unit": "DGL-1", "name": "Estimated budget for the replacement of repairable fire doors, accessories, repair and supply and installation of non-repairable fire doors. (Cap-3)", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "", "start": "2026-08-01", "due": "", "revised": "", "finishwork": "", "prog": 28, "budget": 0, "cost": 2427335, "disb": 0, "subtasks": 1, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 3, "unit": "DGL-2", "name": "Estimated budget for Textile moisture meter for DGL (Extension unit)", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "In-Housed", "start": "2026-08-02", "due": "", "revised": "", "finishwork": "2026-11-05", "prog": 100, "budget": 0, "cost": 559600, "disb": 0, "subtasks": 0, "comment": "Received", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 4, "unit": "DGL-2", "name": "Budget for 06 Nos dehumidifier machine for packing warehouse.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY IA (INTERNAL AUDIT)", "matst": "", "start": "2026-10-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1860000, "disb": 0, "subtasks": 0, "comment": "Requisition Rise In EBS Work on going", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 5, "unit": "DGL-2", "name": "Estimated budget for power cable, production floor, light BBT, machine BBT and DB power connection.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-10-10", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 3088600, "disb": 0, "subtasks": 0, "comment": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 6, "unit": "DGL-2", "name": "Estimated budget for LED tube light, exit light, and fire and safety equipment.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)", "matst": "", "start": "2026-10-14", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 3771525, "disb": 0, "subtasks": 0, "comment": "Budget Light Item Already Received Factory.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 7, "unit": "DGL-2", "name": "Estimated Budget For Production Building HVLS and Ceiling Fan", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-17", "due": "", "revised": "2026-12-31", "finishwork": "", "prog": 0, "budget": 0, "cost": 9532625, "disb": 0, "subtasks": 0, "comment": "Sent to Head Office & Procurement Department work on it.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 8, "unit": "DGL-2", "name": "Estimated budget yellow light and electrical wiring work at production building.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION RISE IN EBS", "matst": "", "start": "2026-10-31", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1582925, "disb": 0, "subtasks": 0, "comment": "Requisition Rise In EBS Work On Going", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 9, "unit": "DFL", "name": "Getup Table Replacement for Finishing Section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Received", "start": "2026-09-06", "due": "2026-11-25", "revised": "", "finishwork": "", "prog": 80, "budget": 155078, "cost": 144377, "disb": 0, "subtasks": 0, "comment": "Due to Worker Strike the work completion might be delayed.", "comment_by": "", "comment_date": "", "desc": "As per CEO Sir' Requirement Finishing Getup Table Replacement is Required.", "task_id": "CPX-DFL-00052-2026", "prog_note": ""}, {"sl": 10, "unit": "DFL", "name": "X-Rite Box New Purchase and Setup for PVH Buyer", "status": "Open", "assignee": "", "priority": "Normal", "bst": "SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)", "matst": "Not Received yet", "start": "2026-10-08", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1174853, "cost": 1174853, "disb": 0, "subtasks": 0, "comment": "Is in I/A-CO", "comment_by": "", "comment_date": "", "desc": "Currently waiting for CM sir's approval. Process timeline details can be found in the budget. CO operation is unable to deliver the information.", "task_id": "", "prog_note": ""}, {"sl": 11, "unit": "DFL", "name": "03 Nos Work Station New Making for the Sample Section", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Received", "start": "2026-11-14", "due": "2026-11-16", "revised": "", "finishwork": "2026-11-15", "prog": 100, "budget": 27960, "cost": 25126, "disb": 0, "subtasks": 0, "comment": "Completed", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 12, "unit": "DGL-2", "name": "Furniture Requirements for the Inspection Room at DGL Unit-02", "status": "Open", "assignee": "", "priority": "Normal", "bst": "", "matst": "", "start": "2026-11-01", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1844350, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 13, "unit": "DGL-2", "name": "Estimated budget for office seating arrangement budget at DGL unit 2.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 3784460, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 14, "unit": "DGL-2", "name": "Estimated budget for furniture making budget at DGL unit -02 cutting section.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1091300, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 15, "unit": "DGL-2", "name": "Estimated budget for furniture making budget at DGL unit -02.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1989300, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 16, "unit": "DRL", "name": "Cutting Section Mobile fabric relay and Table-25pcs", "status": "In Progress", "assignee": "Mr. Kaoser & Mr. Labib", "priority": "Normal", "bst": "WORK START", "matst": "", "start": "2026-10-01", "due": "2026-11-28", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 302530, "disb": 0, "subtasks": 0, "comment": "Material inhouse. Work start soon.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 17, "unit": "DRL", "name": "Sewing operator chair 250pcs", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-10-04", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 922500, "disb": 0, "subtasks": 0, "comment": "PO done", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 18, "unit": "DRL", "name": "Generator synchronizing controller", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "MATERIALS RECEIVED", "matst": "", "start": "2026-09-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 220000, "disb": 0, "subtasks": 0, "comment": "PO done", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 19, "unit": "DRL", "name": "Steam , diesel , water flow meter", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-09-30", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 660000, "disb": 0, "subtasks": 0, "comment": "80% materials inhouse. Work start soon", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 20, "unit": "DRL", "name": "550KVA Generator New Radiator", "status": "Open", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-10-17", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 700000, "disb": 0, "subtasks": 0, "comment": "PO done. Waiting for Material inhouse.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 21, "unit": "DRL", "name": "9th floor office re-arangement work", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)", "matst": "", "start": "2026-10-06", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1500000, "disb": 0, "subtasks": 0, "comment": "Budget in Head office procurement.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 22, "unit": "DRL", "name": "9th floor Display Extension area new VRF AC", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED & APPROVED BY (H/O PROCURMENT)", "matst": "", "start": "2026-10-05", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 2179000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 23, "unit": "DRL", "name": "New Washing machine (replace).", "status": "Open", "assignee": "", "priority": "Normal", "bst": "", "matst": "", "start": "", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 157335, "disb": 0, "subtasks": 0, "comment": "PO done", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 24, "unit": "DRL", "name": "3 Generator Turbocharger servicing", "status": "Open", "assignee": "", "priority": "Normal", "bst": "", "matst": "", "start": "", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 206000, "disb": 0, "subtasks": 0, "comment": "PO dona", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 25, "unit": "DFL", "name": "New Industrial Rack (02 Nos) for the Sewing Section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "Not Received Yet", "start": "2026-11-10", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 95000, "cost": 95000, "disb": 0, "subtasks": 0, "comment": "Due to worker strike sending to CO might take longer time. (Factory Audit release date-17/11/26)", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 26, "unit": "DFL", "name": "New Drawer Cabinet for PVH Buying QC", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "Not Received yet", "start": "2026-11-09", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 5000, "cost": 5000, "disb": 0, "subtasks": 0, "comment": "Due to worker strike there might be a delay to send the budget to CO. Audit Released the Budget on 17/11/26.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 27, "unit": "DFL", "name": "Fence Making for the Maintenance Area-GMP Requirment", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "Not Received Yet", "start": "2026-11-10", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 76930, "cost": 76930, "disb": 0, "subtasks": 0, "comment": "Due to Worker Strike It might be take longer time to send at CO.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 28, "unit": "DGL-1", "name": "Estimated budget of DGL's Fire Cap-34(Floor to Floor Separation)", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "", "start": "2024-12-22", "due": "", "revised": "", "finishwork": "", "prog": 50, "budget": 0, "cost": 695000, "disb": 0, "subtasks": 0, "comment": "Budget prepared on Mr. Rod's recommendations. Out of 03 recommendations, we proceed 02 with the design consultants.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 29, "unit": "GGL", "name": "New Lift Core Civil work", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "PO APPROVED BY CHAIRMAN SIR", "matst": "Materials Received", "start": "2026-09-10", "due": "", "revised": "", "finishwork": "2026-10-30", "prog": 100, "budget": 0, "cost": 400000, "disb": 0, "subtasks": 0, "comment": "Completed", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 30, "unit": "GGL", "name": "LPS Utility Building", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Materials Received", "start": "2026-10-20", "due": "2026-11-30", "revised": "", "finishwork": "2026-11-30", "prog": 80, "budget": 0, "cost": 720000, "disb": 0, "subtasks": 0, "comment": "Work is on going", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 31, "unit": "AWL", "name": "Dry Process Automatic whisker Machine, Horizontal & VerticalBrushing Machine,Plastic Attacher Machine & Grinding Machine", "status": "In Progress", "assignee": "", "priority": "Urgent", "bst": "WORK START", "matst": "Vertical Brushing Machine 8 nos. inhouse", "start": "2026-10-20", "due": "2026-11-26", "revised": "", "finishwork": "", "prog": 90, "budget": 0, "cost": 2630392, "disb": 2521392, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 32, "unit": "DGL-2", "name": "Budget for DGL-02's 04Sets of Arm Hole Press machine & 02 sets of Side Seam Press Machine", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-11-02", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 8150000, "cost": 8150000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 33, "unit": "DGL-2", "name": "Estimated budget for Air conditioner for DGL (Extension unit)", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-26", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 4994000, "disb": 0, "subtasks": 0, "comment": "Budget Approved by ECO Sir and send to Head Office", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 34, "unit": "AWL", "name": "R & D Office Room Desk Table & Cabinet", "status": "Open", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CEO (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-11-02", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 245800, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 35, "unit": "AWL", "name": "Wet Process Aisle Mark", "status": "Open", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CEO (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-11-02", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 146000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 36, "unit": "GGL", "name": "Lift with ARD", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Lift Received,", "start": "2026-06-24", "due": "", "revised": "2027-01-17", "finishwork": "2026-12-10", "prog": 10, "budget": 0, "cost": 3616000, "disb": 0, "subtasks": 0, "comment": "Lift Received, Installation work start will soon", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 37, "unit": "DFL", "name": "New Light Box Making Work for Kontoor Buyer", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "Not Received Yet", "start": "2026-10-20", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 36630, "cost": 36630, "disb": 0, "subtasks": 0, "comment": "Budget is in Procurement Department", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 38, "unit": "DRL", "name": "Iron Table Individual protection", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Received", "start": "2026-10-04", "due": "", "revised": "", "finishwork": "", "prog": 10, "budget": 89399, "cost": 92345, "disb": 0, "subtasks": 0, "comment": "Material Received", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 39, "unit": "GGL", "name": "Inkjet Pattern Cutter Machine", "status": "In Progress", "assignee": "HO", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "ETT Done", "start": "2026-09-22", "due": "", "revised": "", "finishwork": "2027-01-31", "prog": 0, "budget": 610000, "cost": 610000, "disb": 0, "subtasks": 0, "comment": "work order done waiting for machine arrived", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 40, "unit": "GGL", "name": "Dice making for arm hole machine", "status": "In Progress", "assignee": "HO", "priority": "Urgent", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-11-04", "due": "", "revised": "", "finishwork": "2026-11-30", "prog": 20, "budget": 0, "cost": 390000, "disb": 195000, "subtasks": 0, "comment": "work order done waiting for dice arrived", "comment_by": "", "comment_date": "", "desc": "Workshop work on going", "task_id": "", "prog_note": ""}, {"sl": 41, "unit": "GGL", "name": "Roaming QC Table Making", "status": "In Progress", "assignee": "HO", "priority": "Normal", "bst": "REQUISITION RISE IN EBS", "matst": "", "start": "2026-10-10", "due": "", "revised": "", "finishwork": "2026-12-31", "prog": 0, "budget": 0, "cost": 227250, "disb": 0, "subtasks": 0, "comment": "waiting for materials", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 42, "unit": "GGL", "name": "New 1000 KVA Generator Purchase & Installation", "status": "Open", "assignee": "HO", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-15", "due": "", "revised": "", "finishwork": "2027-03-31", "prog": 0, "budget": 0, "cost": 14624470, "disb": 0, "subtasks": 0, "comment": "Budget send to HO, waiting for CS approval", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 43, "unit": "GGL", "name": "VI. BE. MAC Machine Spare Parts", "status": "Open", "assignee": "HO", "priority": "Urgent", "bst": "CHECKED & APPROVED BY (H/O PROCURMENT)", "matst": "", "start": "2026-10-26", "due": "", "revised": "", "finishwork": "2027-02-28", "prog": 0, "budget": 0, "cost": 287668, "disb": 0, "subtasks": 0, "comment": "Budget send to HO, waiting for CS approval after open LC", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 44, "unit": "GGL", "name": "IPS- for RSC Fire Means of Egress CAP Closed", "status": "Open", "assignee": "HO", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "2026-12-31", "prog": 0, "budget": 0, "cost": 378095, "disb": 0, "subtasks": 0, "comment": "Budget send to HO waiting for approval", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 45, "unit": "DGL-2", "name": "Estimated budget for furniture making cutting section.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1091300, "cost": 1091300, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-U-2-109", "prog_note": ""}, {"sl": 46, "unit": "DGL-1", "name": "AUTOMATIC JEANS DECORATION MACHINE.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-10-24", "due": "", "revised": "", "finishwork": "", "prog": 62, "budget": 1866750, "cost": 1866750, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 47, "unit": "DGL-2", "name": "Budget for Different Parts of BBT System at Production Building", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)", "matst": "", "start": "2026-11-05", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 6469230, "cost": 6469230, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 48, "unit": "DGL-1", "name": "Estimated CS For Auto Booster Control Panel For Drinking Water", "status": "Open", "assignee": "", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-09", "due": "", "revised": "", "finishwork": "", "prog": 8, "budget": 390000, "cost": 390000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 49, "unit": "DRL", "name": "Expansion joint & Coller Joint-1st Phase", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-06-29", "due": "", "revised": "", "finishwork": "", "prog": 90, "budget": 1461620, "cost": 1461620, "disb": 0, "subtasks": 0, "comment": "1st phase work on progress.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 50, "unit": "DRL", "name": "Full factory Exit & emergency light re-arangemen", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "", "matst": "", "start": "2026-05-07", "due": "", "revised": "", "finishwork": "2026-11-17", "prog": 100, "budget": 734613, "cost": 734613, "disb": 0, "subtasks": 0, "comment": "1st, 2nd & 3rd Phase work done.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 51, "unit": "DGL-1", "name": "Level Box Making at finishing & Packing section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)", "matst": "", "start": "2026-09-19", "due": "", "revised": "", "finishwork": "", "prog": 33, "budget": 205642, "cost": 205642, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 52, "unit": "DRL", "name": "Fire Drll from FSCD", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PREPARED BY", "matst": "", "start": "2026-10-18", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 18160, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 53, "unit": "DRL", "name": "1st floor Carhart inspection room new table & cabinet making work purpose", "status": "Open", "assignee": "418737", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 41935, "disb": 0, "subtasks": 0, "comment": "Awaiting for Internal audit approval", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 54, "unit": "DRL", "name": "1st & 4th Floor new office desk making work purpose", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 58120, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 55, "unit": "DGL-2", "name": "Estimated Budget For Electric Steam Iron", "status": "Open", "assignee": "", "priority": "", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-14", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1073685, "cost": 1073685, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 56, "unit": "DGL-1", "name": "Estimated Budget for Polyurethan (PU) Repair at Day Care & Main Building", "status": "Open", "assignee": "", "priority": "", "bst": "CHECKED & CONFIRMED BY (H/O AUDIT)", "matst": "", "start": "2026-08-15", "due": "", "revised": "", "finishwork": "", "prog": 8, "budget": 561800, "cost": 561800, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-81", "prog_note": ""}, {"sl": 57, "unit": "DGL-1", "name": "Estimated Budget for Purchasing a Gazi Basket for the Wash Section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-10-17", "due": "", "revised": "", "finishwork": "", "prog": 50, "budget": 205200, "cost": 205200, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 58, "unit": "DGL-2", "name": "Estimated Budget for Facility 3rd Floor Re-arrangement at DGL-02.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-11-12", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 7785541, "cost": 7785541, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 59, "unit": "DGL-2", "name": "Estimated Budget for HR & Admin Office Shifting at DGL-02.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-13", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1317320, "cost": 1317320, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-98", "prog_note": ""}, {"sl": 60, "unit": "DGL-2", "name": "Estimated Budget for Trolley Making at DGL-02.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-12", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 251300, "cost": 251300, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-97", "prog_note": ""}, {"sl": 61, "unit": "DGL-2", "name": "Estimated Budget for Office Setting Arrangement at DGL Unit-02 (New Joining).", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-25", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 381645, "cost": 381645, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-100", "prog_note": ""}, {"sl": 62, "unit": "DGL-2", "name": "Estimated Budget for Purchasing Furniture for the Main Production Building at DGL-02.", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-14", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 3846970, "cost": 3846970, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-102", "prog_note": ""}, {"sl": 63, "unit": "AWL", "name": "120 KVA two nos central UPS annual maintenance contact & battery replace work", "status": "Open", "assignee": "", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-25", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 2326000, "cost": 2326000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 64, "unit": "AFL", "name": "QC Table & Threat Cutting Table Work Budget", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-28", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 331000, "cost": 331000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 65, "unit": "AFL", "name": "AFL Sewing Section Steam Line Making Purpose Materials Budget", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-26", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 547550, "cost": 547550, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 66, "unit": "AFL", "name": "Paper Card board moisture meter work budget", "status": "Open", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 195000, "cost": 195000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 67, "unit": "AWL", "name": "AWL Lab Ceiling Work Budget", "status": "Open", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-31", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 2770280, "cost": 2770280, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 68, "unit": "DRL", "name": "8KWp Solar remodification with hybrid inverter & Battery", "status": "Open", "assignee": "Omar Golam Rabbany", "priority": "Normal", "bst": "SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)", "matst": "", "start": "2026-09-17", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 753168, "cost": 672510, "disb": 0, "subtasks": 0, "comment": "Budget approved waiting for EBS requisition", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}], "units": ["DGL-1", "DGL-2", "DRL", "DFL", "GGL", "AWL", "AFL"], "statuses": ["In Progress", "Complete", "Wating", "Open"], "assignees": ["418737", "HO", "Mr. Kaoser & Mr. Labib", "Omar Golam Rabbany"], "updated": "2026-11-18"};
+let D = {"rows": [{"sl": 1, "unit": "DGL-1", "name": "Estimated Budget For Retrofitting Structure Work at Single storied jhut godown", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "", "start": "2026-04-30", "due": "", "revised": "", "finishwork": "", "prog": 50, "budget": 0, "cost": 214481, "disb": 0, "subtasks": 0, "comment": "Wating For RSC approval.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 2, "unit": "DGL-1", "name": "Estimated budget for the replacement of repairable fire doors, accessories, repair and supply and installation of non-repairable fire doors. (Cap-3)", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "", "start": "2026-08-01", "due": "", "revised": "", "finishwork": "", "prog": 28, "budget": 0, "cost": 2427335, "disb": 0, "subtasks": 1, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 3, "unit": "DGL-2", "name": "Estimated budget for Textile moisture meter for DGL (Extension unit)", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "In-Housed", "start": "2026-08-02", "due": "", "revised": "", "finishwork": "2026-11-05", "prog": 100, "budget": 0, "cost": 559600, "disb": 0, "subtasks": 0, "comment": "Received", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 4, "unit": "DGL-2", "name": "Budget for 06 Nos dehumidifier machine for packing warehouse.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY HOD", "matst": "", "start": "2026-10-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1860000, "disb": 0, "subtasks": 0, "comment": "Requisition Check By Internal Audit", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 5, "unit": "DGL-2", "name": "Estimated budget for power cable, production floor, light BBT, machine BBT and DB power connection.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "MATERIALS RECEIVED", "matst": "", "start": "2026-10-10", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 3088600, "disb": 0, "subtasks": 0, "comment": "Materials Received at factory", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 6, "unit": "DGL-2", "name": "Estimated budget for LED tube light, exit light, and fire and safety equipment.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION RISE IN EBS", "matst": "", "start": "2026-10-14", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 3771525, "disb": 0, "subtasks": 0, "comment": "Budget Light Item Already Received Factory.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 7, "unit": "DGL-2", "name": "Estimated Budget For Production Building HVLS and Ceiling Fan", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-17", "due": "", "revised": "2026-12-31", "finishwork": "", "prog": 0, "budget": 0, "cost": 9532625, "disb": 0, "subtasks": 0, "comment": "Sent to Head Office & Procurement Department work on it.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 8, "unit": "DGL-2", "name": "Estimated budget yellow light and electrical wiring work at production building.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY HOD", "matst": "", "start": "2026-10-31", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1582925, "disb": 0, "subtasks": 0, "comment": "Requisition Check By Internal Audit", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 9, "unit": "DFL", "name": "Getup Table Replacement for Finishing Section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Received", "start": "2026-09-06", "due": "2026-11-25", "revised": "", "finishwork": "", "prog": 80, "budget": 155078, "cost": 144377, "disb": 0, "subtasks": 0, "comment": "Due to Worker Strike the work completion might be delayed.", "comment_by": "", "comment_date": "", "desc": "As per CEO Sir' Requirement Finishing Getup Table Replacement is Required.", "task_id": "CPX-DFL-00052-2026", "prog_note": ""}, {"sl": 10, "unit": "DFL", "name": "X-Rite Box New Purchase and Setup for PVH Buyer", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION RISE IN EBS", "matst": "Not Received yet", "start": "2026-10-08", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1174853, "cost": 1095950, "disb": 0, "subtasks": 0, "comment": "Waiting for materials", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 11, "unit": "DFL", "name": "03 Nos Work Station New Making for the Sample Section", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Received", "start": "2026-11-14", "due": "2026-11-16", "revised": "", "finishwork": "2026-11-15", "prog": 100, "budget": 27960, "cost": 25126, "disb": 0, "subtasks": 0, "comment": "Completed", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 12, "unit": "DGL-2", "name": "Furniture Requirements for the Inspection Room at DGL Unit-02", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "", "matst": "", "start": "2026-11-01", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1844350, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 13, "unit": "DGL-2", "name": "Estimated budget for office seating arrangement budget at DGL unit 2.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 3784460, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 14, "unit": "DGL-2", "name": "Estimated budget for furniture making budget at DGL unit -02 cutting section.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1091300, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 15, "unit": "DGL-2", "name": "Estimated budget for furniture making budget at DGL unit -02.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1989300, "disb": 0, "subtasks": 0, "comment": "Budget approval ongoing", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 16, "unit": "DRL", "name": "Cutting Section Mobile fabric relay and Table-25pcs", "status": "In Progress", "assignee": "Mr. Kaoser & Mr. Labib", "priority": "Normal", "bst": "WORK START", "matst": "", "start": "2026-10-01", "due": "2026-11-28", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 302530, "disb": 0, "subtasks": 0, "comment": "Material inhouse. Work start soon.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 17, "unit": "DRL", "name": "Sewing operator chair 250pcs", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-10-04", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 922500, "disb": 0, "subtasks": 0, "comment": "PO done", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 18, "unit": "DRL", "name": "Generator synchronizing controller", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "MATERIALS RECEIVED", "matst": "", "start": "2026-09-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 220000, "disb": 0, "subtasks": 0, "comment": "PO done", "comment_by": "", "comment_date": "", "desc": "waiting for materials received.", "task_id": "", "prog_note": ""}, {"sl": 19, "unit": "DRL", "name": "Steam , diesel , water flow meter", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-09-30", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 660000, "disb": 0, "subtasks": 0, "comment": "80% materials inhouse. Work start soon", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 20, "unit": "DRL", "name": "550KVA Generator New Radiator", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-10-17", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 700000, "disb": 0, "subtasks": 0, "comment": "PO done. Waiting for Material inhouse.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 21, "unit": "DRL", "name": "9th floor office re-arangement work", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)", "matst": "", "start": "2026-10-06", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 1500000, "disb": 0, "subtasks": 0, "comment": "Budget in Head office procurement.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 22, "unit": "DRL", "name": "9th floor Display Extension area new VRF AC", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED & APPROVED BY (H/O PROCURMENT)", "matst": "", "start": "2026-10-05", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 2179000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 23, "unit": "DRL", "name": "New Washing machine (replace).", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CS MAKE AND CHECKED & APPROVED BY PROCURMENT", "matst": "", "start": "", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 157335, "disb": 0, "subtasks": 0, "comment": "PO done", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 24, "unit": "DRL", "name": "3 Generator Turbocharger servicing", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-09-22", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 206000, "disb": 0, "subtasks": 0, "comment": "PO dona", "comment_by": "", "comment_date": "", "desc": "Supplier is unable to work because the factory has not been shut down.", "task_id": "", "prog_note": ""}, {"sl": 25, "unit": "DFL", "name": "New Industrial Rack (02 Nos) for the Sewing Section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "Not Received Yet", "start": "2026-11-10", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 95000, "cost": 95000, "disb": 0, "subtasks": 0, "comment": "Due to worker strike sending to CO might take longer time. (Factory Audit release date-17/11/26)", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 26, "unit": "DFL", "name": "New Drawer Cabinet for PVH Buying QC", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "Not Received yet", "start": "2026-11-09", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 5000, "cost": 5000, "disb": 0, "subtasks": 0, "comment": "Budget sent to CO.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 27, "unit": "DFL", "name": "Fence Making for the Maintenance Area-GMP Requirment", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "Not Received Yet", "start": "2026-11-10", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 76930, "cost": 76930, "disb": 0, "subtasks": 0, "comment": "Budget sent to CO.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 28, "unit": "DGL-1", "name": "Estimated budget of DGL's Fire Cap-34(Floor to Floor Separation)", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "", "start": "2025-01-16", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 2455000, "disb": 0, "subtasks": 0, "comment": "Budget prepared on Mr. Rod's recommendations. Out of 03 recommendations, we proceed 02 with the design consultants.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 29, "unit": "GGL", "name": "New Lift Core Civil work", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "PO APPROVED BY CHAIRMAN SIR", "matst": "Materials Received", "start": "2026-09-10", "due": "", "revised": "", "finishwork": "2026-10-30", "prog": 100, "budget": 0, "cost": 400000, "disb": 104000, "subtasks": 0, "comment": "Completed", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 30, "unit": "GGL", "name": "LPS Utility Building", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Materials Received", "start": "2026-10-20", "due": "2026-11-30", "revised": "", "finishwork": "2026-11-30", "prog": 80, "budget": 0, "cost": 720000, "disb": 310736, "subtasks": 0, "comment": "Work is on going", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 31, "unit": "AWL", "name": "Dry Process Automatic whisker Machine, Horizontal & VerticalBrushing Machine,Plastic Attacher Machine & Grinding Machine", "status": "In Progress", "assignee": "", "priority": "Urgent", "bst": "WORK START", "matst": "Vertical Brushing Machine 8 nos. inhouse", "start": "2026-10-20", "due": "2026-11-26", "revised": "", "finishwork": "", "prog": 90, "budget": 0, "cost": 2630392, "disb": 2521392, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 32, "unit": "DGL-2", "name": "Budget for DGL-02's 04Sets of Arm Hole Press machine & 02 sets of Side Seam Press Machine", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-11-02", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 8150000, "cost": 8150000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 33, "unit": "DGL-2", "name": "Estimated budget for Air conditioner for DGL (Extension unit)", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-26", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 4994000, "disb": 0, "subtasks": 0, "comment": "Budget Approved by ECO Sir and send to Head Office", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 34, "unit": "AWL", "name": "R & D Office Room Desk Table & Cabinet", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CEO (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-19", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 245800, "cost": 245800, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 35, "unit": "AWL", "name": "Wet Process Aisle Mark", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CEO (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-11-02", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 146000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 36, "unit": "GGL", "name": "Lift with ARD", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Lift Received,", "start": "2026-06-24", "due": "", "revised": "2027-01-17", "finishwork": "2026-12-10", "prog": 10, "budget": 0, "cost": 3766000, "disb": 3766000, "subtasks": 0, "comment": "Lift Received, Installation work start will soon", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 37, "unit": "DFL", "name": "New Light Box Making Work for Kontoor Buyer", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "Not Received Yet", "start": "2026-10-20", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 36630, "cost": 36630, "disb": 0, "subtasks": 0, "comment": "Budget is in Procurement Department", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 38, "unit": "DRL", "name": "Iron Table Individual protection", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "WORK START", "matst": "Received", "start": "2026-10-04", "due": "", "revised": "", "finishwork": "", "prog": 10, "budget": 89399, "cost": 92345, "disb": 0, "subtasks": 0, "comment": "Material Received", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 39, "unit": "GGL", "name": "Inkjet Pattern Cutter Machine", "status": "In Progress", "assignee": "HO", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "ETT Done", "start": "2026-09-22", "due": "", "revised": "", "finishwork": "2027-01-31", "prog": 0, "budget": 610000, "cost": 610000, "disb": 610000, "subtasks": 0, "comment": "work order done waiting for machine arrived", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 40, "unit": "GGL", "name": "Dice making for arm hole machine", "status": "In Progress", "assignee": "HO", "priority": "Urgent", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-11-04", "due": "", "revised": "", "finishwork": "2026-11-30", "prog": 20, "budget": 0, "cost": 390000, "disb": 195000, "subtasks": 0, "comment": "work order done waiting for dice arrived", "comment_by": "", "comment_date": "", "desc": "Workshop work on going", "task_id": "", "prog_note": ""}, {"sl": 41, "unit": "GGL", "name": "Roaming QC Table Making", "status": "In Progress", "assignee": "HO", "priority": "Normal", "bst": "REQUISITION RISE IN EBS", "matst": "", "start": "2026-10-10", "due": "", "revised": "", "finishwork": "2026-12-31", "prog": 0, "budget": 0, "cost": 227250, "disb": 0, "subtasks": 0, "comment": "waiting for materials", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 42, "unit": "GGL", "name": "New 1000 KVA Generator Purchase & Installation", "status": "In Progress", "assignee": "HO", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-15", "due": "", "revised": "", "finishwork": "2027-03-31", "prog": 0, "budget": 0, "cost": 14624470, "disb": 0, "subtasks": 0, "comment": "Budget send to HO, waiting for CS approval", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 43, "unit": "GGL", "name": "VI. BE. MAC Machine Spare Parts", "status": "In Progress", "assignee": "HO", "priority": "Urgent", "bst": "CHECKED & APPROVED BY (H/O PROCURMENT)", "matst": "", "start": "2026-10-26", "due": "", "revised": "", "finishwork": "2027-02-28", "prog": 0, "budget": 0, "cost": 287668, "disb": 0, "subtasks": 0, "comment": "Budget send to HO, waiting for CS approval after open LC", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 44, "unit": "GGL", "name": "IPS- for RSC Fire Means of Egress CAP Closed", "status": "In Progress", "assignee": "HO", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "2026-12-31", "prog": 0, "budget": 0, "cost": 378095, "disb": 0, "subtasks": 0, "comment": "Budget send to HO waiting for approval", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 45, "unit": "DGL-2", "name": "Estimated budget for furniture making cutting section.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-11-03", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1091300, "cost": 1091300, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-U-2-109", "prog_note": ""}, {"sl": 46, "unit": "DGL-1", "name": "AUTOMATIC JEANS DECORATION MACHINE.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-10-24", "due": "", "revised": "", "finishwork": "", "prog": 62, "budget": 1866750, "cost": 1866750, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 47, "unit": "DGL-2", "name": "Budget for Different Parts of BBT System at Production Building", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-11-05", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 6469230, "cost": 6469230, "disb": 0, "subtasks": 0, "comment": "PO Approved By Procurement Head", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 48, "unit": "DGL-1", "name": "Estimated CS For Auto Booster Control Panel For Drinking Water", "status": "In Progress", "assignee": "", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-09", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 390000, "cost": 390000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 49, "unit": "DRL", "name": "Expansion joint & Coller Joint-1st Phase", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO SEND TO SUPPLIER", "matst": "", "start": "2026-06-29", "due": "", "revised": "", "finishwork": "", "prog": 90, "budget": 1461620, "cost": 1461620, "disb": 0, "subtasks": 0, "comment": "1st phase work on progress.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 50, "unit": "DRL", "name": "Full factory Exit & emergency light re-arangemen", "status": "Complete", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "", "start": "2026-05-07", "due": "", "revised": "", "finishwork": "2026-11-17", "prog": 100, "budget": 734613, "cost": 734613, "disb": 0, "subtasks": 0, "comment": "1st, 2nd & 3rd Phase work done.", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 51, "unit": "DGL-1", "name": "Level Box Making at finishing & Packing section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "REQUISITION APPROVEED BY HOF (HEAD OF FACTORY)", "matst": "", "start": "2026-09-19", "due": "", "revised": "", "finishwork": "", "prog": 33, "budget": 205642, "cost": 205642, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 52, "unit": "DRL", "name": "Fire Drll from FSCD", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PREPARED BY", "matst": "", "start": "2026-10-18", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 18160, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 53, "unit": "DRL", "name": "1st floor Carhart inspection room new table & cabinet making work purpose", "status": "In Progress", "assignee": "418737", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 41935, "disb": 0, "subtasks": 0, "comment": "Awaiting for Internal audit approval", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 54, "unit": "DRL", "name": "1st & 4th Floor new office desk making work purpose", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 0, "cost": 58120, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 55, "unit": "DGL-2", "name": "Estimated Budget For Electric Steam Iron", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-11-14", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1073685, "cost": 1073685, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 56, "unit": "DGL-1", "name": "Estimated Budget for Polyurethan (PU) Repair at Day Care & Main Building", "status": "In Progress", "assignee": "", "priority": "", "bst": "CHECKED & CONFIRMED BY (H/O AUDIT)", "matst": "", "start": "2026-08-15", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 561800, "cost": 561800, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-81", "prog_note": ""}, {"sl": 57, "unit": "DGL-1", "name": "Estimated Budget for Purchasing a Gazi Basket for the Wash Section", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "PO CHECKED & APPROVED BY PROCURMENT HEAD", "matst": "", "start": "2026-10-17", "due": "", "revised": "", "finishwork": "", "prog": 50, "budget": 205200, "cost": 205200, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 58, "unit": "DGL-2", "name": "Estimated Budget for Facility 3rd Floor Re-arrangement at DGL-02.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-11-12", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 7785541, "cost": 7785541, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 59, "unit": "DGL-2", "name": "Estimated Budget for HR & Admin Office Shifting at DGL-02.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-13", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 1317320, "cost": 1317320, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-98", "prog_note": ""}, {"sl": 60, "unit": "DGL-2", "name": "Estimated Budget for Trolley Making at DGL-02.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-12", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 251300, "cost": 251300, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-97", "prog_note": ""}, {"sl": 61, "unit": "DGL-2", "name": "Estimated Budget for Office Setting Arrangement at DGL Unit-02 (New Joining).", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-25", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 381645, "cost": 381645, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-100", "prog_note": ""}, {"sl": 62, "unit": "DGL-2", "name": "Estimated Budget for Purchasing Furniture for the Main Production Building at DGL-02.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-14", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 3846970, "cost": 3846970, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "DGL-MNT-102", "prog_note": ""}, {"sl": 63, "unit": "AWL", "name": "120 KVA two nos central UPS annual maintenance contact & battery replace work", "status": "In Progress", "assignee": "", "priority": "Urgent", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-25", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 2326000, "cost": 2326000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 64, "unit": "AFL", "name": "QC Table & Threat Cutting Table Work Budget", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-28", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 331000, "cost": 331000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 65, "unit": "AFL", "name": "AFL Sewing Section Steam Line Making Purpose Materials Budget", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "BUDGET RECEIVED BY (H/O OPERATION DEPARTMENT)", "matst": "", "start": "2026-10-26", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 547550, "cost": 547550, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 66, "unit": "AFL", "name": "Paper Card board moisture meter work budget", "status": "In Progress", "assignee": "", "priority": "Urgent", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "", "start": "2026-10-29", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 195000, "cost": 195000, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 67, "unit": "AWL", "name": "AWL Lab Ceiling Work Budget", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "CHECKED BY INTERNAL AUDIT (PROJECT/BUDGET/CS)", "matst": "", "start": "2026-10-31", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 2770280, "cost": 2770280, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 68, "unit": "DRL", "name": "8KWp Solar remodification with hybrid inverter & Battery", "status": "In Progress", "assignee": "Omar Golam Rabbany", "priority": "Normal", "bst": "SEND TO FACTORY (APPROVED SCAN COPY THROW THE MAIL)", "matst": "", "start": "2026-09-17", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 753168, "cost": 672510, "disb": 0, "subtasks": 0, "comment": "Budget approved waiting for EBS requisition", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}, {"sl": 70, "unit": "DGL-2", "name": "Estimated Budget For Ner Fitting For Insect Protection East And West Side Purpose.", "status": "In Progress", "assignee": "", "priority": "Normal", "bst": "APPROVEED BY CHAIRMEN SIR", "matst": "", "start": "2026-11-16", "due": "", "revised": "", "finishwork": "", "prog": 0, "budget": 239200, "cost": 239200, "disb": 0, "subtasks": 0, "comment": "", "comment_by": "", "comment_date": "", "desc": "", "task_id": "", "prog_note": ""}], "units": ["DGL-1", "DGL-2", "DRL", "DFL", "GGL", "AWL", "AFL"], "statuses": ["In Progress", "Wating", "Complete"], "assignees": ["418737", "HO", "Mr. Kaoser & Mr. Labib", "Omar Golam Rabbany"], "updated": "2026-11-19"};
 const UNITS_ALL = ['DGL-1','DGL-2','DRL','DFL','GGL','AWL','AFL'];
 /* ── v10: canonical units — the same rules as the script (7 separate
    units: AWL and AFL are separate, DAL/DFL is now DFL; a legacy
@@ -686,7 +686,20 @@ function canonUnit(u){ const k=String(u||'').trim().toUpperCase();
   if(k==='DRL') return 'DRL'; if(k==='GGL') return 'GGL';
   return String(u||'').trim(); }
 window.__canonUnit=canonUnit;
-const STATUSES_ALL = ['In Progress','Complete','Wating','Open'];
+const STATUSES_ALL = ['In Progress','Wating','Complete'];
+/* v10.69: Open is gone — every task is In Progress unless Complete /
+   Wating (manual). A task currently In Progress shows that status as a
+   disabled option ("workflow only"); the Edit forms offer Complete /
+   Wating only. */
+const MANUAL_STATUSES = ['Complete','Wating'];
+function manualStatusOptions(cur){
+  const c=(cur||'').toLowerCase();
+  const locked=(c==='in progress');
+  let h='';
+  if(locked) h+=`<option value="${esc(cur)}" selected disabled>${esc(cur)} — workflow only</option>`;
+  MANUAL_STATUSES.forEach(s=>{ h+=`<option value="${s}" ${(!locked && s.toLowerCase()===c)?'selected':''}>${s}</option>`; });
+  return h;
+}
 /* v10.45 (2026-11-16): Budget Status options now the owner's full 32-step list, in his order —
    the same steps as the workflow chain plus the PO-approval SIR steps; spellings verbatim
    (RECOMANDATION / OPERATON / PROCURMENT, trailing space in item 10). */
@@ -710,7 +723,7 @@ dark:'🌙 Dark',light:'☀️ Light',selectAll:'Select all',clear:'Clear',
 allUnits:'All units ▾',noUnits:'No units selected ▾',nUnits:'{n} units selected ▾',
 allStatuses:'All statuses ▾',noStatuses:'No statuses selected ▾',nStatuses:'{n} statuses selected ▾',
 bstH:'Budget status',allBst:'All budget statuses ▾',noBst:'No budget status selected ▾',nBst:'{n} budget statuses selected ▾',bstBlank:'(No budget status)',
-kpiTotal:'Total Projects',kpiComplete:'Complete',kpiInProg:'In Progress',kpiOpen:'Open',kpiOverdue:'Overdue',kpiUnits:'Units',kpiCost:'Total Tentative Cost',
+kpiTotal:'Total Projects',kpiComplete:'Complete',kpiInProg:'In Progress',kpiWating:'Wating',kpiOverdue:'Overdue',kpiUnits:'Units',kpiCost:'Total Tentative Cost',stepNote:'Step token — you can view all data, but edit only your own workflow step.',stepChip:'Step {n} · {name}',
 chipAll:'all projects',chipOfFiltered:'of filtered',chipUnits:'units',chipNone:'none yet',
 ovCostT:'Tentative Cost by Unit',ovCostS:'Ranked — total tentative cost per unit in the selected filters',
 ovStatusT:'Cost by Status',ovStatusS:'Share of total tentative cost',
@@ -722,7 +735,7 @@ unitT:'Unit Summary',unitS:'Per-unit totals inside the selected filters',
 unitCostT:'Tentative Cost by Unit',unitCostS:'How much tentative cost each unit holds',
 unitPayT:'Payment Share by Unit',unitPayS:'Share of total payment disbursed',
 navOv:'OVERVIEW',navList:'PROJECT LIST',navUnit:'UNIT SUMMARY',
-foot:'Source: Dekkoisho workspace · Snapshot 18 Nov 2026 · Live data from the Google Sheet',
+foot:'Source: Dekkoisho workspace · Snapshot 19 Nov 2026 · Live data from the Google Sheet',
 thSL:'SL',thUnit:'Unit',thTask:'Project',thStatus:'Status',thStart:'Start Date',thDeadline:'Deadline',thFinish:'Finish Date',thProgress:'Progress',
 thBudget:'Tentative Budget',thCost:'Tentative Cost',thPayment:'Payment',thEdit:'Edit',thRemarks:'Remarks',thComplete:'Completed',thLastWf:'Last Workflow',
 thAvgProg:'Avg Progress',thProjects:'Projects',thOverdue:'Overdue',
@@ -758,7 +771,7 @@ liveEmpty:'⚪ Sheet is empty — showing the snapshot. Import the data into the
 fsTitleAll:'All Projects',fsTotals:'{n} project(s) · Total cost {c} · Total budget {b} · Total payment {p}',
 fsNoProjects:'No projects in this status yet. If a project gets this status in the Sheet, it will appear here automatically.',
 fsAddTitle:'➕ Add New Project',fsAddTotals:'New project will be added to the bottom of the Sheet.',
-stComplete:'Completed',stInProg:'In Progress',stWating:'Wating',stOpen:'Open',
+stComplete:'Completed',stInProg:'In Progress',stWating:'Wating',
 thDays:'Days',
 secProjects:'{n} projects',secComplete:'{n} complete',secInProg:'{n} in progress',secOverdue:'{n} overdue',secNoProjects:'No projects yet',
 daysUnit:'d',
@@ -991,7 +1004,7 @@ function statusChip(s){
   if(k==='complete') return '<span class="stpill st-complete">'+T('stComplete')+'</span>';
   if(k==='in progress') return '<span class="stpill st-inprog">'+T('stInProg')+'</span>';
   if(k==='writing'||k==='wating') return '<span class="stpill st-wating">'+T('stWating')+'</span>';
-  if(k==='open') return '<span class="stpill st-open">'+T('stOpen')+'</span>';
+  if(k==='open') return '<span class="stpill st-inprog">'+T('stInProg')+'</span>';
   return '<span class="stpill st-open">'+esc(s||'—')+'</span>';
 }
 const AV_PAL=['#7b68ee','#5b8def','#4caf50','#f59e0b','#b07fe8','#e8833a','#38a169','#d97706','#64748b','#c05621'];
@@ -1180,8 +1193,8 @@ function render(){
     {l:T('kpiTotal'), v:fmtN(a.n), raw:a.n, fmt:'num', share:a.n?1:0, shareT:'100% of filtered projects', c:`<span class="chip n">${T('chipAll')}</span>`, ic:'⬢', bg:'#DBEAFE', fg:'#1D4ED8', go:"kpiClick('all')"},
     {l:T('kpiComplete'), v:fmtN(stCount('complete')), raw:stCount('complete'), fmt:'num', share:a.n?stCount('complete')/a.n:0, shareT:pct(stCount('complete'))+' of filtered projects', c:`<span class="chip g">${a.n?(stCount('complete')/a.n*100).toFixed(1)+'% '+T('chipOfFiltered'):''}</span>`, ic:'✓', bg:'#DCF5E5', fg:'#15803D', go:"kpiClick('Complete')"},
     {l:T('kpiInProg'), v:fmtN(stCount('in progress')), raw:stCount('in progress'), fmt:'num', share:a.n?stCount('in progress')/a.n:0, shareT:pct(stCount('in progress'))+' of filtered projects', c:`<span class="chip b">${a.n?(stCount('in progress')/a.n*100).toFixed(1)+'% '+T('chipOfFiltered'):''}</span>`, ic:'🔨', bg:'#DBEAFE', fg:'#1D4ED8', go:"kpiClick('In Progress')"},
-    /* v10.41: OPEN KPI card replaces the Overdue card (same 4th position) — counts Status = Open, indigo accent to read distinct from the sky-blue In Progress card next to it; click filters the list to Open via the generic kpiClick status path. */
-    {l:T('kpiOpen'), v:fmtN(stCount('open')), raw:stCount('open'), fmt:'num', share:a.n?stCount('open')/a.n:0, shareT:pct(stCount('open'))+' of filtered projects', c:`<span class="chip b">${a.n?(stCount('open')/a.n*100).toFixed(1)+'% '+T('chipOfFiltered'):''}</span>`, ic:'📂', bg:'#E0E7FF', fg:'#3730A3', go:"kpiClick('Open')"},
+    /* v10.69: WATING KPI card in the 4th position (was Open, v10.41) — Open is gone, so the card counts Status = Wating, red accent to match the Wating status; click filters the list to Wating via the generic kpiClick status path. */
+    {l:T('kpiWating'), v:fmtN(stCount('wating')), raw:stCount('wating'), fmt:'num', share:a.n?stCount('wating')/a.n:0, shareT:pct(stCount('wating'))+' of filtered projects', c:`<span class="chip r">${a.n?(stCount('wating')/a.n*100).toFixed(1)+'% '+T('chipOfFiltered'):''}</span>`, ic:'⏸', bg:'#FEE2E2', fg:'#B91C1C', go:"kpiClick('Wating')"},
     {l:T('kpiUnits'), v:fmtN(UNITS_ALL.length), raw:UNITS_ALL.length, fmt:'num', share:unitsWithProj/UNITS_ALL.length, shareT:unitsWithProj+' of '+UNITS_ALL.length+' units have projects', c:`<span class="chip n">${UNITS_ALL.length} ${T('chipUnits')}</span>`, ic:'🏭', bg:'#FEF3C7', fg:'#B45309', go:"switchView('unit')"},
     {l:T('kpiCost'), v:fmtM(a.tc), raw:a.tc, fmt:'money', share:a.tc?a.tpay/a.tc:0, shareT:'Payment disbursed: '+(a.tc?(a.tpay/a.tc*100).toFixed(1):'0')+'% of tentative cost', c:`<span class="chip n">${fmtN(a.tb)} ${T('thBudget')}</span>`, ic:'৳', bg:'#DCF5E5', fg:'#15803D', go:"switchView('unit')"},
   ];
@@ -1254,7 +1267,10 @@ function render(){
      v10.63 (2026-11-17): Subtask section shows a progress bar (done/total subtasks) so subtask completion is visible at a glance; parent Progress stays manual (owner's decision — never derived from subtasks). Workflow step add/delete toast now names the status change when the phase rule flips the task status.
      v10.64 (2026-11-17): snapshot-first instant load — the embedded snapshot is re-frozen from the live Sheet (67 tasks, 17 Nov 2026); the boot live fetch runs silent (no skeleton, the snapshot stays visible until live data lands); a unit login's first paint shows only that unit's snapshot rows.
      v10.65 (2026-11-18): speed fix — the logged-in live render no longer waits for the CSV progress overlay (it runs in the background after the first render and re-renders only if a prog value changed); the Last Workflow fetch now runs in parallel with the main fetch instead of one round trip after it; snapshot re-frozen from the live Sheet (68 tasks, 18 Nov 2026).
-     v10.66 (2026-11-18): workflow tables are per-line two-date — each step shows its own Received Date (the previous dated step's Delivery Date in chain order; first dated step shows '—') and Delivery Date (the step's own stored date), with Number of Days from the stored Days Taken; the old Next Step Date column is gone (its value was the next row's Delivery Date). Same columns in the print sheet and the CSV export; the Add/Edit Step form is unchanged (Received is derived, never entered). */
+     v10.66 (2026-11-18): workflow tables are per-line two-date — each step shows its own Received Date (the previous dated step's Delivery Date in chain order; first dated step shows '—') and Delivery Date (the step's own stored date), with Number of Days from the stored Days Taken; the old Next Step Date column is gone (its value was the next row's Delivery Date). Same columns in the print sheet and the CSV export; the Add/Edit Step form is unchanged (Received is derived, never entered).
+     v10.67 (2026-11-18): Number of Days now sits BETWEEN Received Date and Delivery Date (screen, print sheet and CSV export); both dates are editable — the Add Step form and the edit row each have a Received + a Delivery date input, and the edit row shows the live days between them as the inputs change; a stored Received (script v4.19) is shown first, otherwise the derived value (previous step's Delivery Date) is the fallback.
+     v10.68 (2026-11-18): STATUS LOCK — Open / In Progress change only through workflow steps: the Add form always starts a task Open, the Edit forms (detail + fullscreen) offer Complete / Wating only and show a current Open / In Progress as a disabled option, and a board drag to the Open / In Progress columns is blocked; the script (v4.20) enforces the same rule server-side.
+     v10.69 (2026-11-19): Open is gone — every task is In Progress unless Complete / Wating (manual). STATUSES_ALL / STATUS_ORDER are now [In Progress, Wating, Complete]; the board has 3 columns; the 4th KPI card counts Wating; the Add form has no status field (new tasks are In Progress); a workflow step added to a Complete / Wating task reopens it to In Progress. Per-step tokens (script v4.21): whoami 'STEP:n' sees all data but edits only that step — project Add/Edit, board drag, subtasks and comments are disabled for step tokens, and only their own step row shows edit/delete buttons. Snapshot re-frozen from the live Sheet (69 tasks, 19 Nov 2026). */
   const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
     return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
@@ -1326,7 +1342,12 @@ function pPct(v){ v=(v||'').toString().replace('%','').trim(); const n=parseFloa
 /* ── v10.61: the owner renamed status "Writing" to "Wating" (his spelling).
    The Sheet and old STATUS_LOG rows still store "Writing" — normalize at
    the data boundary so old rows keep working; writes always send "Wating". ── */
-function normStatus(s){ const v=String(s||'').trim(); return v.toLowerCase()==='writing'?'Wating':v; }
+function normStatus(s){ const v=String(s||'').trim(); const k=v.toLowerCase();
+  /* v10.69: Open is gone — old stored 'Open' rows (Sheet, STATUS_LOG,
+     snapshot) render as In Progress; writes never send 'Open'. */
+  if(k==='writing') return 'Wating';
+  if(k==='open') return 'In Progress';
+  return v; }
 function rowsFromCSV(raw){
   if(!raw.length) return [];
   const header=raw[0].map(normH);
@@ -1338,7 +1359,7 @@ function rowsFromCSV(raw){
     const name=col(r, ['Task']);
     const unit=col(r, ['Unit']);
     if(!name && !unit) continue;
-    out.push({ sl: col(r, ['SL']), unit: canonUnit(col(r, ['Unit'])), name, status: normStatus(col(r, ['Status'])) || 'Open',
+    out.push({ sl: col(r, ['SL']), unit: canonUnit(col(r, ['Unit'])), name, status: normStatus(col(r, ['Status'])) || 'In Progress',
       assignee: col(r, ['Assignee']), priority: col(r, ['Priority']),
       bst: col(r, ['Budget Status']),
       matst: col(r, ['Materials Status']),
@@ -1363,12 +1384,12 @@ function showSkeleton(){
 /* ── v10: the script's getdata rows are already in dashboard shape
    (start/due/revised/finishwork are ISO dates); map them onto D.rows,
    canonicalizing the unit labels the same way the script does. ── */
-function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:normStatus(r.status)||'Open', assignee:r.assignee||'', priority:r.priority||'', bst: r.bst || '', matst: r.matst || '', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
+function mapScriptRow(r){ return {sl:String(r.sl||''), unit:canonUnit(r.unit), name:r.name||r.task||'', status:normStatus(r.status)||'In Progress', assignee:r.assignee||'', priority:r.priority||'', bst: r.bst || '', matst: r.matst || '', start:r.start||'', due:r.due||'', revised:r.revfinish||r.revised||'', finishwork:r.finishwork||'', prog:Number(r.prog)||0, budget:Number(r.budget)||0, cost:Number(r.cost)||0, disb:Number(r.disb||r.payment)||0, subtasks:Number(r.subtasks)||0, comment:r.comment||'', comment_by:'', comment_date:'', desc:r.desc||'', task_id:r.task_id||'', prog_note:''}; }
 /* ── v10: re-run whoami at boot when a token is saved, so the profile chip
    and the per-unit edit lock come back without re-entering the token. ── */
 function whoamiRestore(){ const u=scriptUrl(), t=curToken(); if(!u||!t) return;
   fetch(u+'?'+new URLSearchParams({action:'whoami',token:t,cb:Date.now()}),{redirect:'follow'}).then(r=>r.json()).then(j=>{
-    if(j&&j.ok&&j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=t; render(); }
+    if(j&&j.ok&&j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=t; saveStepLogin(j); render(); }
   }).catch(()=>{}); }
 /* v10.29: silent=true runs a background refresh — no skeleton, no
    "Fetching…" status, and on failure the local (just-saved) values stay
@@ -1383,7 +1404,7 @@ function whoamiRestore(){ const u=scriptUrl(), t=curToken(); if(!u||!t) return;
    a remembered single-unit login sees only that unit's snapshot rows;
    master ('ALL') and guest ('') get no filter. The live fetch replaces
    D.rows afterwards anyway. */
-function bootScopeSnapshot(){ const au=allowedUnit(); if(au&&au!=='ALL') D.rows=D.rows.filter(r=>r.unit===au); }
+function bootScopeSnapshot(){ const au=allowedUnit(); if(au&&au!=='ALL'&&!isStepMode()) D.rows=D.rows.filter(r=>r.unit===au); }
 async function refreshLive(manual, silent, boot){
   const st=document.getElementById('liveStatus'), btn=document.getElementById('btnRefresh');
   if(btn) btn.disabled=true;
@@ -1514,7 +1535,7 @@ function closeDetail(){ const m=document.getElementById('dtModal'); if(m) m.styl
 function renderDetail(){
   const r=rowBySl(dtRn); if(!r) return closeDetail();
   const canE=canEditUnit(r.unit);
-  const head=`<div class="dthead"><div style="flex:1;min-width:220px"><h2>${esc(r.name)}</h2><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${statusChip(r.status)}<span class="chip n">${esc(r.unit)}</span><span class="chip n">SL ${esc(r.sl)}</span></div>${stageHeadHtml(r)}</div>${!dtEdit?`<button class="fsbtn" onclick="wfPrint()" title="${T('wfPrint')}">${T('wfPrint')}</button><button class="fsbtn" onclick="wfExportCsv()" title="${T('wfExport')}">${T('wfExport')}</button>`:''}${canE&&!dtEdit?`<button class="fsbtn pri" onclick="dtStartEdit()">${T('dtEdit')}</button>`:''}<button class="xbtn" onclick="closeDetail()">${T('dtClose')}</button></div>`;
+  const head=`<div class="dthead"><div style="flex:1;min-width:220px"><h2>${esc(r.name)}</h2><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap">${statusChip(r.status)}<span class="chip n">${esc(r.unit)}</span><span class="chip n">SL ${esc(r.sl)}</span></div>${stageHeadHtml(r)}${isStepMode()?`<div style="font-size:12px;color:var(--muted);margin-top:6px">${esc(T('stepNote'))}</div>`:''}</div>${!dtEdit?`<button class="fsbtn" onclick="wfPrint()" title="${T('wfPrint')}">${T('wfPrint')}</button><button class="fsbtn" onclick="wfExportCsv()" title="${T('wfExport')}">${T('wfExport')}</button>`:''}${canE&&!dtEdit?`<button class="fsbtn pri" onclick="dtStartEdit()">${T('dtEdit')}</button>`:''}<button class="xbtn" onclick="closeDetail()">${T('dtClose')}</button></div>`;
   if(dtEdit){ document.getElementById('dtBody').innerHTML=`<div class="dtwrap">${head}${dtEditForm(r)}</div>`; return; }
   document.getElementById('dtBody').innerHTML=`<div class="dtwrap">${head}${dtViewHtml(r)}</div>`;
 }
@@ -1576,6 +1597,7 @@ async function loadSubs(quiet){
 }
 async function subToggle(subrow, checked){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isStepMode()){ toast(T('stepNote'),'err'); subRefresh(); return; }
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ subRefresh(); toast(T('msgNoScript'),'err'); return; }
   const s=dtSubs.find(x=>x.row===subrow); if(!s||s.local) return;
@@ -1598,6 +1620,7 @@ async function subToggle(subrow, checked){
 }
 async function subAdd(){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isStepMode()){ toast(T('stepNote'),'err'); return; }
   const name=((document.getElementById('subName')||{}).value||'').trim();
   if(!name) return;
   const due=(document.getElementById('subDue')||{}).value||'';
@@ -1623,10 +1646,11 @@ async function subAdd(){
 }
 /* ── v10.10: edit a subtask inline — name, start date and due date.
    Save calls the script's editsubtask action (v4.6); an empty date clears it. ── */
-function subEdit(subrow){ dtSubEdit=subrow; subRefresh(); }
+function subEdit(subrow){ if(isStepMode()){ toast(T('stepNote'),'err'); return; } dtSubEdit=subrow; subRefresh(); }
 function subCancelEdit(){ dtSubEdit=null; subRefresh(); }
 async function subSaveEdit(subrow){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isStepMode()){ toast(T('stepNote'),'err'); return; }
   const name=((document.getElementById('seName')||{}).value||'').trim();
   if(!name) return;
   const due=(document.getElementById('seDue')||{}).value||'';
@@ -1647,6 +1671,7 @@ async function subSaveEdit(subrow){
 }
 async function subDel(subrow){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isStepMode()){ toast(T('stepNote'),'err'); return; }
   /* v9: confirm before deleting — the delete used to run immediately. */
   const ok=await confirmDlg(T('cfDelSubT'), T('cfDelSubB'));
   if(!ok) return;
@@ -1762,9 +1787,9 @@ function wfCustomBlockHtml(r){
   const c=wfIsCollapsedSec(r.sl,'custom');
   return `<div class="tl-subs wf-wrap wf-sec${c?' wf-collapsed':''}" id="dtStageWfWrapC" style="${has?'':'display:none'}"><div class="wf-head" onclick="wfToggleCollapseSec('custom')" role="button" tabindex="0" title="Click to show / hide" onkeydown="if(event.target===this&&(event.key==='Enter'||event.key===' ')){event.preventDefault();wfToggleCollapseSec('custom');}"><span class="wf-chev" id="dtWfChevC">${c?'▸':'▾'}</span><div class="wf-head-txt"><div class="tl-subs-h">${T('wfCustomTitle')}</div></div><span class="wf-count" id="dtWfCountC">${wfCustomCountHtml()}</span></div><div class="wf-sec-body" id="dtStageWfBodyC">${wfTableHtml(r,'custom')}</div></div>`;
 }
-/* ── v10.52: Stage History is one journey — Started → Open (Approval
-   Process steps inside) → In Progress (After Approval steps +
-   Subtasks inside) → Work Done. The three workflow blocks keep their
+/* ── v10.69: Stage History is one journey — Started → In Progress
+   (Approval + After Approval steps + Subtasks inside) → Work Done.
+   The three workflow blocks keep their
    ids (dtStageWfWrapA/B/C, dtStageWfBodyA/B/C, dtWfCountA/B/C,
    dtWfChevA/B/C) and the Add Step form keeps its id (dtStageWfForm),
    so wfRefresh() still rewrites the bodies on every workflow
@@ -1776,7 +1801,7 @@ function wfCustomBlockHtml(r){
 function stageEntryHtml(status,label,meta,cls,nested){
   return `<div class="tlrow ${cls}"><div class="tl-stage-head" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(status)}<span style="font-size:13px">${label}</span></div>${meta?`<div class="tl-meta">${meta}</div>`:''}${nested||''}</div>`;
 }
-/* Approval block — nested under the Open stage entry. */
+/* Approval block — nested under the In Progress stage entry (v10.69: Open is gone, so both workflow blocks live there). */
 function openBlocksHtml(r){ return wfSectionBlockHtml(r,0); }
 /* After Approval block → Subtasks (editable checklist) → Custom /
    Earlier block → the ONE shared Add Step form — nested under the
@@ -1794,10 +1819,10 @@ function stageBodyHtml(r){
   const totalDays = (()=>{ const st=parseD(r.start); if(!st) return null;
     const end=parseD(r.finishwork)||todayMid();
     return Math.max(0,Math.floor((end-st)/86400000)); })();
-  /* ── v10.52: Stage History is one journey, as asked: Started → Open
-     (Approval Process steps nested inside Open) → In Progress (After
-     Approval steps + Subtasks nested inside In Progress) → Work Done
-     (Completed + End Date). Stages not reached yet show as upcoming
+  /* ── v10.69: Stage History is one journey: Started → In Progress
+     (Approval + After Approval steps + Subtasks nested inside
+     In Progress) → Work Done (Completed + End Date). Stages not
+     reached yet show as upcoming
      (muted, "Not reached yet") so the full journey is always visible;
      the phase rule (v10.39) is untouched — this is display only. The
      old order (Started → In Progress → Workflow Steps → Subtasks →
@@ -1811,10 +1836,11 @@ function stageBodyHtml(r){
   const endD=endDateOf(r);
   const isComp=(r.status||'').toLowerCase()==='complete';
   const isProg=(r.status||'').toLowerCase()==='in progress';
-  const isOpen=(r.status||'').toLowerCase()==='open';
   const isWating=(r.status||'').toLowerCase()==='wating';
-  const openBlocks=openBlocksHtml(r);
-  const progBlocks=progBlocksHtml(r);
+  /* v10.69: Open is gone — both workflow blocks (Approval + After
+     Approval) plus Subtasks, Custom and the Add Step form all nest
+     under the single In Progress stage entry. */
+  const allWfBlocks=openBlocksHtml(r)+progBlocksHtml(r);
   const endHtml=endD?`<div class="tl-subs"><div style="font-size:13px"><b>${T('stEndDate')}</b> — ${fmtD(r.finishwork||r.revised||r.due)}</div></div>`:'';
   const startStep=`<div class="tlrow"><div style="font-size:13px"><b>${T('stStarted')}</b> — ${r.start?fmtD(r.start):T('tmNoStart')}</div></div>`;
   const curTag=` · ${T('stCurrentStage')}`;  if(dtStageLog.length){
@@ -1822,27 +1848,23 @@ function stageBodyHtml(r){
        the logged view showed only the status-change rows, so the original
        start date was lost from the timeline. Same "Started" row as the
        seeded view, so both views always open with it. ── */
-    /* ── v10.60: the log rows are grouped by destination stage in
-       canonical journey order — Started → Open → In Progress →
-       Work Done — instead of raw chronological order. A task that
-       moved In Progress → Open (an Approval step added after an
-       After-Approval step) used to show its In Progress block
-       (After Approval + Subtasks) ABOVE its Open block (Approval
-       Process); now the Open block always sits above the In Progress
-       block, and (v10.62) each stage group now shows only its latest
-       row — older rows stay in STATUS_LOG and are hidden from display.
-       The nested blocks ride on the
-       LATEST row that enters their stage; a stage the log never
-       enters gets a synthetic entry as before. ── */
+    /* ── v10.69: the log rows are grouped by destination stage in
+       canonical journey order — Started → In Progress → Work Done —
+       instead of raw chronological order. (Open is gone: old rows
+       that ended in Open are normalized to In Progress on load, so
+       they group under In Progress.) Each stage group shows only its
+       latest row (v10.62) — older rows stay in STATUS_LOG and are
+       hidden from display. The nested blocks ride on the LATEST row
+       that enters their stage; a stage the log never enters gets a
+       synthetic entry as before. ── */
     const toStage=e=>String(e.to||'').trim().toLowerCase();
     const logRowHtml=(e,nested)=>{
       const fromTxt=e.from==='—'?T('stStarted'):esc(e.from);
       return `<div class="tlrow"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(e.to)}<span style="font-size:13px">${fromTxt} → ${esc(e.to)}</span></div><div class="tl-meta">${fmtD(e.date)} · ${Tf('stDaysIn',{n:fmtN(e.days||0),f:e.from==='—'?T('stStarted'):e.from})}${e.by?' · '+esc(e.by):''}</div>${nested||''}</div>`;
     };
-    const groups={other:[],open:[],prog:[],comp:[]};
+    const groups={other:[],prog:[],comp:[]};
     dtStageLog.forEach(e=>{ const t=toStage(e);
       if(t==='wating') return; // v10.62: rows that END in Wating are never shown in Stage History (from-Wating rows still show, with their truthful from-label)
-      if(t==='open') groups.open.push(e);
       else if(t==='in progress') groups.prog.push(e);
       else if(t==='complete') groups.comp.push(e);
       else groups.other.push(e); });
@@ -1857,24 +1879,17 @@ function stageBodyHtml(r){
       const tE=(parseD(e.date)||new Date(0)).getTime(), tB=(parseD(best.e.date)||new Date(0)).getTime();
       return (tE>tB||(tE===tB&&i>best.i))?{e,i}:best;
     },null).e;
-    ['other','open','prog','comp'].forEach(k=>{ if(groups[k].length) groups[k]=[latestOf(groups[k])]; });
+    ['other','prog','comp'].forEach(k=>{ if(groups[k].length) groups[k]=[latestOf(groups[k])]; });
     const items=[startStep];
     groups.other.forEach(e=>items.push(logRowHtml(e)));
-    if(groups.open.length){
-      groups.open.forEach((e,k)=>items.push(logRowHtml(e,k===groups.open.length-1?openBlocks:'')));
-    } else {
-      const cls=isOpen?'cur':(isWating?'upcoming':'');
-      const meta=isOpen?Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)}):'';
-      items.push(stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),meta,cls,openBlocks));
-    }
     if(groups.prog.length){
-      groups.prog.forEach((e,k)=>items.push(logRowHtml(e,k===groups.prog.length-1?progBlocks:'')));
+      groups.prog.forEach((e,k)=>items.push(logRowHtml(e,k===groups.prog.length-1?allWfBlocks:'')));
     } else if(isProg){
-      items.push(stageEntryHtml('In Progress',T('kpiInProg')+curTag,Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)}),'cur',progBlocks));
+      items.push(stageEntryHtml('In Progress',T('kpiInProg')+curTag,Tf('stSince',{d:fmtD(s.since),n:fmtN(s.days)}),'cur',allWfBlocks));
     } else if(isComp){
-      items.push(stageEntryHtml('In Progress',T('kpiInProg'),'','',progBlocks));
+      items.push(stageEntryHtml('In Progress',T('kpiInProg'),'','',allWfBlocks));
     } else {
-      items.push(stageEntryHtml('In Progress',T('kpiInProg'),T('stNotYet'),'upcoming',progBlocks));
+      items.push(stageEntryHtml('In Progress',T('kpiInProg'),T('stNotYet'),'upcoming',allWfBlocks));
     }
     if(groups.comp.length){
       groups.comp.forEach((e,k)=>items.push(logRowHtml(e,k===groups.comp.length-1?endHtml:'')));
@@ -1891,27 +1906,23 @@ function stageBodyHtml(r){
     items.push(curRow);
     h+=`<div class="tl">${items.join('')}</div>`;
   } else {
-    /* ── v10.52: seeded journey — the same four stages, synthesised:
-       Open is current when the task is Open, past once it moved on,
-       upcoming while still Wating; In Progress is current when In
-       Progress, past (start → done) when Complete, upcoming while
-       still Open or Wating; Work Done is current when Complete,
-       upcoming otherwise — never a fake date. A Wating task keeps
-       its current-stage row directly after Started, then the four
-       journey stages follow; there is no Wating journey stage. ── */
+    /* ── v10.69: seeded journey — three stages now (Open is gone),
+       synthesised: In Progress is current when In Progress, past
+       (start → done) when Complete, upcoming while still Wating;
+       Work Done is current when Complete, upcoming otherwise — never
+       a fake date. A Wating task keeps its current-stage row directly
+       after Started, then the journey stages follow; there is no
+       Wating journey stage. ── */
     let steps=startStep;
     if(isWating){
       steps+=`<div class="tlrow cur"><div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">${statusChip(r.status)}<span style="font-size:13px">${T('stCurrentStage')}</span></div><div class="tl-meta">${st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')}</div></div>`;
     }
-    const openCls=isOpen?'cur':(isWating?'upcoming':'');
-    const openMeta=isOpen?(st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart')):(isWating?T('stNotYet'):'');
-    steps+=stageEntryHtml('Open',T('stOpen')+(isOpen?curTag:''),openMeta,openCls,openBlocks);
     let progMeta='',progCls='';
     if(isProg){ progCls='cur'; progMeta=st?Tf('stSince',{d:fmtD(r.start),n:fmtN(s.days)}):T('tmNoStart'); }
     else if(isComp){ const n=st&&compD?Math.max(0,Math.floor((compD-st)/86400000)):0;
       progMeta=st&&compD?fmtD(r.start)+' → '+fmtD(r.finishwork||r.revised)+' · '+Tf('stDaysIn',{n:fmtN(n),f:T('kpiInProg')}):(st?fmtD(r.start):T('tmNoStart')); }
     else { progCls='upcoming'; progMeta=T('stNotYet'); }
-    steps+=stageEntryHtml('In Progress',T('kpiInProg')+(isProg?curTag:''),progMeta,progCls,progBlocks);
+    steps+=stageEntryHtml('In Progress',T('kpiInProg')+(isProg?curTag:''),progMeta,progCls,allWfBlocks);
     const doneMeta=isComp?(compD?Tf('stDoneOn',{d:fmtD(r.finishwork||r.revised)}):T('stCurrentStage')):T('stNotYet');
     steps+=stageEntryHtml('Complete',T('stWorkDone')+(isComp?curTag:''),doneMeta,isComp?'cur':'upcoming',endHtml);
     h+=`<div class="tl">${steps}</div>`+`<div class="tl-note">${T('stSeedNote')}</div>`;
@@ -2070,15 +2081,37 @@ function wfDaysText(model, idx){
 /* v10.66: Received Date — the Delivery Date of the nearest EARLIER dated
    step in chain order (the file moves from one stage to the next, so a
    step's Received is the previous step's Delivery). The first dated step,
-   or a step whose earlier steps all lack dates, shows '—'. */
+   or a step whose earlier steps all lack dates, shows '—'.
+   v10.67: a STORED w.received (script v4.19) wins over the derived value —
+   rows not yet backfilled keep showing the derived one. The derived value
+   is computed even for a pending step (no row yet) so the Add Step form
+   can prefill its Received — display callers still guard on the row. */
 function wfReceivedText(model, idx){
   const row=model[idx].row; if(!row) return '—';
+  if(parseD(row.received||'')) return fmtD(row.received);
   const iso=wfReceivedIso(model, idx); return iso?fmtD(iso):'—';
 }
 function wfReceivedIso(model, idx){
-  const row=model[idx].row; if(!row) return '';
+  if(!model[idx]) return '';
   for(let j=idx-1;j>=0;j--){ const pd=parseD((model[j].row||{}).date||''); if(pd) return model[j].row.date; }
   return '';
+}
+/* v10.67: raw Received for inputs/CSV — stored first, derived fallback. */
+function wfReceivedRaw(model, idx){
+  const row=model[idx].row; if(!row) return '';
+  if(parseD(row.received||'')) return row.received;
+  return wfReceivedIso(model, idx);
+}
+/* v10.67: live days between two dates — same wording as wfDaysText. */
+function wfDaysBetween(recv, deliv){
+  const a=parseD(recv||''), b=parseD(deliv||'');
+  if(!a||!b) return '—';
+  const n=Math.max(0,Math.floor((b-a)/86400000));
+  return n===0?T('stSubSameDay'):Tf('wfDaysN',{n:fmtN(n)});
+}
+function wfEditDaysLive(){
+  const c=document.getElementById('wfEDays'); if(!c) return;
+  c.textContent=wfDaysBetween((document.getElementById('wfERecv')||{}).value||'', (document.getElementById('wfEDate')||{}).value||'');
 }
 function wfDoneCount(model){ return model.filter(m=>!m.custom && m.row && parseD(m.row.date||'')).length; }
 function wfCustomCount(model){ return model.filter(m=>m.custom && !m.legacy && m.row).length; }
@@ -2100,19 +2133,23 @@ function wfSecCounterHtml(sec){
    full-model index), so step 13's Received still comes from step 12. */
 function wfTableHtml(r,which){
   const canE=canEditUnit(r.unit);
+  /* v10.69: in step mode the holder edits ONLY their own step row — every
+     other row is read-only and never shows edit/delete buttons. */
+  const canStep=m=>isStepMode()&&myStepNo()===m.no;
+  const canRow=m=>canE||canStep(m);
   const model=wfModel();
   if(dtWfState==='loading'){ return `<div style="font-size:13px;color:var(--muted)">${T('wfLoading')}</div>`; }
   const rows=model.filter(m=>which==='custom'?m.custom:!m.custom&&((which===0&&m.no<=WF_SECTIONS[0].steps.length)||(which===1&&m.no>WF_SECTIONS[0].steps.length)));
-  return `<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfReceived')}</th><th>${T('wfDate')}</th><th>${T('wfDays')}</th><th>${T('wfRef')}</th>${canE?'<th></th>':''}</tr>`+
+  return `<div class="wfscroll"><table class="wftable"><tr><th>#</th><th>${T('wfStep')}</th><th>${T('wfWho')}</th><th>${T('wfReceived')}</th><th>${T('wfDays')}</th><th>${T('wfDate')}</th><th>${T('wfRef')}</th>${(canE||isStepMode())?'<th></th>':''}</tr>`+
   rows.map((m)=>{
     const idx=model.indexOf(m);
     const w=m.row, dated=w&&parseD(w.date||'');
-    if(canE&&dtWfEdit===m.no){
+    if(canRow(m)&&dtWfEdit===m.no){
       const nameCell=m.custom?`<input type="text" id="wfEName" class="efinput" style="min-width:140px" value="${esc(m.name)}">`:esc(m.name);
-      return `<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${nameCell}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td>—</td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}"></td><td>—</td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
+      return `<tr class="wf-done"><td class="wfstep-no">${m.no}</td><td>${nameCell}</td><td><input type="text" id="wfEWho" class="efinput" style="min-width:110px" value="${esc(w.who||'')}"></td><td><input type="date" id="wfERecv" class="efinput" style="max-width:150px" value="${toISODate(wfReceivedRaw(model,idx))}" oninput="wfEditDaysLive()"></td><td id="wfEDays">${wfDaysBetween(wfReceivedRaw(model,idx), w.date||'')}</td><td><input type="date" id="wfEDate" class="efinput" style="max-width:150px" value="${toISODate(w.date||'')}" oninput="wfEditDaysLive()"></td><td><input type="text" id="wfERef" class="efinput" style="min-width:110px" value="${esc(w.ref||'')}"></td><td style="white-space:nowrap"><button class="entrybtn" onclick="wfSaveEdit(${m.no})">${T('stSave')}</button> <button class="entrybtn off" onclick="wfCancelEdit()">${T('cfCancel')}</button></td></tr>`;
     }
-    const acts=canE&&w?`<button class="subedit" title="${T('wfEdit')}" onclick="wfEdit(${m.no})">✏️</button><button class="subdel" title="${T('wfDel')}" onclick="wfDel(${m.no})">✕</button>`:'';
-    return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.legacy?` <span style="font-size:11px;color:var(--muted)">(${T('wfLegacy')})</span>`:m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${wfReceivedText(model,idx)}</td><td>${dated?fmtD(w.date):'—'}</td><td>${wfDaysText(model,idx)}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${canE?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
+    const acts=canRow(m)&&w?`<button class="subedit" title="${T('wfEdit')}" onclick="wfEdit(${m.no})">✏️</button><button class="subdel" title="${T('wfDel')}" onclick="wfDel(${m.no})">✕</button>`:'';
+    return `<tr class="${dated?'wf-done':'wf-pending'}"><td class="wfstep-no">${m.no}</td><td>${esc(m.name)}${m.legacy?` <span style="font-size:11px;color:var(--muted)">(${T('wfLegacy')})</span>`:m.custom?` <span style="font-size:11px;color:var(--muted)">(${T('wfCustom').replace('…','')})</span>`:''}${w&&w.local?` <span style="font-size:11px;color:var(--muted)">(${T('wfPending')})</span>`:''}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${wfReceivedText(model,idx)}</td><td>${wfDaysText(model,idx)}</td><td>${dated?fmtD(w.date):'—'}</td><td>${w&&w.ref?esc(w.ref):'—'}</td>${(canE||isStepMode())?`<td style="white-space:nowrap">${acts}</td>`:''}</tr>`;
   }).join('')+`</table></div>`;
 }
 /* v10.34: the Add Step form is ONE shared form below all three blocks
@@ -2120,19 +2157,38 @@ function wfTableHtml(r,which){
    so the dropdown always lists the fixed steps still pending. */
 function wfAddFormHtml(r){
   const canE=canEditUnit(r.unit);
+  /* v10.69: a step token sees ONLY their own step in this form — and only
+     while it is still pending (no custom steps). Once their step is done
+     the form hides. */
+  if(isStepMode()){
+    if(dtWfState==='loading') return '';
+    const model=wfModel();
+    const mine=model.find(m=>!m.custom&&m.no===myStepNo());
+    if(!mine||(mine.row&&parseD(mine.row.date||''))) return '';
+    const recvDef=wfReceivedIso(model, model.findIndex(m=>m.no===mine.no));
+    return `<div class="wfadd"><select id="wfStepSel" class="efinput"><option value="${mine.no}">${mine.no}. ${esc(mine.name)}</option></select><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}" oninput="window.__wfFormTouched=true"><input type="date" id="wfRecv" class="efinput" value="${toISODate(recvDef)}" oninput="window.__wfFormTouched=true"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}" oninput="window.__wfFormTouched=true"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}" oninput="window.__wfFormTouched=true"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
+  }
   if(!canE||dtWfState==='loading') return '';
   const model=wfModel();
   const pending=model.filter(m=>!m.custom && !(m.row&&parseD(m.row.date||'')));
   let h='';
   if(!scriptUrl()||!curToken()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:8px">${T('wfGuestNote')}</div>`;
   if(!pending.length){ h+=`<div style="font-size:13px;color:var(--muted);margin-top:8px">${T('wfAllDone')}</div>`; }
-  h+=`<div class="wfadd"><select id="wfStepSel" class="efinput" onchange="wfStepSelChange()">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}<option value="custom">${esc(T('wfCustom'))}</option></select><input type="text" id="wfCustomName" class="efinput" placeholder="${T('wfCustomPh')}" style="display:${pending.length?'none':''}" oninput="window.__wfFormTouched=true"><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}" oninput="window.__wfFormTouched=true"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}" oninput="window.__wfFormTouched=true"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}" oninput="window.__wfFormTouched=true"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
+  /* v10.67: Received defaults to the first pending step's predecessor delivery. */
+  const recvDef=pending.length?wfReceivedIso(model, model.findIndex(m=>m.no===pending[0].no)):'';
+  h+=`<div class="wfadd"><select id="wfStepSel" class="efinput" onchange="wfStepSelChange()">${pending.map(m=>`<option value="${m.no}">${m.no}. ${esc(m.name)}</option>`).join('')}<option value="custom">${esc(T('wfCustom'))}</option></select><input type="text" id="wfCustomName" class="efinput" placeholder="${T('wfCustomPh')}" style="display:${pending.length?'none':''}" oninput="window.__wfFormTouched=true"><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}" oninput="window.__wfFormTouched=true"><input type="date" id="wfRecv" class="efinput" value="${toISODate(recvDef)}" oninput="window.__wfFormTouched=true"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}" oninput="window.__wfFormTouched=true"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}" oninput="window.__wfFormTouched=true"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
   return h;
 }
 function wfStepSelChange(){
   window.__wfFormTouched=true;
   const sel=document.getElementById('wfStepSel'), inp=document.getElementById('wfCustomName');
   if(sel&&inp) inp.style.display=(sel.value==='custom')?'':'none';
+  /* v10.67: Received follows the selected step's predecessor delivery. */
+  const rv=document.getElementById('wfRecv');
+  if(rv&&sel&&sel.value!=='custom'){
+    const model=wfModel(); const idx=model.findIndex(m=>m.no===parseInt(sel.value,10));
+    if(idx>=0) rv.value=toISODate(wfReceivedIso(model,idx));
+  }
 }
 /* v10.28: next free CUSTOM step number — max(25, maxExistingStepNo + 1),
    where maxExistingStepNo is the max stepno across all current workflow
@@ -2145,40 +2201,27 @@ function wfStepSelChange(){
 function wfNextCustomNo(){
   return Math.max(WF_STEPS.length, ...wfModel().map(m=>m.no)) + 1;
 }
-/* ── v10.39: phase-derived Status — the user's rule (2026-11-15): a task
-   in the Approval Process phase is "Open"; a task in the After Approval
-   Process phase is "In Progress". The phase is derived from the task's
-   workflow rows: any step in section A (canonical stepno 1–12, v10.40)
-   means Approval; any step in section B (canonical stepno 13–24) means
-   After Approval (section B wins when both exist). Classification is
-   strictly by section: a fixed step by its canonical number; a stored
-   earlier-step row keeps its RECORDED stepno (a retired name whose
-   stored stepno is 13–24 was a PO-approval step, i.e. After Approval);
-   a genuine custom step (stepno >= 25) sets no phase. ── */
+/* ── v10.69: phase-derived Status — Open is gone, so the phase rule is
+   now one line: every task is In Progress unless Complete / Wating
+   (manual). A workflow ADD reopens a Complete / Wating task to
+   In Progress (the owner's 2026-11-19 decision — a new step means work
+   is under way again); a workflow DELETE never reopens one. An
+   In Progress task never changes. wfPhase() is kept for shape: it
+   returns 'B' when the task has any workflow row at all (fixed,
+   earlier or custom — any row means work is in progress). ── */
 function wfPhase(){
-  let hasA=false, hasB=false;
-  wfModel().forEach(m=>{
-    if(!m.row) return;
-    let n;
-    if(!m.custom) n=m.no;
-    else if(m.legacy){ n=parseInt(m.row.stepno,10); if(isNaN(n)) return; }
-    else return; /* genuine custom step (>= 25): no phase */
-    if(n>=1&&n<=12) hasA=true;
-    else if(n>=13&&n<=24) hasB=true;
-  });
-  return hasB?'B':(hasA?'A':null);
+  return wfModel().some(m=>m.row)?'B':null;
 }
 /* The status the phase rule wants for this task, or null when no change
-   applies: no workflow steps at all, the status already matches the
-   phase, or the task is Complete (a task at 100%/Complete is never
-   overdue and must stay Complete) or Wating — only Open / In Progress
-   tasks are ever moved. */
-function wfPhaseStatus(r){
-  const ph=wfPhase(); if(!ph) return null;
+   applies. reopen=true (workflow ADD): a Complete / Wating task with at
+   least one workflow row reopens to In Progress; reopen=false (workflow
+   DELETE): Complete / Wating never move. An In Progress task never
+   moves either way; any other status becomes In Progress. */
+function wfPhaseStatus(r, reopen){
   const cur=(r.status||'').toLowerCase();
-  if(cur!=='open'&&cur!=='in progress') return null;
-  const want=ph==='B'?'In Progress':'Open';
-  return want.toLowerCase()===cur?null:want;
+  if(cur==='in progress') return null;
+  if(cur==='complete'||cur==='wating') return (reopen!==false&&wfPhase())?'In Progress':null;
+  return 'In Progress';
 }
 /* Status-only update — v4.14 writes only the fields sent and logs the
    change into Stage History when the status actually changed. If the
@@ -2371,8 +2414,12 @@ async function wfAdd(){
   }
   const who=((document.getElementById('wfWho')||{}).value||'').trim();
   const date=(document.getElementById('wfDate')||{}).value||'';
+  const recv=(document.getElementById('wfRecv')||{}).value||'';
   const ref=((document.getElementById('wfRef')||{}).value||'').trim();
   if(!step||!date) return;
+  /* v10.69: a step token may add only their own step (the form offers
+     nothing else, but never trust the form alone). */
+  if(isStepMode()&&(isCustom||no!==myStepNo())){ say(T('stepNote')); return; }
   /* v10.38: double-click guard — a fast second click right after an add,
      before the user touched the rebuilt form, is an accidental
      double-click, not a second add (the rebuilt form auto-selects the
@@ -2384,7 +2431,7 @@ async function wfAdd(){
   /* Guest / snapshot mode: local preview only — nothing is sent anywhere.
      Same numbering as the logged-in path: max(25, maxExisting + 1). */
   if(!url||!tok){
-    const localG={sl:r.sl,unit:r.unit,task:r.name,stepno:isCustom?wfNextCustomNo():no,step,who,date,ref,local:true};
+    const localG={sl:r.sl,unit:r.unit,task:r.name,stepno:isCustom?wfNextCustomNo():no,step,who,date,received:recv,ref,local:true};
     dtWfLocal.push(localG);
     /* v10.43: guest preview — the Last Workflow cell follows the
        preview step too (nothing is sent anywhere). */
@@ -2407,7 +2454,7 @@ async function wfAdd(){
      (server-computed Days / Next Step Date) and the local row is
      swapped out; on failure the local row is removed and the error is
      shown. */
-  const local={sl:r.sl,unit:r.unit,task:r.name,stepno,step,who,date,ref,local:true};
+  const local={sl:r.sl,unit:r.unit,task:r.name,stepno,step,who,date,received:recv,ref,local:true};
   dtWfLocal.push(local);
   /* v10.43: optimistic — the Last Workflow cell follows the new step at
      once (when its date is the latest); rolled back below on failure. */
@@ -2420,7 +2467,7 @@ async function wfAdd(){
   /* v10.63: name the phase flip in the toast when the step actually
      changed the status; otherwise keep the plain toast. */
   toast(wantStatus?Tf('toastWfAddFlip',{st:wantStatus}):T('toastWfAdd'),'ok');
-  const q=new URLSearchParams({token:tok,action:'addworkflow',sl:String(r.sl),unit:r.unit,task:r.name,step,who,date,ref});
+  const q=new URLSearchParams({token:tok,action:'addworkflow',sl:String(r.sl),unit:r.unit,task:r.name,step,who,date,received:recv,ref});
   q.set('stepno',String(stepno));
   bgWrite(url,q,
     ()=>{ dtWfLocal=dtWfLocal.filter(w=>w!==local); bgRelease(key);
@@ -2444,14 +2491,16 @@ async function wfAdd(){
       wfRefresh();
       const mm=document.getElementById('wfMsg'); if(mm){ const dup=(!isCustom && /already exists/i.test(e.message||''))?wfDupBlockerMsg(no,step):null; mm.textContent=dup||Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
-function wfEdit(no){ dtWfEdit=no; wfRefresh(); }
+function wfEdit(no){ if(isStepMode()&&no!==myStepNo()) return; dtWfEdit=no; wfRefresh(); }
 function wfCancelEdit(){ dtWfEdit=null; wfRefresh(); }
 async function wfSaveEdit(no){
   const r=rowBySl(dtRn); if(!r) return;
   /* v10.27: find by stepno — model[no-1] is wrong once custom steps exist. */
   const model=wfModel(); const m=model.find(x=>x.no===no); if(!m||!m.row) return;
+  if(isStepMode()&&no!==myStepNo()){ toast(T('stepNote'),'err'); return; }
   const who=((document.getElementById('wfEWho')||{}).value||'').trim();
   const date=(document.getElementById('wfEDate')||{}).value||'';
+  const recv=(document.getElementById('wfERecv')||{}).value||'';
   const ref=((document.getElementById('wfERef')||{}).value||'').trim();
   let newName=m.name;
   if(m.custom){
@@ -2465,7 +2514,7 @@ async function wfSaveEdit(no){
   const url=scriptUrl(), tok=curToken();
   if(m.row.local){
     const t=dtWfLocal.find(w=>w===m.row)||m.row;
-    if(t){ t.who=who; t.date=date; t.ref=ref; if(m.custom) t.step=newName; }
+    if(t){ t.who=who; t.date=date; t.received=recv; t.ref=ref; if(m.custom) t.step=newName; }
     /* v10.43: the edited preview step may be the last one — recompute
        the Last Workflow cell from the remaining rows. */
     lwRecomputeFromRows(r.sl); render();
@@ -2474,15 +2523,15 @@ async function wfSaveEdit(no){
   if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
   /* v10.30: send the row's STORED stepno, not the model number — a legacy
      row's model number (>= 25) differs from its stored stepno. */
-  const q=new URLSearchParams({token:tok,action:'editworkflow',sl:String(r.sl),unit:r.unit,stepno:String((m.row&&m.row.stepno)||no),who,date,ref});
+  const q=new URLSearchParams({token:tok,action:'editworkflow',sl:String(r.sl),unit:r.unit,stepno:String((m.row&&m.row.stepno)||no),who,date,received:recv,ref});
   /* v10.27: editworkflow renames a step via p.step — send the edited name
      for custom steps (fixed steps keep their canonical name). */
   if(m.custom) q.set('step',newName);
   if(m.row.row!==undefined&&m.row.row!==null&&m.row.row!=='') q.set('row',String(m.row.row));
   /* v10.38: optimistic — apply locally at once; the server write runs in
      the background and the edit is rolled back if it fails. */
-  const prev={who:m.row.who,date:m.row.date,ref:m.row.ref,step:m.row.step};
-  m.row.who=who; m.row.date=date; m.row.ref=ref; if(m.custom) m.row.step=newName;
+  const prev={who:m.row.who,date:m.row.date,received:m.row.received,ref:m.row.ref,step:m.row.step};
+  m.row.who=who; m.row.date=date; m.row.received=recv; m.row.ref=ref; if(m.custom) m.row.step=newName;
   /* v10.43: the edited step may be the last one — recompute the Last
      Workflow cell at once; the success handler converges it below. */
   lwRecomputeFromRows(r.sl); render();
@@ -2499,6 +2548,7 @@ async function wfDel(no){
   const r=rowBySl(dtRn); if(!r) return;
   /* v10.27: find by stepno — model[no-1] is wrong once custom steps exist. */
   const model=wfModel(); const m=model.find(x=>x.no===no); if(!m||!m.row) return;
+  if(isStepMode()&&no!==myStepNo()){ toast(T('stepNote'),'err'); return; }
   const ok=await confirmDlg(T('wfDelT'), T('wfDelB'));
   if(!ok) return;
   const url=scriptUrl(), tok=curToken();
@@ -2509,7 +2559,7 @@ async function wfDel(no){
     lwRecomputeFromRows(r.sl); render();
     /* v10.39: guest/local preview — the phase is recomputed from the
        remaining steps and the status follows locally (nothing is sent). */
-    const wantL=wfPhaseStatus(r);
+    const wantL=wfPhaseStatus(r,false);
     if(wantL){ r.status=wantL; render(); renderDetail(); }
     wfRefresh(); toast(T('toastWfDel'),'ok'); return;
   }
@@ -2525,9 +2575,9 @@ async function wfDel(no){
      remaining steps at once; rolled back below on failure. */
   const prevLw=lastWfMap[String(r.sl)]||null;
   lwRecomputeFromRows(r.sl); render();
-  /* v10.39: the remaining steps set the phase now — e.g. deleting the
-     only After Approval step drops the task back to Open. */
-  const wantStatus=wfPhaseStatus(r);
+  /* v10.69: the remaining steps set the phase now — a delete never
+     reopens a Complete / Wating task (only an add does). */
+  const wantStatus=wfPhaseStatus(r,false);
   const prevStatus=wantStatus?wfApplyPhaseStatus(r):null;
   /* v10.63: name the phase flip in the toast when the delete actually
      changed the status; otherwise keep the plain toast. */
@@ -2563,9 +2613,9 @@ function wfCsvText(r){
   L.push(['Tentative Budget (BDT)',r.budget||0,'Tentative Cost (BDT)',r.cost||0,'Payment (BDT)',r.disb||0,'Progress', (r.prog||0)+'%','Budget Status',r.bst||'','Materials Status',r.matst||''].map(wfCsvCell).join(','));
   L.push(['Workflow', wfDoneCount(model)+' / '+WF_STEPS.length+(customs?` ${Tf('wfCustomCount',{n:fmtN(customs)})}`:'')+(legacy?` ${Tf('wfLegacyCount',{n:fmtN(legacy)})}`:'')].map(wfCsvCell).join(','));
   L.push('');
-  L.push(['Step No','Step','Who','Received Date','Delivery Date','Number of Days','Ref / Remark'].map(wfCsvCell).join(','));
+  L.push(['Step No','Step','Who','Received Date','Number of Days','Delivery Date','Ref / Remark'].map(wfCsvCell).join(','));
   model.forEach((m,idx)=>{ const w=m.row;
-    L.push([m.no,m.name,w&&w.who?w.who:'',wfReceivedIso(model,idx),w&&parseD(w.date||'')?w.date:'',wfDaysText(model,idx)==='—'?'':wfDaysText(model,idx),w&&w.ref?w.ref:''].map(wfCsvCell).join(',')); });
+    L.push([m.no,m.name,w&&w.who?w.who:'',wfReceivedRaw(model,idx),wfDaysText(model,idx)==='—'?'':wfDaysText(model,idx),w&&parseD(w.date||'')?w.date:'',w&&w.ref?w.ref:''].map(wfCsvCell).join(',')); });
   return L.join('\r\n');
 }
 function wfExportCsv(){
@@ -2580,7 +2630,7 @@ function wfExportCsv(){
 /* ── v10.27: A4 print sheet — rebuilt to match the sample task-workflow
    sheet (.sheet in ~/workspace/ts-spaces/sample-task-workflow/index.html):
    eyebrow, h2 title, 2-column kv2 with dashed rows, flat 7-column table
-   (Step | Stage | By | Received Date | Delivery Date | Number of Days | Status), footer note. No signature
+   (Step | Stage | By | Received Date | Number of Days | Delivery Date | Status), footer note. No signature
    boxes. EBS Req No. = Ref of step 13 (REQUISITION RISE IN EBS), PO / WO
    No. = Ref of step 19 (PO CREATE BY PROCURMENT). Section header rows
    split the table into the same two sections as the on-screen table. ── */
@@ -2607,17 +2657,17 @@ function wfPrintSheetHtml(r,sec){
     /* Days still count against the FULL model, so a section print keeps
        the same day counts as the whole print. */
     const fullIdx=model.indexOf(m);
-    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,fullIdx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,fullIdx))}</td><td>${esc(st)}</td></tr>`; }).join('');
+    return `<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,fullIdx))}</td><td>${esc(wfDaysText(model,fullIdx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(st)}</td></tr>`; }).join('');
   const secRow=whole
     ? ''
     : `<tr class="prsec"><td colspan="7">${esc(WF_SECTIONS[sec].name)}</td></tr>`;
   const wholeRows=model.map((m,idx)=>{ const w=m.row, dated=w&&parseD(w.date||'');
     const st=dated?T('prDone'):(idx===firstPending?T('prInProg'):T('wfPending'));
     const sec2=(!m.custom&&(m.no===1||m.no===WF_SEC2_START))?`<tr class="prsec"><td colspan="7">${esc(m.no===1?WF_SECTIONS[0].name:WF_SECTIONS[1].name)}</td></tr>`:'';
-    return sec2+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,idx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(wfDaysText(model,idx))}</td><td>${esc(st)}</td></tr>`; }).join('');
+    return sec2+`<tr><td>${m.no}</td><td>${esc(m.name)}</td><td>${w&&w.who?esc(w.who):'—'}</td><td>${esc(wfReceivedText(model,idx))}</td><td>${esc(wfDaysText(model,idx))}</td><td>${dated?fmtD(w.date):'—'}</td><td>${esc(st)}</td></tr>`; }).join('');
   return `<div class="co">Dekko Group · Task &amp; Budget Approval Sheet</div><h2>${esc(r.name)}</h2>`+
   `<div class="kv2">${fields.map(f=>`<div><span>${esc(f[0])}</span><b>${f[1]}</b></div>`).join('')}</div>`+
-  `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>${esc(T('wfReceived'))}</th><th>${esc(T('wfDate'))}</th><th>${esc(T('wfDays'))}</th><th>${esc(T('thStatus'))}</th></tr>`+
+  `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>${esc(T('wfReceived'))}</th><th>${esc(T('wfDays'))}</th><th>${esc(T('wfDate'))}</th><th>${esc(T('thStatus'))}</th></tr>`+
   (whole?wholeRows:secRow+rowsHtml)+`</table>`+
   `<p class="pr-foot">${esc(Tf('prFooter',{d:fmtD(toISODate(todayMid()))}))}</p>`;
 }
@@ -2631,7 +2681,7 @@ function wfPrint(sec){
 
 /* ── In-view edit mode: all fields editable except name + unit (row identity).
    Date pickers for all four dates; saves through the existing update action. ── */
-function dtStartEdit(){ const r=rowBySl(dtRn); if(!r||!canEditUnit(r.unit)) return; dtEdit=true; renderDetail(); }
+function dtStartEdit(){ const r=rowBySl(dtRn); if(!r) return; if(isStepMode()){ toast(T('stepNote'),'err'); return; } if(!canEditUnit(r.unit)) return; dtEdit=true; renderDetail(); }
 function dtCancelEdit(){ dtEdit=false; renderDetail(); }
 function dtEditForm(r){
   return `<div class="dtsec"><h4>${T('dtEdit')}</h4>
@@ -2639,7 +2689,7 @@ function dtEditForm(r){
   <div class="efgrid">
     <div style="grid-column:span 2"><label>${T('fTask')}</label><input class="efinput" value="${esc(r.name)}" disabled></div>
     <div><label>${T('fUnit')}</label><input class="efinput" value="${esc(r.unit)}" disabled></div>
-    <div><label>${T('fStatus')}</label><select id="deStatus" class="efinput">${STATUSES_ALL.map(s=>`<option ${s.toLowerCase()===(r.status||'').toLowerCase()?'selected':''}>${s}</option>`).join('')}</select></div>
+    <div><label>${T('fStatus')}</label><select id="deStatus" class="efinput">${manualStatusOptions(r.status)}</select><div style="font-size:11px;color:var(--muted)">In Progress changes only through workflow steps.</div></div>
     <div><label>${T('fAssignee')}</label><input id="deAssignee" class="efinput" value="${esc(r.assignee)}"></div>
     <div><label>${T('fPriority')}</label><select id="dePriority" class="efinput"><option value=""></option><option ${r.priority==='Urgent'?'selected':''}>Urgent</option><option ${r.priority==='Normal'?'selected':''}>Normal</option></select></div>
     <div><label>${T('fBst')}</label><select id="deBst" class="efinput">${bstOptionsHtml(r.bst)}</select></div>
@@ -2666,6 +2716,7 @@ async function dtSaveEdit(){
   const token=curToken();
   const m=document.getElementById('dtMsg');
   const say=(t,c)=>{ if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } };
+  if(isStepMode()){ say(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
   if(!url){ say(T('msgNoScript'),'err'); toast(T('msgNoScript'),'err'); return; }
   if(!token){ say(T('msgToken'),'err'); toast(T('msgToken'),'err'); return; }
   const vals={status:document.getElementById('deStatus').value,
@@ -2724,11 +2775,32 @@ function allowedUnit(){ return window.__allowedUnit || fsGet('cu-allowed-unit') 
 function curToken(){ return window.__sessionToken || fsGet('cu-entry-token') || ''; }
 function scriptUrl(){ return EMBEDDED_SCRIPT_URL || fsGet('cu-entry-url') || ''; }
 function canEditUnit(u){ const a=allowedUnit(); return !a || a==='ALL' || a.toUpperCase()===(u||'').toUpperCase(); }
+/* ── v10.69: per-step tokens (script v4.21) — whoami returns unit
+   'STEP:n' (plus step + stepName). The holder sees ALL data but edits
+   only their own workflow step; project Add/Edit, board drag, subtasks
+   and comments are all disabled for them, and only their step row
+   shows edit/delete buttons. ── */
+function saveStepLogin(j){
+  const u=String((j&&j.unit)||'');
+  const m=u.match(/^STEP:(\d+)$/i);
+  if(m){ window.__stepNo=parseInt(m[1],10);
+    window.__stepName=String((j&&j.stepName)||'');
+    fsSet('cu-step-no',String(window.__stepNo)); fsSet('cu-step-name',window.__stepName); }
+  else { window.__stepNo=null; window.__stepName=''; fsSet('cu-step-no',''); fsSet('cu-step-name',''); }
+}
+function isStepMode(){ return /^STEP:\d+$/i.test(allowedUnit()||''); }
+function myStepNo(){ if(!isStepMode()) return null;
+  if(window.__stepNo) return window.__stepNo;
+  const m=(allowedUnit()||'').match(/^STEP:(\d+)$/i); return m?parseInt(m[1],10):null; }
+function myStepName(){ if(!isStepMode()) return '';
+  if(window.__stepName) return window.__stepName;
+  const s=fsGet('cu-step-name'); if(s) return s;
+  const n=myStepNo(); return (n&&WF_STEPS[n-1])?WF_STEPS[n-1]:''; }
 function statusName(s){ const k=(s||'').toLowerCase();
   if(k==='complete') return T('stComplete');
   if(k==='in progress') return T('stInProg');
   if(k==='writing'||k==='wating') return T('stWating');
-  if(k==='open') return T('stOpen');
+  if(k==='open') return T('stInProg');
   return s; }
 function fsTitle(){ if(fsStatus==='all') return T('fsTitleAll'); return statusName(fsStatus); }
 function fsPairs(){ const a=agg();
@@ -2753,6 +2825,11 @@ function setFsTab(t){ fsTab=t;
   if(t==='add'){ fsBuildAddLists();
     document.getElementById('fsTitle').textContent=T('fsAddTitle');
     document.getElementById('fsTotals').textContent=T('fsAddTotals');
+    /* v10.69: a step token cannot add projects — show the note and
+       disable Save (the form itself stays visible, read-only). */
+    const sn=document.getElementById('fsStepNote');
+    if(sn){ sn.style.display=isStepMode()?'block':'none'; if(isStepMode()) sn.textContent=T('stepNote'); }
+    const ab=document.getElementById('fsAddBtn'); if(ab) ab.disabled=isStepMode();
   } else renderFsTable();
 }
 function openAddProject(){ openStatusPopup('all'); setFsTab('add'); }
@@ -2760,11 +2837,13 @@ function fsBuildAddLists(){
   const us=document.getElementById('faUnit');
   if(us) us.innerHTML=UNITS_ALL.map(u=>`<option>${u}</option>`).join('');
   const au=allowedUnit();
-  if(us && au && au!=='ALL' && !UNITS_ALL.includes(au)) us.innerHTML+=`<option>${au}</option>`;
-  if(us && au && au!=='ALL'){ us.value=au; us.disabled=true; }
+  if(us && au && au!=='ALL' && !isStepMode() && !UNITS_ALL.includes(au)) us.innerHTML+=`<option>${au}</option>`;
+  if(us && au && au!=='ALL' && !isStepMode()){ us.value=au; us.disabled=true; }
   else if(us) us.disabled=false;
 }
 async function fsAddSave(){
+  /* v10.69: a step token cannot add projects. */
+  if(isStepMode()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
   const url=scriptUrl();
   const token=(document.getElementById('fsToken')||{}).value||curToken();
   const unit=document.getElementById('faUnit').value;
@@ -2773,7 +2852,7 @@ async function fsAddSave(){
   if(!url){ fsSay(T('msgNoScript'),'err'); toggleFsSettings(); return; }
   if(!token){ fsSay(T('msgToken'),'err'); toggleFsSettings(); return; }
   if(document.getElementById('fsRemember').checked) fsSet('cu-entry-token',token);
-  const vals={status:document.getElementById('faStatus').value,
+  const vals={status:'In Progress',
     assignee:document.getElementById('faAssignee').value.trim(),
     priority:document.getElementById('faPriority').value,
     bst:document.getElementById('faBst').value.trim(),
@@ -2815,7 +2894,7 @@ async function fsAddSave(){
     (e)=>{ D.rows=D.rows.filter(x=>x!==local); __untrackPending(nextSl); render(); renderFsTable();
       setFsTab('add');
       const set=(id,v)=>{ const el=document.getElementById(id); if(el) el.value=v; };
-      set('faUnit',unit); set('faStatus',vals.status); set('faName',name); set('faAssignee',vals.assignee);
+      set('faUnit',unit); set('faName',name); set('faAssignee',vals.assignee);
       set('faPriority',vals.priority); set('faBst',vals.bst); set('faMatst',vals.matst);
       set('faStart',vals.start); set('faDue',vals.due); set('faRevised',vals.revised); set('faFinishWork',vals.finishwork);
       set('faProg',String(vals.prog)); set('faBudget',String(vals.budget)); set('faCost',String(vals.cost));
@@ -2837,7 +2916,7 @@ function fsSaveSetup(){ const uEl=document.getElementById('fsUrl'), tEl=document
   if(!EMBEDDED_SCRIPT_URL) fsSet('cu-entry-url',u);
   if(!tok){ fsSay(T('msgSetupSaved'),'ok'); render(); renderFsTable(); return; }
   fetch(u+'?'+new URLSearchParams({action:'whoami',token:tok,cb:Date.now()}),{redirect:'follow'}).then(r=>r.json()).then(j=>{
-    if(j && j.ok && j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=tok;
+    if(j && j.ok && j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=tok; saveStepLogin(j);
       if(rem){ fsSet('cu-entry-token',tok); fsSet('cu-allowed-unit',j.unit); }
       fsSay(j.unit==='ALL'?T('msgSetupSavedAll'):Tf('msgSetupSavedUnit',{u:j.unit}),'ok');
       toast(T('toastSetup'),'ok');
@@ -2850,13 +2929,12 @@ function renderFsTable(){
   const tc=pairs.reduce((s,r)=>s+(r.cost||0),0), tb=pairs.reduce((s,r)=>s+(r.budget||0),0), td=pairs.reduce((s,r)=>s+(r.disb||0),0);
   document.getElementById('fsTitle').textContent=fsTitle();
   document.getElementById('fsTotals').textContent=Tf('fsTotals',{n:pairs.length, c:fmtM(tc), b:fmtM(tb), p:fmtM(td)});
-  const stOpts=STATUSES_ALL;
   const tbl = pairs.length?
     `<table><tr><th></th><th>${T('thSL')}</th><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('thStart')}</th><th>${T('thDeadline')}</th><th>${T('thDays')}</th><th>${T('thProgress')}</th><th class="num">${T('thBudget')} (BDT)</th><th class="num">${T('thCost')} (BDT)</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('thRemarks')}</th><th></th></tr>`+
     pairs.map(r=>{
       if(String(r.sl)===String(fsEditSl)){
         return `<tr id="fsEditRow"><td></td><td>${esc(r.sl)}</td><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td>`+
-        `<td><select id="fsSt" class="efinput" style="min-width:120px">${stOpts.map(s=>`<option ${s.toLowerCase()===(r.status||'').toLowerCase()?'selected':''}>${s}</option>`).join('')}</select></td>`+
+        `<td><select id="fsSt" class="efinput" style="min-width:120px">${manualStatusOptions(r.status)}</select></td>`+
         `<td><input type="date" id="feStart" class="efinput" value="${toISODate(r.start)}"></td><td><input type="date" id="feDue" class="efinput" value="${toISODate(r.due)}" title="Due Date"><input type="date" id="feRevised" class="efinput" value="${toISODate(r.revised)}" title="Revised Finish Date" style="margin-top:4px"></td><td>${daysCell(r)}</td>`+
         `<td><input type="number" step="any" min="0" max="100" id="fsPr" class="efinput" value="${r.prog||0}" style="width:80px"> %</td>`+
         `<td><input type="number" step="any" id="fsBu" class="efinput" value="${r.budget||0}" style="min-width:110px"></td>`+
@@ -2877,6 +2955,7 @@ function fsCancelEdit(){ fsEditSl=null; renderFsTable(); }
 async function fsSaveEdit(sl){
   const row=rowBySl(sl);
   if(!row){ fsSay(T('msgRowGone'),'err'); return; }
+  if(isStepMode()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
   const url=scriptUrl();
   const token=(document.getElementById('fsToken')||{}).value||curToken();
   if(!url){ fsSay(T('msgNoScript'),'err'); toggleFsSettings(); return; }
@@ -2913,10 +2992,10 @@ async function fsSaveEdit(sl){
       fsSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
 }
 /* ── v3: left sidebar, Board, Calendar, Group-by, Comments. ── */
-const STATUS_ORDER=['Open','In Progress','Wating','Complete'];
+const STATUS_ORDER=['In Progress','Wating','Complete'];
 /* v10.12: board colors from the reference design — To Do blue, In Progress
    orange, Review red, Completed green. Wating takes the Review red. */
-const STATUS_COLORS={'Open':'#2563eb','In Progress':'#f59e0b','Wating':'#ef4444','Complete':'#22c55e'};
+const STATUS_COLORS={'In Progress':'#f59e0b','Wating':'#ef4444','Complete':'#22c55e'};
 function statusColor(s){ return STATUS_COLORS[s]||'#7b68ee'; }
 /* Short card date like the reference ("Sep 08"). */
 function fmtDShort(v){ const d=parseD(v); if(!d) return '—'; return DMON[d.getMonth()]+' '+String(d.getDate()).padStart(2,'0'); }
@@ -2988,7 +3067,9 @@ document.addEventListener('click', e=>{ if(!e.target.closest('.notif-wrap')) clo
 function renderProfile(){
   const el=document.getElementById('profileName'); if(!el) return;
   const a=allowedUnit();
-  const name = a==='ALL' ? T('profileOwner') : (a || T('profileGuest'));
+  /* v10.69: a step token shows its step — "Step 4 · CHECKED & APPROVED
+     BY (H/O PROCURMENT)" — so the holder always sees which step they own. */
+  const name = isStepMode() ? Tf('stepChip',{n:myStepNo(),name:myStepName()}) : (a==='ALL' ? T('profileOwner') : (a || T('profileGuest')));
   el.textContent=name;
   const av=document.getElementById('profileAvt'); if(av) av.textContent=(name||'?')[0].toUpperCase();
 }
@@ -3029,6 +3110,21 @@ function boardSay(msg, cls){ const e=document.getElementById('boardMsg'); if(e){
 async function moveTask(sl, newStatus){
   const r=rowBySl(sl); if(!r) return false;
   if((r.status||'')===newStatus) return true;
+  /* v10.69: STATUS LOCK — In Progress is workflow-driven only (Open is
+     gone), so a board drag to the In Progress column is blocked (the card
+     stays put and the user is told why). Drags to Complete / Wating still
+     work — those two stay freely editable by hand. A step token cannot
+     drag at all — it edits only its own workflow step. */
+  if(isStepMode()){
+    boardSay(T('stepNote'),'err');
+    toast(T('stepNote'),'err');
+    return false;
+  }
+  if(newStatus==='In Progress'){
+    boardSay('In Progress changes only through workflow steps — drag to Complete or Wating instead.','err');
+    toast('In Progress changes only through workflow steps.','err');
+    return false;
+  }
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ boardSay(T('msgNoScript'),'err'); toast(T('msgNoScript'),'err'); window.__lastMoveUrl=null; render(); return false; }
   const q=new URLSearchParams({token:tok, action:'update', sl:String(r.sl), unit:r.unit, name:r.name,
@@ -3123,6 +3219,7 @@ async function cmAdd(){
   const author=((document.getElementById('cmAuthor')||{}).value||'').trim()||cmAuthor();
   const m=document.getElementById('cmMsg');
   const say=(t,c)=>{ if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } };
+  if(isStepMode()){ say(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
   if(!text) return;
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ say(T('msgNoScript'),'err'); toast(T('msgNoScript'),'err'); return; }
