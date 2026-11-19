@@ -1729,7 +1729,10 @@ function lcRowsFor(sl){ return lcBySl[String(sl)]||[]; }
 function lcCountText(sl){ return lcState[String(sl)]==='ready'?Tf('lcCount',{n:fmtN(lcRowsFor(sl).length)}):'—'; }
 function canLcWrite(r){ return !isStepMode()&&!!allowedUnit()&&canEditUnit(r.unit); }
 function lcCellVal(x,fd){ const v=x[fd.k]; return v==null?'':String(v); }
-function lcCellDisp(x,fd){ const v=lcCellVal(x,fd); if(!v) return '—'; return LC_DATE_KEYS[fd.k]?fmtD(v):esc(v); }
+/* v10.72: ITEM DESCRIPTION and REMARKS show at most 50 letters in the
+   popup table (first 50 + '...', full text in the title tooltip) — the
+   CSV download, print sheet and add/edit form keep the full text. */
+function lcCellDisp(x,fd){ const v=lcCellVal(x,fd); if(!v) return '—'; if(LC_DATE_KEYS[fd.k]) return fmtD(v); if((fd.k==='itemDesc'||fd.k==='remarks')&&v.length>50) return `<span class="tname" title="${escA(v)}">${esc(v.slice(0,50))}...</span>`; return esc(v); }
 async function loadLc(){
   const r=rowBySl(dtRn); if(!r) return;
   const sl=String(r.sl);
