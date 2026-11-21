@@ -476,12 +476,12 @@ th{padding:8px 10px}
 #printSheet tr.prsec td{background:#eef1f6;color:#19233f;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:12px}
 #printSheet .pr-foot{font-size:11.5px;color:#5f6f86;margin-top:22px}
 /* v10.70: LC popup + Download All / Print All print sections. */
-.lcmodal{position:fixed;inset:0;background:var(--card);z-index:200;overflow:auto;padding:0}
-.lcwrap{max-width:1400px;margin:0 auto;padding:0 18px 40px}
-.lcscroll{overflow-x:auto;padding:12px 0}
+.lcmodal{position:fixed;inset:0;background:var(--card);z-index:200;overflow:hidden;padding:0;display:flex;flex-direction:column}
+.lcwrap{max-width:1400px;width:100%;margin:0 auto;padding:0 18px 20px;flex:1;min-height:0;display:flex;flex-direction:column}
+.lcbody{flex:1;min-height:0;overflow:auto;padding:12px 0}
 .lctable{border-collapse:collapse;width:100%;font-size:12.5px}
 .lctable th,.lctable td{border:1px solid var(--border);padding:6px 8px;text-align:left;white-space:nowrap}
-.lctable th{background:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+.lctable th{background:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0;z-index:5}
 /* v10.75: LC popup cards + filters + received-row tint (2nd-phase machine schema). */
 /* v10.76 (2026-11-21): 'Tentative Budget (BDT)' column deleted from the Sheet — every Budget
    display/input/payload is gone (list, detail, edit/add forms, fullscreen table, grid card,
@@ -491,6 +491,11 @@ th{padding:8px 10px}
 .lccard{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:140px}
 .lccard span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
 .lccard b{display:block;font-size:18px;margin-top:2px}
+/* LC popup filters: all 5 in one row (equal widths) on desktop, stacked one
+   per line on mobile (<=640px). */
+.lcFilters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:4px 0 12px}
+.lcFilters label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
+@media(max-width:640px){.lcFilters{grid-template-columns:1fr}}
 .lctable tr.lc-recv td{background:rgba(34,197,94,.13)}
 [data-theme="dark"] .lctable tr.lc-recv td{background:rgba(34,197,94,.25)}
 tr.lc-row{cursor:pointer}
@@ -1743,22 +1748,28 @@ async function subDel(subrow){
    column of the popup table / CSV / print, and the first field of the
    add/edit form (script v4.23). Superseded by v10.75.
    v10.75: 2nd-phase machine schema (script v4.25) — the popup, CSV and
-   print now carry the 21 file columns (S.L. NO. → REMARKS) instead of
+   print now carry the file columns (S.L. NO. → REMARKS) instead of
    the old shipment columns, which are gone. Cards on top (Required / Received /
    Due / Total Amount, over the filtered rows) + 5 filters (MACHINE
    TYPE, BRAND, MACHINE USE LINE, SUPPLIER NAME, SUPPLIER BANGLADESHI
-   AGENT NAME); STATUS=RECEIVED rows get a green tint (.lc-recv).
+   AGENT NAME); STATUS IN-HOUSE / RECEIVED rows get a green tint (.lc-recv).
+   The popup carries STATUS right after MODEL and a Received QTY column
+   right after QTY (the old STATUS after ETA is gone); the cards are QTY
+   sums — Required = sum QTY, Received = sum Received, Due = Required −
+   Received. The top block (title + cards + filters) stays fixed while
+   the table scrolls in .lcbody; the table header sticks under the
+   filters. Filters: 5 in one row on desktop, stacked on mobile (<=640px).
    Writes: master + own-unit token + step-4 token (CHECKED & APPROVED
    BY (H/O PROCURMENT)); every other step token is read-only. ── */
-const LC_HEADERS=['SL','MACHINE TYPE','BRAND','MODEL','QTY','NEW UNIT PRICE','TOTAL PRICE FOR NEW MACHINE','FREIGHT COST','TOTAL PRICE FOR NEW MACHINE WITH FREIGHT COST','MACHINE USE LINE','PI NO','PI DATE','LC / TT NO','LC DATE','SHIPMENT DATE','ETA','STATUS','SUPPLIER NAME','SUPPLIER BANGLADESHI AGENT NAME','SUPPLIER AGENT CONTACT NO','REMARKS'];
-const LC_FIELDS=[{k:'slNo',type:'number'},{k:'machineType',type:'text'},{k:'brand',type:'text'},{k:'model',type:'text'},{k:'qty',type:'number'},{k:'unitPrice',type:'number'},{k:'totalPrice',type:'number'},{k:'freight',type:'number'},{k:'totalWithFreight',type:'number'},{k:'useLine',type:'text'},{k:'piNo',type:'text'},{k:'piDate',type:'date'},{k:'lcNo',type:'text'},{k:'lcDate',type:'date'},{k:'shipDate',type:'date'},{k:'eta',type:'date'},{k:'status',type:'select',opts:['','RECEIVED']},{k:'supplier',type:'text'},{k:'agent',type:'text'},{k:'agentContact',type:'text'},{k:'remarks',type:'text'}];
+const LC_HEADERS=['SL','MACHINE TYPE','BRAND','MODEL','STATUS','QTY','Received','NEW UNIT PRICE','TOTAL PRICE FOR NEW MACHINE','FREIGHT COST','TOTAL PRICE FOR NEW MACHINE WITH FREIGHT COST','MACHINE USE LINE','PI NO','PI DATE','LC / TT NO','LC DATE','SHIPMENT DATE','ETA','SUPPLIER NAME','SUPPLIER BANGLADESHI AGENT NAME','SUPPLIER AGENT CONTACT NO','REMARKS'];
+const LC_FIELDS=[{k:'slNo',type:'number'},{k:'machineType',type:'text'},{k:'brand',type:'text'},{k:'model',type:'text'},{k:'status',type:'select',opts:['','IN-HOUSE','RECEIVED']},{k:'qty',type:'number'},{k:'received',type:'number'},{k:'unitPrice',type:'number'},{k:'totalPrice',type:'number'},{k:'freight',type:'number'},{k:'totalWithFreight',type:'number'},{k:'useLine',type:'text'},{k:'piNo',type:'text'},{k:'piDate',type:'date'},{k:'lcNo',type:'text'},{k:'lcDate',type:'date'},{k:'shipDate',type:'date'},{k:'eta',type:'date'},{k:'supplier',type:'text'},{k:'agent',type:'text'},{k:'agentContact',type:'text'},{k:'remarks',type:'text'}];
 const LC_DATE_KEYS={piDate:1,lcDate:1,shipDate:1,eta:1};
 const lcBySl={};
 const lcState={}; /* sl -> 'loading' | 'ready' | 'guest' | 'failed' */
 let dtLcEdit=null; /* null = no form, 'new' = add form, row number = editing */
 let lcFilters={machineType:'',brand:'',useLine:'',supplier:'',agent:''}; /* popup filters, reset on open */
 function lcRowsFor(sl){ return lcBySl[String(sl)]||[]; }
-function lcIsReceived(x){ return String(x.status||'').trim().toUpperCase()==='RECEIVED'; }
+function lcIsReceived(x){ const s=String(x.status||'').trim().toUpperCase().replace(/-/g,' '); return s==='IN HOUSE'||s==='RECEIVED'; }
 /* v10.75: the 5 popup filters, combined with AND; options come from the
    loaded rows, the cards + table show the filtered rows. */
 function lcFilteredRows(sl){
@@ -1773,8 +1784,8 @@ function lcFilteredRows(sl){
   });
 }
 function lcCardsHtml(rows){
-  const req=rows.length;
-  const recv=rows.filter(lcIsReceived).length;
+  const req=rows.reduce((s,x)=>s+(parseFloat(x.qty)||0),0);
+  const recv=rows.reduce((s,x)=>s+(parseFloat(x.received)||0),0);
   const total=rows.reduce((s,x)=>s+(parseFloat(x.totalWithFreight)||0),0);
   return `<div class="lccards">`+
     `<div class="lccard"><span>${esc(T('lcCardRequired'))}</span><b>${fmtN(req)}</b></div>`+
@@ -1786,7 +1797,7 @@ function lcFilterHtml(allRows){
   const sel=(k,label)=>{ const vals=[...new Set(allRows.map(x=>String(x[k]||'').trim()).filter(Boolean))].sort();
     return `<div><label>${esc(label)}</label><select class="efinput" onchange="lcSetFilter('${k}',this.value)"><option value="">${esc(T('lcFilterAll'))}</option>`+
       vals.map(v=>`<option value="${escA(v)}"${lcFilters[k]===v?' selected':''}>${esc(v)}</option>`).join('')+`</select></div>`; };
-  return `<div class="efgrid" style="margin:4px 0 12px">`+
+  return `<div class="lcFilters">`+
     sel('machineType','MACHINE TYPE')+sel('brand','BRAND')+sel('useLine','MACHINE USE LINE')+sel('supplier','SUPPLIER NAME')+sel('agent','SUPPLIER BANGLADESHI AGENT NAME')+`</div>`;
 }
 function lcSetFilter(k,v){ lcFilters[k]=v; lcRender(); }
@@ -1818,7 +1829,7 @@ async function loadLc(){
   if(String(dtRn)!==sl) return;
   wfRefresh();
   const lm=document.getElementById('lcModal');
-  if(lm&&lm.style.display==='block') lcRender();
+  if(lm&&lm.style.display==='flex') lcRender();
 }
 /* Clickable LC row for the workflow table (section B only): sits between
    step 22 and 23, shows the entry count ('—' while loading / on failure). */
@@ -1837,7 +1848,7 @@ function openLcPopup(){
   let m=document.getElementById('lcModal');
   if(!m){ m=document.createElement('div'); m.id='lcModal'; m.className='lcmodal'; document.body.appendChild(m); }
   lcRender();
-  m.style.display='block';
+  m.style.display='flex';
   document.body.style.overflow='hidden';
 }
 function closeLcPopup(){ const m=document.getElementById('lcModal'); if(m) m.style.display='none'; const dm=document.getElementById('dtModal'); document.body.style.overflow=(dm&&dm.style.display==='flex')?'hidden':''; dtLcEdit=null; }
@@ -1849,20 +1860,28 @@ function lcRender(){
   const st=lcState[String(r.sl)];
   let h=`<div class="lcwrap"><div class="dthead"><div style="flex:1;min-width:220px"><h2>${esc(T('lcTitle'))}</h2><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="chip n">${esc(r.unit)}</span><span class="chip n">SL ${esc(r.sl)}</span><span class="chip n">${esc(r.name)}</span></div></div>${canW?`<button class="fsbtn pri" onclick="lcStartAdd()">${T('lcAdd')}</button>`:''}<button class="fsbtn" onclick="lcDownloadCsv()" title="${T('lcDownload')}">${T('lcDownload')}</button><button class="fsbtn" onclick="lcPrint()" title="${T('lcPrint')}">${T('lcPrint')}</button><button class="xbtn" onclick="closeLcPopup()">${T('dtClose')}</button></div>`;
   if(isStepMode()&&myStepNo()===4) h+=`<div style="padding:8px 0 0;font-size:12.5px;color:var(--muted)">${esc(T('lcStep4Note'))}</div>`;
-  if(dtLcEdit!==null) h+=lcFormHtml(r);
   if(st==='ready'){
     const shown=lcFilteredRows(r.sl);
     h+=lcCardsHtml(shown)+lcFilterHtml(rows);
+    h+=`<div class="lcbody">`;
+    if(dtLcEdit!==null) h+=lcFormHtml(r);
     if(!rows.length) h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcEmpty')}</div>`;
     else if(!shown.length) h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcNoMatch')}</div>`;
-    else h+=`<div class="lcscroll"><table class="lctable"><tr>${LC_HEADERS.map(x=>`<th>${esc(x)}</th>`).join('')}${canW?'<th></th>':''}</tr>`+
-      shown.map(x=>`<tr${lcIsReceived(x)?' class="lc-recv"':''}>${LC_FIELDS.map(fd=>`<td>${lcCellDisp(x,fd)}</td>`).join('')}${canW&&!x.local?`<td style="white-space:nowrap"><button class="subedit" title="${T('lcEdit')}" onclick="lcStartEdit(${x.row})">✏️</button><button class="subdel" title="${T('lcDelete')}" onclick="lcDel(${x.row})">✕</button></td>`:canW?'<td></td>':''}</tr>`).join('')+`</table></div>`;
+    else h+=`<table class="lctable"><tr>${LC_HEADERS.map(x=>`<th>${esc(x)}</th>`).join('')}${canW?'<th></th>':''}</tr>`+
+      shown.map(x=>`<tr${lcIsReceived(x)?' class="lc-recv"':''}>${LC_FIELDS.map(fd=>`<td>${lcCellDisp(x,fd)}</td>`).join('')}${canW&&!x.local?`<td style="white-space:nowrap"><button class="subedit" title="${T('lcEdit')}" onclick="lcStartEdit(${x.row})">✏️</button><button class="subdel" title="${T('lcDelete')}" onclick="lcDel(${x.row})">✕</button></td>`:canW?'<td></td>':''}</tr>`).join('')+`</table>`;
+    h+=`</div>`;
   } else if(st==='guest'){
-    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcEmpty')}</div><div style="padding-bottom:18px;font-size:12.5px;color:var(--muted)">${T('lcGuestNote')}</div>`;
+    h+=`<div class="lcbody">`;
+    if(dtLcEdit!==null) h+=lcFormHtml(r);
+    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcEmpty')}</div><div style="padding-bottom:18px;font-size:12.5px;color:var(--muted)">${T('lcGuestNote')}</div></div>`;
   } else if(st==='failed'){
-    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcLoadFail')}</div>`;
+    h+=`<div class="lcbody">`;
+    if(dtLcEdit!==null) h+=lcFormHtml(r);
+    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcLoadFail')}</div></div>`;
   } else {
-    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcLoading')}</div>`;
+    h+=`<div class="lcbody">`;
+    if(dtLcEdit!==null) h+=lcFormHtml(r);
+    h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcLoading')}</div></div>`;
   }
   h+=`</div>`;
   m.innerHTML=h;
@@ -3230,7 +3249,7 @@ async function fsAddSave(){
 }
 document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return;
   const lm=document.getElementById('lcModal');
-  if(lm && lm.style.display==='block'){ closeLcPopup(); return; }
+  if(lm && lm.style.display==='flex'){ closeLcPopup(); return; }
   const dm=document.getElementById('dtModal');
   if(dm && dm.style.display==='flex') closeDetail();
   else if(document.getElementById('fsModal').style.display==='flex') closeStatusPopup(); });
