@@ -813,6 +813,7 @@ groupByL:'Group by',groupUnit:'Unit',groupStatus:'Status',
 bdHint:'Drag a card to another column to change its status',
 calToday:'Today',calNoDate:'No date',calNoDateSub:'Tasks without a deadline',
 dtComments:'Comments',cmEmpty:'No comments yet — be the first to comment',cmAddPh:'Write a comment…',cmAuthorPh:'Your name',cmPost:'Post',cmLoading:'⏳ Loading comments…',
+dtAttachments:'Attachments',atEmpty:'No files yet — upload one',atLoading:'⏳ Loading attachments…',atUpload:'⬆ Upload',atView:'View',atDelete:'Delete file',atConfirmDelete:'Delete file?',atConfirmDeleteB:'This file will be removed from Drive. This cannot be undone.',atSaved:'File uploaded',atDeleted:'File deleted',atTooBig:'File is too large — max 10 MB.',atStepNote:'Step token — you can view attachments, but cannot upload or delete.',atGuestNote:'Log in to upload files.',atNoFile:'Choose a file first.',atLoadFail:'Could not load attachments — please refresh and try again.',
 wdSun:'Sun',wdMon:'Mon',wdTue:'Tue',wdWed:'Wed',wdThu:'Thu',wdFri:'Fri',wdSat:'Sat',
 selBar:'{n} selected',selClear:'Clear',
 quickAdd:'＋ Add Project',topSearchPh:'Search projects…',
@@ -1123,6 +1124,17 @@ function bgGuard(key){ if(__inflight.has(key)) return false; __inflight.add(key)
 function bgRelease(key){ __inflight.delete(key); }
 function bgWrite(url,q,onOk,onFail){
   fetch(url+'?'+q.toString()+'&cb='+Date.now())
+    .then(r=>r.json())
+    .then(j=>{ if(!j.ok) throw new Error(j.error||'unknown error'); if(onOk) onOk(j); })
+    .catch(e=>{ if(onFail) onFail(e); });
+}
+/* ── v10.77: POST helper for uploads — base64 would blow URL limits on
+   the GET path, so uploadfile goes as a JSON body. Content-Type is
+   text/plain on purpose: it keeps the request a CORS simple request
+   (no preflight, which Apps Script web apps do not answer); doPost
+   parses e.postData.contents as JSON regardless of the content type. ── */
+function bgPost(url, body, onOk, onFail){
+  fetch(url,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(body)})
     .then(r=>r.json())
     .then(j=>{ if(!j.ok) throw new Error(j.error||'unknown error'); if(onOk) onOk(j); })
     .catch(e=>{ if(onFail) onFail(e); });
@@ -1541,7 +1553,7 @@ async function refreshLive(manual, silent, boot){
 let dtRn=null, dtEdit=false, dtSubs=[], dtSubsState='idle', dtSubEdit=null;
 function rowBySl(sl){ return D.rows.find(r=>String(r.sl)===String(sl)); }
 function openDetail(sl){
-  dtRn=sl; dtEdit=false; dtSubs=[]; dtSubsState='idle'; dtSubEdit=null; dtStageLog=[]; dtStageState='idle'; dtWf=[]; dtWfState='idle'; dtWfEdit=null; dtWfLocal=[]; dtLcEdit=null;
+  dtRn=sl; dtEdit=false; dtSubs=[]; dtSubsState='idle'; dtSubEdit=null; dtStageLog=[]; dtStageState='idle'; dtWf=[]; dtWfState='idle'; dtWfEdit=null; dtWfLocal=[]; dtLcEdit=null; dtAt=[]; dtAtState='idle';
   const r=rowBySl(sl); if(!r) return;
   if(!document.getElementById('dtModal')){
     const w=document.createElement('div');
@@ -1554,11 +1566,12 @@ function openDetail(sl){
   loadStageLog();
   loadWorkflow();
   loadLc();
+  loadAttachments();
   document.getElementById('dtModal').style.display='flex';
   document.body.style.overflow='hidden';
   window.scrollTo(0,0);
 }
-function closeDetail(){ const m=document.getElementById('dtModal'); if(m) m.style.display='none'; document.body.style.overflow=''; dtRn=null; dtEdit=false; dtSubs=[]; dtSubEdit=null; dtCm=[]; dtStageLog=[]; dtWf=[]; dtWfEdit=null; dtWfLocal=[]; dtLcEdit=null; }
+function closeDetail(){ const m=document.getElementById('dtModal'); if(m) m.style.display='none'; document.body.style.overflow=''; dtRn=null; dtEdit=false; dtSubs=[]; dtSubEdit=null; dtCm=[]; dtStageLog=[]; dtWf=[]; dtWfEdit=null; dtWfLocal=[]; dtLcEdit=null; dtAt=[]; dtAtState='idle'; }
 function renderDetail(){
   const r=rowBySl(dtRn); if(!r) return closeDetail();
   const canE=canEditUnit(r.unit);
@@ -1573,6 +1586,7 @@ function dtViewHtml(r){
   `<div class="dtsec"><h4>${T('dtTime')}</h4>${timeSection(r)}</div>`+
   `<div class="dtsec" id="dtStageSec"><h4>${T('dtStage')}</h4><div class="tl-note" style="margin:0 0 4px">${T('stStageSub')}</div><div id="dtStageBody">${stageBodyHtml(r)}</div></div>`+
   `<div class="dtsec" id="dtCmSec"><h4>${T('dtComments')}</h4><div id="dtCmBody">${cmBodyHtml(r)}</div></div>`+
+  `<div class="dtsec" id="dtAtSec"><h4>${T('dtAttachments')}</h4><div id="dtAtBody">${atBodyHtml(r)}</div></div>`+
   `<div class="dtsec"><h4>${T('dtProgress')}</h4><div style="font-size:13px"><span class="pbar" style="width:160px"><i style="width:${Math.min(100,Math.max(0,r.prog||0))}%"></i></span> <b>${r.prog||0}%</b>${r.prog_note?`<br><span style="font-size:11.5px;color:var(--muted)">${Tf('dtNote',{p:r.prog||0})}</span>`:''}</div></div>`+
   `<div class="dtsec"><h4>${T('dtComment')}</h4><div style="font-size:13px">${r.comment?esc(r.comment)+(r.comment_by?` <span style="color:var(--muted)">— ${esc(r.comment_by)}${r.comment_date?', '+fmtD(r.comment_date):''}</span>`:''):T('dtNoComment')}</div></div>`+
   `<div class="dtsec"><h4>${T('dtDesc')}</h4><div style="font-size:13px">${r.desc?esc(r.desc):T('dtNoDesc')}</div></div>`;
@@ -2977,6 +2991,7 @@ function wfPrintSheetHtml(r,sec){
   `<div class="kv2">${fields.map(f=>`<div><span>${esc(f[0])}</span><b>${f[1]}</b></div>`).join('')}</div>`+
   `<table><tr><th>Step</th><th>${esc(T('prStage'))}</th><th>By</th><th>${esc(T('wfReceived'))}</th><th>${esc(T('wfDays'))}</th><th>${esc(T('wfDate'))}</th><th>${esc(T('thStatus'))}</th></tr>`+
   (whole?wholeRows:secRow+rowsHtml)+`</table>`+
+  atPrintHtml()+
   `<p class="pr-foot">${esc(Tf('prFooter',{d:fmtD(toISODate(todayMid()))}))}</p>`;
 }
 function wfPrint(sec){
@@ -3546,6 +3561,115 @@ async function cmAdd(){
     ()=>{ loadComments(true); },
     (e)=>{ dtCm=dtCm.filter(x=>x!==local); cmRefresh();
       const mm=document.getElementById('cmMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
+}
+/* ── v10.77: Attachments (ATTACHMENTS tab + Drive folder) — one file list
+   per task, in the full-page task view, directly after Comments. Reads:
+   master / step token see all rows, unit token only its own unit; we
+   filter client-side by SL (same pattern as loadComments / loadLc).
+   Writes: master + own-unit token only — NEVER a step token (not even
+   step 3 or step 4), never a guest. Upload goes by POST (bgPost) as a
+   JSON body {action:'uploadfile', token, sl, unit, task, fileName,
+   mimeType, data} with data = raw base64 (no data: prefix) — the GET
+   path would blow URL limits on base64. Files are capped at 10 MB
+   client-side, before any request is sent. Delete is a GET deletefile
+   with row + fileId, behind the shared confirm dialog. Both writes
+   are optimistic (v10.38 pattern) with rollback + error toast. ── */
+let dtAt=[], dtAtState='idle';
+const AT_MAX_BYTES=10*1024*1024;
+function canAttach(r){ if(isStepMode()) return false; return !!allowedUnit()&&canEditUnit(r.unit); }
+function atBodyHtml(r){
+  let h='';
+  if(dtAtState==='loading'){ h+=`<div style="font-size:13px;color:var(--muted)">${T('atLoading')}</div>`; return h; }
+  if(!dtAt.length){ h+=`<div style="font-size:13px;color:var(--muted)">${T('atEmpty')}</div>`; }
+  else h+=dtAt.map(f=>{
+    const view=f.url?`<a href="${escA(f.url)}" target="_blank" rel="noopener" style="font-size:13px">${esc(T('atView'))} ↗</a>`:'';
+    const meta=[f.by||'', f.date?fmtD(f.date):''].filter(Boolean).join(' · ');
+    const del=canAttach(r)?`<button class="subdel" title="${escA(T('atDelete'))}" onclick="atDel(${f.row||0},'${escA(String(f.fileId||''))}')">✕</button>`:'';
+    return `<div class="cmrow"><div class="cmh"><b>${esc(f.fileName||'—')}</b>${f.local?' <span style="color:var(--muted)">(uploading…)</span>':''}</div><div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap"><span style="font-size:12px;color:var(--muted)">${esc(meta)}</span>${view}${del}</div></div>`;
+  }).join('');
+  if(canAttach(r)) h+=`<div class="cmadd"><input type="file" id="atFile" class="efinput"><button class="entrybtn" onclick="atUpload()">${T('atUpload')}</button></div><div id="atMsg" class="fsmsg" style="padding:6px 0"></div>`;
+  else if(isStepMode()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:6px">${esc(T('atStepNote'))}</div>`;
+  else if(!allowedUnit()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:6px">${esc(T('atGuestNote'))}</div>`;
+  return h;
+}
+function atRefresh(){ const b=document.getElementById('dtAtBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=atBodyHtml(r); }
+async function loadAttachments(quiet){
+  const r=rowBySl(dtRn); if(!r) return;
+  if(!scriptUrl()){ dtAtState='idle'; atRefresh(); return; }
+  if(!quiet){ dtAtState='loading'; atRefresh(); }
+  try{
+    const res=await fetch(scriptUrl()+'?'+new URLSearchParams({action:'getattachments',token:curToken(),cb:Date.now()}),{redirect:'follow'});
+    const j=await res.json();
+    const fresh=(j&&j.ok&&Array.isArray(j.files)) ? j.files.filter(f=>String(f.sl)===String(r.sl)) : [];
+    /* v10.38: keep optimistic local files the server has not returned
+       yet — deduped by file name. */
+    const pending=dtAt.filter(f=>f.local && !fresh.some(x=>String(x.fileName||'').trim().toLowerCase()===String(f.fileName||'').trim().toLowerCase()));
+    dtAt=fresh.concat(pending);
+  }catch(e){ dtAt=dtAt.filter(f=>f.local); }
+  dtAtState='idle'; atRefresh();
+}
+function atSay(t,c){ const m=document.getElementById('atMsg'); if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } }
+async function atUpload(){
+  const r=rowBySl(dtRn); if(!r) return;
+  const m=document.getElementById('atMsg');
+  const say=(t,c)=>{ atSay(t,c); if(c==='err') toast(t,'err'); };
+  if(!canAttach(r)){ say(isStepMode()?T('atStepNote'):T('atGuestNote'),'err'); return; }
+  const input=document.getElementById('atFile');
+  const file=input&&input.files&&input.files[0];
+  if(!file){ say(T('atNoFile'),'err'); return; }
+  if(file.size>AT_MAX_BYTES){ say(T('atTooBig'),'err'); return; }
+  const url=scriptUrl(), tok=curToken();
+  if(!url||!tok){ say(T('msgNoScript'),'err'); return; }
+  const key='atUpload:'+r.sl+':'+file.name+'|'+file.size;
+  if(!bgGuard(key)) return;
+  /* v10.38: optimistic — the file appears at once (local:true, so its
+     delete stays local until the server confirms it and
+     loadAttachments() brings the real sheet row + fileId). */
+  const local={sl:String(r.sl),unit:r.unit,task:r.name,fileName:file.name,mimeType:file.type||'',by:cmAuthor(),date:toISODate(todayMid()),local:true};
+  dtAt.push(local);
+  if(input) input.value='';
+  atRefresh();
+  toast(T('atSaved'),'ok');
+  const fr=new FileReader();
+  fr.onload=()=>{
+    const du=String(fr.result||'');
+    const comma=du.indexOf(',');
+    const b64=comma>=0?du.slice(comma+1):du;
+    bgPost(url,{action:'uploadfile',token:tok,sl:String(r.sl),unit:r.unit,task:r.name,fileName:file.name,mimeType:file.type||'',data:b64},
+      ()=>{ bgRelease(key); loadAttachments(true); },
+      (e)=>{ bgRelease(key); dtAt=dtAt.filter(x=>x!==local); atRefresh();
+        const mm=document.getElementById('atMsg'); if(mm){ mm.textContent=Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
+  };
+  fr.onerror=()=>{ bgRelease(key); dtAt=dtAt.filter(x=>x!==local); atRefresh(); say(T('atLoadFail'),'err'); };
+  fr.readAsDataURL(file);
+}
+async function atDel(row,fileId){
+  const r=rowBySl(dtRn); if(!r) return;
+  if(!canAttach(r)){ toast(isStepMode()?T('atStepNote'):T('atGuestNote'),'err'); return; }
+  const ok=await confirmDlg(T('atConfirmDelete'), T('atConfirmDeleteB'));
+  if(!ok) return;
+  const url=scriptUrl(), tok=curToken();
+  if(!url||!tok){ toast(T('msgNoScript'),'err'); return; }
+  const idx=dtAt.findIndex(x=>String(x.row||'')===String(row)&&String(x.fileId||'')===String(fileId||''));
+  if(idx<0) return;
+  const f=dtAt[idx];
+  if(f.local){ dtAt.splice(idx,1); atRefresh(); toast(T('atDeleted'),'ok'); return; }
+  /* v10.38: optimistic — the file disappears at once; the server delete
+     runs in the background and the row is restored if it fails. */
+  dtAt.splice(idx,1);
+  atRefresh();
+  toast(T('atDeleted'),'ok');
+  const q=new URLSearchParams({token:tok,action:'deletefile',sl:String(r.sl),unit:r.unit,task:r.name,row:String(row),fileId:String(fileId||'')});
+  bgWrite(url,q,
+    ()=>{ loadAttachments(true); },
+    (e)=>{ dtAt.splice(Math.min(idx,dtAt.length),0,f); atRefresh(); bgFailToast(e); });
+}
+/* v10.77: attachment names for the detail print sheet — a plain name
+   list after the workflow table, only when files are loaded. */
+function atPrintHtml(){
+  if(!dtAt.length) return '';
+  return `<h3 style="margin:16px 0 6px">${esc(T('dtAttachments'))}</h3><ul style="font-size:13px;margin:0;padding-left:18px">`+
+    dtAt.map(f=>`<li>${esc(f.fileName||'—')}${f.by?` — ${esc(f.by)}`:''}${f.date?` · ${fmtD(f.date)}`:''}</li>`).join('')+`</ul>`;
 }
 buildFilters(); applyTheme(); applyLang(); whoamiRestore(); bootScopeSnapshot(); render(); refreshLive(false,false,true);
 </script>
