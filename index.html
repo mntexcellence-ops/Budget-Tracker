@@ -1760,7 +1760,10 @@ async function subDel(subrow){
    the table scrolls in .lcbody; the table header sticks under the
    filters. Filters: 5 in one row on desktop, stacked on mobile (<=640px).
    Writes: master + own-unit token + step-4 token (CHECKED & APPROVED
-   BY (H/O PROCURMENT)); every other step token is read-only. ── */
+   BY (H/O PROCURMENT)); every other step token is read-only.
+   v10.80: editlc/deletelc now send unit+task too (script v4.28 checks
+   them against the project row) — without them every LC Edit/Delete
+   from the dashboard failed with "That project moved in the Sheet". ── */
 const LC_HEADERS=['SL','MACHINE TYPE','BRAND','MODEL','STATUS','QTY','Received','NEW UNIT PRICE','TOTAL PRICE FOR NEW MACHINE','FREIGHT COST','TOTAL PRICE FOR NEW MACHINE WITH FREIGHT COST','MACHINE USE LINE','PI NO','PI DATE','LC / TT NO','LC DATE','SHIPMENT DATE','ETA','SUPPLIER NAME','SUPPLIER BANGLADESHI AGENT NAME','SUPPLIER AGENT CONTACT NO','REMARKS'];
 const LC_FIELDS=[{k:'slNo',type:'number'},{k:'machineType',type:'text'},{k:'brand',type:'text'},{k:'model',type:'text'},{k:'status',type:'select',opts:['','IN-HOUSE','RECEIVED']},{k:'qty',type:'number'},{k:'received',type:'number'},{k:'unitPrice',type:'number'},{k:'totalPrice',type:'number'},{k:'freight',type:'number'},{k:'totalWithFreight',type:'number'},{k:'useLine',type:'text'},{k:'piNo',type:'text'},{k:'piDate',type:'date'},{k:'lcNo',type:'text'},{k:'lcDate',type:'date'},{k:'shipDate',type:'date'},{k:'eta',type:'date'},{k:'supplier',type:'text'},{k:'agent',type:'text'},{k:'agentContact',type:'text'},{k:'remarks',type:'text'}];
 const LC_DATE_KEYS={piDate:1,lcDate:1,shipDate:1,eta:1};
@@ -1931,7 +1934,7 @@ async function lcSave(){
     const prev=Object.assign({},live);
     Object.assign(live,vals);
     dtLcEdit=null; lcRender(); wfRefresh(); toast(T('lcSaved'),'ok');
-    const q=new URLSearchParams({token:tok,action:'editlc',sl,row:String(rowNo)});
+    const q=new URLSearchParams({token:tok,action:'editlc',sl,unit:r.unit,task:r.name,row:String(rowNo)});
     LC_FIELDS.forEach(fd=>q.set(fd.k,vals[fd.k]));
     bgWrite(url,q,
       ()=>{ bgRelease(key); loadLc(); },
@@ -1951,7 +1954,7 @@ async function lcDel(row){
   const idx=rows.indexOf(target);
   lcBySl[sl]=rows.filter(x=>x!==target);
   lcRender(); wfRefresh(); toast(T('lcDeleted'),'ok');
-  const q=new URLSearchParams({token:tok,action:'deletelc',sl,row:String(row)});
+  const q=new URLSearchParams({token:tok,action:'deletelc',sl,unit:r.unit,task:r.name,row:String(row)});
   bgWrite(url,q,
     ()=>{ loadLc(); },
     (e)=>{ const arr=lcRowsFor(sl); arr.splice(Math.min(idx,arr.length),0,target); lcBySl[sl]=arr; lcRender(); wfRefresh(); bgFailToast(e); });
