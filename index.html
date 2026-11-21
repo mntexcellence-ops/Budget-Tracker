@@ -482,6 +482,13 @@ th{padding:8px 10px}
 .lctable{border-collapse:collapse;width:100%;font-size:12.5px}
 .lctable th,.lctable td{border:1px solid var(--border);padding:6px 8px;text-align:left;white-space:nowrap}
 .lctable th{background:var(--soft);font-size:11px;text-transform:uppercase;letter-spacing:.4px}
+/* v10.75: LC popup cards + filters + received-row tint (2nd-phase machine schema). */
+.lccards{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 4px}
+.lccard{background:var(--soft);border:1px solid var(--border);border-radius:8px;padding:10px 16px;min-width:140px}
+.lccard span{display:block;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
+.lccard b{display:block;font-size:18px;margin-top:2px}
+.lctable tr.lc-recv td{background:rgba(34,197,94,.13)}
+[data-theme="dark"] .lctable tr.lc-recv td{background:rgba(34,197,94,.25)}
 tr.lc-row{cursor:pointer}
 tr.lc-row:hover td{background:var(--soft)}
 #printSheet table.lcprint{font-size:10px}
@@ -739,7 +746,7 @@ allUnits:'All units ▾',noUnits:'No units selected ▾',nUnits:'{n} units selec
 allStatuses:'All statuses ▾',noStatuses:'No statuses selected ▾',nStatuses:'{n} statuses selected ▾',
 bstH:'Budget status',allBst:'All budget statuses ▾',noBst:'No budget status selected ▾',nBst:'{n} budget statuses selected ▾',bstBlank:'(No budget status)',
 kpiTotal:'Total Projects',kpiComplete:'Complete',kpiInProg:'In Progress',kpiWating:'Wating',kpiOverdue:'Overdue',kpiUnits:'Units',kpiCost:'Total Tentative Cost',stepNote:'Step token — you can view all data, but edit only your own workflow step.',stepChip:'Step {n} · {name}',
-stepNote3:'Step token — you can view all data, edit only your own workflow step, and add/edit projects.',dlAll:'⬇ Download All',prAll:'🖨️ Print All',allPrintH:'Budget Tracker — All Projects · {d}',allPrintUnit:'Unit — {u} ({n} projects)',lcTitle:'LC — Letter of Credit',lcHint:'Letter of Credit',lcAdd:'➕ Add LC Entry',lcDownload:'⬇ Download CSV',lcPrint:'🖨️ Print',lcEmpty:'No LC entries yet — add one',lcGuestNote:'Log in to add or edit LC entries.',lcCount:'{n} entries',lcEdit:'Edit LC entry',lcDelete:'Delete LC entry',lcConfirmDelete:'Delete LC entry?',lcConfirmDeleteB:'This LC entry will be removed from the Sheet. This cannot be undone.',lcItemRequired:'ITEM DESCRIPTION is required for an LC entry.',lcLoading:'⏳ Loading LC entries…',lcLoadFail:'Could not load LC entries — please refresh and try again.',lcSaved:'LC entry saved',lcDeleted:'LC entry deleted',
+stepNote3:'Step token — you can view all data, edit only your own workflow step, and add/edit projects.',dlAll:'⬇ Download All',prAll:'🖨️ Print All',allPrintH:'Budget Tracker — All Projects · {d}',allPrintUnit:'Unit — {u} ({n} projects)',lcTitle:'LC — Letter of Credit',lcHint:'Letter of Credit',lcAdd:'➕ Add LC Entry',lcDownload:'⬇ Download CSV',lcPrint:'🖨️ Print',lcEmpty:'No LC entries yet — add one',lcGuestNote:'Log in to add or edit LC entries.',lcCount:'{n} entries',lcEdit:'Edit LC entry',lcDelete:'Delete LC entry',lcConfirmDelete:'Delete LC entry?',lcConfirmDeleteB:'This LC entry will be removed from the Sheet. This cannot be undone.',lcMachineRequired:'MACHINE TYPE is required for an LC entry.',lcCardRequired:'Required',lcCardReceived:'Received',lcCardBaki:'Baki',lcCardTotal:'Total Amount',lcFilterAll:'All',lcNoMatch:'No LC entries match the selected filters.',lcStep4Note:'Step 4 (CHECKED & APPROVED BY (H/O PROCURMENT)) can add/edit LC rows.',lcLoading:'⏳ Loading LC entries…',lcLoadFail:'Could not load LC entries — please refresh and try again.',lcSaved:'LC entry saved',lcDeleted:'LC entry deleted',
 chipAll:'all projects',chipOfFiltered:'of filtered',chipUnits:'units',chipNone:'none yet',
 ovCostT:'Unit Wise Tentative Cost',ovCostS:'Ranked — total tentative cost per unit in the selected filters',
 ovStatusT:'Status Wise Cost',ovStatusS:'Share of total tentative cost',
@@ -1715,24 +1722,65 @@ async function subDel(subrow){
    step counters or the phase rule. Reads: master / step token see all
    rows, unit token only its own unit. Writes: master + own-unit token
    only — never a step token, never a guest.
-   v10.71: every LC row carries a TYPE ('LC' | 'TT' | 'LOCAL') — first
+   v10.71: every LC row carried a shipment-type dropdown — first
    column of the popup table / CSV / print, and the first field of the
-   add/edit form (dropdown, default LC; script v4.23). A row with no
-   type shows blank there, like any other empty LC cell. ── */
-const LC_HEADERS=['TYPE','GOODS STATUS','LC ISSUE DATE','CURRENCY','VALUE','UNIT','SUPPLIER','ITEM DESCRIPTION','PORT OF SHIPMENT','L/C SHPT DT.','ACTUAL SHIP DATE','B/L QTY','UNIT OF QTY','Tentative ETD','Tentative ETA','F.VESSEL NAME','ETA CTG PORT','ETA FACTORY','BTB L/C NO.','IN-HOUSE','REMARKS'];
-const LC_FIELDS=[{k:'type',type:'select'},{k:'goodsStatus',type:'text'},{k:'lcIssueDate',type:'date'},{k:'currency',type:'text'},{k:'value',type:'number'},{k:'lcUnit',type:'text'},{k:'supplier',type:'text'},{k:'itemDesc',type:'text'},{k:'portOfShipment',type:'text'},{k:'lcShptDt',type:'date'},{k:'actualShipDate',type:'date'},{k:'blQty',type:'number'},{k:'unitOfQty',type:'text'},{k:'tentEtd',type:'date'},{k:'tentEta',type:'date'},{k:'vesselName',type:'text'},{k:'etaCtgPort',type:'text'},{k:'etaFactory',type:'text'},{k:'btbLcNo',type:'text'},{k:'inHouse',type:'text'},{k:'remarks',type:'text'}];
-const LC_DATE_KEYS={lcIssueDate:1,lcShptDt:1,actualShipDate:1,tentEtd:1,tentEta:1};
+   add/edit form (script v4.23). Superseded by v10.75.
+   v10.75: 2nd-phase machine schema (script v4.25) — the popup, CSV and
+   print now carry the 21 file columns (S.L. NO. → REMARKS) instead of
+   the old shipment columns, which are gone. Cards on top (Required / Received /
+   Baki / Total Amount, over the filtered rows) + 5 filters (MACHINE
+   TYPE, BRAND, MACHINE USE LINE, SUPPLIER NAME, SUPPLIER BANGLADESHI
+   AGENT NAME); STATUS=RECEIVED rows get a green tint (.lc-recv).
+   Writes: master + own-unit token + step-4 token (CHECKED & APPROVED
+   BY (H/O PROCURMENT)); every other step token is read-only. ── */
+const LC_HEADERS=['SL','MACHINE TYPE','BRAND','MODEL','QTY','NEW UNIT PRICE','TOTAL PRICE FOR NEW MACHINE','FREIGHT COST','TOTAL PRICE FOR NEW MACHINE WITH FREIGHT COST','MACHINE USE LINE','PI NO','PI DATE','LC / TT NO','LC DATE','SHIPMENT DATE','ETA','STATUS','SUPPLIER NAME','SUPPLIER BANGLADESHI AGENT NAME','SUPPLIER AGENT CONTACT NO','REMARKS'];
+const LC_FIELDS=[{k:'slNo',type:'number'},{k:'machineType',type:'text'},{k:'brand',type:'text'},{k:'model',type:'text'},{k:'qty',type:'number'},{k:'unitPrice',type:'number'},{k:'totalPrice',type:'number'},{k:'freight',type:'number'},{k:'totalWithFreight',type:'number'},{k:'useLine',type:'text'},{k:'piNo',type:'text'},{k:'piDate',type:'date'},{k:'lcNo',type:'text'},{k:'lcDate',type:'date'},{k:'shipDate',type:'date'},{k:'eta',type:'date'},{k:'status',type:'select',opts:['','RECEIVED']},{k:'supplier',type:'text'},{k:'agent',type:'text'},{k:'agentContact',type:'text'},{k:'remarks',type:'text'}];
+const LC_DATE_KEYS={piDate:1,lcDate:1,shipDate:1,eta:1};
 const lcBySl={};
 const lcState={}; /* sl -> 'loading' | 'ready' | 'guest' | 'failed' */
 let dtLcEdit=null; /* null = no form, 'new' = add form, row number = editing */
+let lcFilters={machineType:'',brand:'',useLine:'',supplier:'',agent:''}; /* popup filters, reset on open */
 function lcRowsFor(sl){ return lcBySl[String(sl)]||[]; }
+function lcIsReceived(x){ return String(x.status||'').trim().toUpperCase()==='RECEIVED'; }
+/* v10.75: the 5 popup filters, combined with AND; options come from the
+   loaded rows, the cards + table show the filtered rows. */
+function lcFilteredRows(sl){
+  const f=lcFilters;
+  return lcRowsFor(sl).filter(x=>{
+    if(f.machineType&&String(x.machineType||'')!==f.machineType) return false;
+    if(f.brand&&String(x.brand||'')!==f.brand) return false;
+    if(f.useLine&&String(x.useLine||'')!==f.useLine) return false;
+    if(f.supplier&&String(x.supplier||'')!==f.supplier) return false;
+    if(f.agent&&String(x.agent||'')!==f.agent) return false;
+    return true;
+  });
+}
+function lcCardsHtml(rows){
+  const req=rows.length;
+  const recv=rows.filter(lcIsReceived).length;
+  const total=rows.reduce((s,x)=>s+(parseFloat(x.totalWithFreight)||0),0);
+  return `<div class="lccards">`+
+    `<div class="lccard"><span>${esc(T('lcCardRequired'))}</span><b>${fmtN(req)}</b></div>`+
+    `<div class="lccard"><span>${esc(T('lcCardReceived'))}</span><b>${fmtN(recv)}</b></div>`+
+    `<div class="lccard"><span>${esc(T('lcCardBaki'))}</span><b>${fmtN(req-recv)}</b></div>`+
+    `<div class="lccard"><span>${esc(T('lcCardTotal'))}</span><b>$${fmtN(total)}</b></div></div>`;
+}
+function lcFilterHtml(allRows){
+  const sel=(k,label)=>{ const vals=[...new Set(allRows.map(x=>String(x[k]||'').trim()).filter(Boolean))].sort();
+    return `<div><label>${esc(label)}</label><select class="efinput" onchange="lcSetFilter('${k}',this.value)"><option value="">${esc(T('lcFilterAll'))}</option>`+
+      vals.map(v=>`<option value="${escA(v)}"${lcFilters[k]===v?' selected':''}>${esc(v)}</option>`).join('')+`</select></div>`; };
+  return `<div class="efgrid" style="margin:4px 0 12px">`+
+    sel('machineType','MACHINE TYPE')+sel('brand','BRAND')+sel('useLine','MACHINE USE LINE')+sel('supplier','SUPPLIER NAME')+sel('agent','SUPPLIER BANGLADESHI AGENT NAME')+`</div>`;
+}
+function lcSetFilter(k,v){ lcFilters[k]=v; lcRender(); }
 function lcCountText(sl){ return lcState[String(sl)]==='ready'?Tf('lcCount',{n:fmtN(lcRowsFor(sl).length)}):'—'; }
-function canLcWrite(r){ return !isStepMode()&&!!allowedUnit()&&canEditUnit(r.unit); }
+function canLcWrite(r){ if(isStepMode()) return myStepNo()===4; return !!allowedUnit()&&canEditUnit(r.unit); }
 function lcCellVal(x,fd){ const v=x[fd.k]; return v==null?'':String(v); }
 /* v10.72: ITEM DESCRIPTION and REMARKS show at most 50 letters in the
    popup table (first 50 + '...', full text in the title tooltip) — the
-   CSV download, print sheet and add/edit form keep the full text. */
-function lcCellDisp(x,fd){ const v=lcCellVal(x,fd); if(!v) return '—'; if(LC_DATE_KEYS[fd.k]) return fmtD(v); if((fd.k==='itemDesc'||fd.k==='remarks')&&v.length>50) return `<span class="tname" title="${escA(v)}">${esc(v.slice(0,50))}...</span>`; return esc(v); }
+   CSV download, print sheet and add/edit form keep the full text.
+   v10.75: same rule, now on MACHINE TYPE and REMARKS (2nd-phase schema). */
+function lcCellDisp(x,fd){ const v=lcCellVal(x,fd); if(!v) return '—'; if(LC_DATE_KEYS[fd.k]) return fmtD(v); if((fd.k==='machineType'||fd.k==='remarks')&&v.length>50) return `<span class="tname" title="${escA(v)}">${esc(v.slice(0,50))}...</span>`; return esc(v); }
 async function loadLc(){
   const r=rowBySl(dtRn); if(!r) return;
   const sl=String(r.sl);
@@ -1745,8 +1793,8 @@ async function loadLc(){
     if(!(j&&j.ok&&Array.isArray(j.rows))) throw new Error((j&&j.error)||'getlc failed');
     const fresh=j.rows.filter(x=>String(x.sl)===sl);
     /* v10.38 pattern: keep optimistic local rows the server has not
-       returned yet — deduped by ITEM DESCRIPTION. */
-    const pending=lcRowsFor(sl).filter(x=>x.local && !fresh.some(f=>String(f.itemDesc||'').trim().toLowerCase()===String(x.itemDesc||'').trim().toLowerCase()));
+       returned yet — deduped by MACHINE TYPE + S.L. NO. */
+    const pending=lcRowsFor(sl).filter(x=>x.local && !fresh.some(f=>String(f.machineType||'').trim().toLowerCase()===String(x.machineType||'').trim().toLowerCase() && String(f.slNo||'')===String(x.slNo||'')));
     lcBySl[sl]=fresh.concat(pending);
     lcState[sl]='ready';
   }catch(e){ if(lcState[sl]==='loading') lcState[sl]='failed'; }
@@ -1768,6 +1816,7 @@ function lcPrintRow(r){
 function openLcPopup(){
   const r=rowBySl(dtRn); if(!r) return;
   dtLcEdit=null;
+  lcFilters={machineType:'',brand:'',useLine:'',supplier:'',agent:''};
   let m=document.getElementById('lcModal');
   if(!m){ m=document.createElement('div'); m.id='lcModal'; m.className='lcmodal'; document.body.appendChild(m); }
   lcRender();
@@ -1782,11 +1831,15 @@ function lcRender(){
   const canW=canLcWrite(r);
   const st=lcState[String(r.sl)];
   let h=`<div class="lcwrap"><div class="dthead"><div style="flex:1;min-width:220px"><h2>${esc(T('lcTitle'))}</h2><div style="margin-top:6px;display:flex;gap:6px;flex-wrap:wrap"><span class="chip n">${esc(r.unit)}</span><span class="chip n">SL ${esc(r.sl)}</span><span class="chip n">${esc(r.name)}</span></div></div>${canW?`<button class="fsbtn pri" onclick="lcStartAdd()">${T('lcAdd')}</button>`:''}<button class="fsbtn" onclick="lcDownloadCsv()" title="${T('lcDownload')}">${T('lcDownload')}</button><button class="fsbtn" onclick="lcPrint()" title="${T('lcPrint')}">${T('lcPrint')}</button><button class="xbtn" onclick="closeLcPopup()">${T('dtClose')}</button></div>`;
+  if(isStepMode()&&myStepNo()===4) h+=`<div style="padding:8px 0 0;font-size:12.5px;color:var(--muted)">${esc(T('lcStep4Note'))}</div>`;
   if(dtLcEdit!==null) h+=lcFormHtml(r);
   if(st==='ready'){
+    const shown=lcFilteredRows(r.sl);
+    h+=lcCardsHtml(shown)+lcFilterHtml(rows);
     if(!rows.length) h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcEmpty')}</div>`;
+    else if(!shown.length) h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcNoMatch')}</div>`;
     else h+=`<div class="lcscroll"><table class="lctable"><tr>${LC_HEADERS.map(x=>`<th>${esc(x)}</th>`).join('')}${canW?'<th></th>':''}</tr>`+
-      rows.map(x=>`<tr>${LC_FIELDS.map(fd=>`<td>${lcCellDisp(x,fd)}</td>`).join('')}${canW&&!x.local?`<td style="white-space:nowrap"><button class="subedit" title="${T('lcEdit')}" onclick="lcStartEdit(${x.row})">✏️</button><button class="subdel" title="${T('lcDelete')}" onclick="lcDel(${x.row})">✕</button></td>`:canW?'<td></td>':''}</tr>`).join('')+`</table></div>`;
+      shown.map(x=>`<tr${lcIsReceived(x)?' class="lc-recv"':''}>${LC_FIELDS.map(fd=>`<td>${lcCellDisp(x,fd)}</td>`).join('')}${canW&&!x.local?`<td style="white-space:nowrap"><button class="subedit" title="${T('lcEdit')}" onclick="lcStartEdit(${x.row})">✏️</button><button class="subdel" title="${T('lcDelete')}" onclick="lcDel(${x.row})">✕</button></td>`:canW?'<td></td>':''}</tr>`).join('')+`</table></div>`;
   } else if(st==='guest'){
     h+=`<div style="padding:18px 0;font-size:13px;color:var(--muted)">${T('lcEmpty')}</div><div style="padding-bottom:18px;font-size:12.5px;color:var(--muted)">${T('lcGuestNote')}</div>`;
   } else if(st==='failed'){
@@ -1802,11 +1855,11 @@ function lcFormHtml(r){
   const v=k=>{ const x=ed?ed[k]:''; if(x==null) return ''; return LC_DATE_KEYS[k]?toISODate(x):String(x); };
   const f=LC_FIELDS.map((fd,i)=>{
     if(fd.type==='select'){
-      const cur=v(fd.k)||'LC';
-      const opts=['LC','TT','LOCAL'].map(o=>`<option value="${o}"${o===cur?' selected':''}>${o}</option>`).join('');
+      const cur=v(fd.k)||'';
+      const opts=(fd.opts||[]).map(o=>`<option value="${escA(o)}"${o===cur?' selected':''}>${o?esc(o):'—'}</option>`).join('');
       return `<div><label>${esc(LC_HEADERS[i])}</label><select id="lcF_${fd.k}" class="efinput">${opts}</select></div>`;
     }
-    return `<div><label>${esc(LC_HEADERS[i])}${fd.k==='itemDesc'?' *':''}</label><input type="${fd.type}" id="lcF_${fd.k}" class="efinput" value="${esc(v(fd.k))}"></div>`;
+    return `<div><label>${esc(LC_HEADERS[i])}${fd.k==='machineType'?' *':''}</label><input type="${fd.type}" id="lcF_${fd.k}" class="efinput" value="${esc(v(fd.k))}"></div>`;
   }).join('');
   return `<div class="dtsec"><h4>${ed?T('lcEdit'):T('lcAdd')}</h4><div class="efgrid">${f}</div><div style="margin-top:12px;display:flex;gap:10px;flex-wrap:wrap"><button class="entrybtn" onclick="lcSave()">${T('dtSave')}</button><button class="entrybtn off" onclick="lcCancelEdit()">${T('cfCancel')}</button></div><div id="lcMsg" class="fsmsg" style="padding:6px 0"></div></div>`;
 }
@@ -1820,7 +1873,7 @@ async function lcSave(){
   LC_FIELDS.forEach(fd=>{ vals[fd.k]=((document.getElementById('lcF_'+fd.k)||{}).value||'').trim(); });
   const m=document.getElementById('lcMsg');
   const say=(t,c)=>{ if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } };
-  if(!vals.itemDesc){ say(T('lcItemRequired'),'err'); return; }
+  if(!vals.machineType){ say(T('lcMachineRequired'),'err'); return; }
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ say(T('msgNoScript'),'err'); return; }
   const isNew=dtLcEdit==='new';
