@@ -493,7 +493,7 @@ th{padding:8px 10px}
 .lccard b{display:block;font-size:18px;margin-top:2px}
 /* LC popup filters: all 5 in one row (equal widths) on desktop, stacked one
    per line on mobile (<=640px). */
-.lcFilters{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:4px 0 12px}
+.lcFilters{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px;margin:4px 0 12px}
 .lcFilters label{font-size:11px;color:var(--muted);display:block;margin-bottom:3px}
 @media(max-width:640px){.lcFilters{grid-template-columns:1fr}}
 .lctable tr.lc-recv td{background:rgba(34,197,94,.13)}
@@ -1763,18 +1763,30 @@ async function subDel(subrow){
    BY (H/O PROCURMENT)); every other step token is read-only.
    v10.80: editlc/deletelc now send unit+task too (script v4.28 checks
    them against the project row) — without them every LC Edit/Delete
-   from the dashboard failed with "That project moved in the Sheet". ── */
+   from the dashboard failed with "That project moved in the Sheet".
+   v10.81: LC STATUS dropdown now offers the full lifecycle — PENDING,
+   SHIPPED, AT PORT, CUSTOMS CLEARANCE, PARTIAL RECEIVED, IN-HOUSE,
+   CANCELLED (blank first; RECEIVED deliberately NOT offered — a row
+   is marked received via the Received QTY column, and IN-HOUSE is the
+   received-at-factory state). Green tint matcher unchanged (still
+   IN-HOUSE / RECEIVED, so any legacy RECEIVED row stays green); the
+   cards stay QTY-based (Received = sum of the Received column, not
+   status-based). New in v10.81: a 6th popup filter — STATUS (All + the
+   same 7 lifecycle values), AND-combined with the other 5; the 6
+   filters sit in one row on desktop (repeat(6,…)), stacked on mobile. ── */
 const LC_HEADERS=['SL','MACHINE TYPE','BRAND','MODEL','STATUS','QTY','Received','NEW UNIT PRICE','TOTAL PRICE FOR NEW MACHINE','FREIGHT COST','TOTAL PRICE FOR NEW MACHINE WITH FREIGHT COST','MACHINE USE LINE','PI NO','PI DATE','LC / TT NO','LC DATE','SHIPMENT DATE','ETA','SUPPLIER NAME','SUPPLIER BANGLADESHI AGENT NAME','SUPPLIER AGENT CONTACT NO','REMARKS'];
-const LC_FIELDS=[{k:'slNo',type:'number'},{k:'machineType',type:'text'},{k:'brand',type:'text'},{k:'model',type:'text'},{k:'status',type:'select',opts:['','IN-HOUSE','RECEIVED']},{k:'qty',type:'number'},{k:'received',type:'number'},{k:'unitPrice',type:'number'},{k:'totalPrice',type:'number'},{k:'freight',type:'number'},{k:'totalWithFreight',type:'number'},{k:'useLine',type:'text'},{k:'piNo',type:'text'},{k:'piDate',type:'date'},{k:'lcNo',type:'text'},{k:'lcDate',type:'date'},{k:'shipDate',type:'date'},{k:'eta',type:'date'},{k:'supplier',type:'text'},{k:'agent',type:'text'},{k:'agentContact',type:'text'},{k:'remarks',type:'text'}];
+const LC_FIELDS=[{k:'slNo',type:'number'},{k:'machineType',type:'text'},{k:'brand',type:'text'},{k:'model',type:'text'},{k:'status',type:'select',opts:['','PENDING','SHIPPED','AT PORT','CUSTOMS CLEARANCE','PARTIAL RECEIVED','IN-HOUSE','CANCELLED']},{k:'qty',type:'number'},{k:'received',type:'number'},{k:'unitPrice',type:'number'},{k:'totalPrice',type:'number'},{k:'freight',type:'number'},{k:'totalWithFreight',type:'number'},{k:'useLine',type:'text'},{k:'piNo',type:'text'},{k:'piDate',type:'date'},{k:'lcNo',type:'text'},{k:'lcDate',type:'date'},{k:'shipDate',type:'date'},{k:'eta',type:'date'},{k:'supplier',type:'text'},{k:'agent',type:'text'},{k:'agentContact',type:'text'},{k:'remarks',type:'text'}];
 const LC_DATE_KEYS={piDate:1,lcDate:1,shipDate:1,eta:1};
 const lcBySl={};
 const lcState={}; /* sl -> 'loading' | 'ready' | 'guest' | 'failed' */
 let dtLcEdit=null; /* null = no form, 'new' = add form, row number = editing */
-let lcFilters={machineType:'',brand:'',useLine:'',supplier:'',agent:''}; /* popup filters, reset on open */
+let lcFilters={machineType:'',brand:'',useLine:'',supplier:'',agent:'',status:''}; /* popup filters, reset on open */
 function lcRowsFor(sl){ return lcBySl[String(sl)]||[]; }
 function lcIsReceived(x){ const s=String(x.status||'').trim().toUpperCase().replace(/-/g,' '); return s==='IN HOUSE'||s==='RECEIVED'; }
 /* v10.75: the 5 popup filters, combined with AND; options come from the
-   loaded rows, the cards + table show the filtered rows. */
+   loaded rows, the cards + table show the filtered rows.
+   v10.81: 6th filter — STATUS (fixed lifecycle list, same 7 values as the
+   form dropdown); AND-combines with the other 5. */
 function lcFilteredRows(sl){
   const f=lcFilters;
   return lcRowsFor(sl).filter(x=>{
@@ -1783,6 +1795,7 @@ function lcFilteredRows(sl){
     if(f.useLine&&String(x.useLine||'')!==f.useLine) return false;
     if(f.supplier&&String(x.supplier||'')!==f.supplier) return false;
     if(f.agent&&String(x.agent||'')!==f.agent) return false;
+    if(f.status&&String(x.status||'').trim().toUpperCase()!==f.status) return false;
     return true;
   });
 }
@@ -1797,11 +1810,14 @@ function lcCardsHtml(rows){
     `<div class="lccard"><span>${esc(T('lcCardTotal'))}</span><b>$${fmtN(total)}</b></div></div>`;
 }
 function lcFilterHtml(allRows){
-  const sel=(k,label)=>{ const vals=[...new Set(allRows.map(x=>String(x[k]||'').trim()).filter(Boolean))].sort();
+  const sel=(k,label,fixed)=>{ const vals=fixed||[...new Set(allRows.map(x=>String(x[k]||'').trim()).filter(Boolean))].sort();
     return `<div><label>${esc(label)}</label><select class="efinput" onchange="lcSetFilter('${k}',this.value)"><option value="">${esc(T('lcFilterAll'))}</option>`+
       vals.map(v=>`<option value="${escA(v)}"${lcFilters[k]===v?' selected':''}>${esc(v)}</option>`).join('')+`</select></div>`; };
+  /* STATUS filter uses the fixed lifecycle list (same 7 values as the form
+     dropdown, taken from LC_FIELDS so the two can never drift apart). */
+  const stOpts=((LC_FIELDS.find(fd=>fd.k==='status')||{}).opts||[]).filter(Boolean);
   return `<div class="lcFilters">`+
-    sel('machineType','MACHINE TYPE')+sel('brand','BRAND')+sel('useLine','MACHINE USE LINE')+sel('supplier','SUPPLIER NAME')+sel('agent','SUPPLIER BANGLADESHI AGENT NAME')+`</div>`;
+    sel('machineType','MACHINE TYPE')+sel('brand','BRAND')+sel('useLine','MACHINE USE LINE')+sel('supplier','SUPPLIER NAME')+sel('agent','SUPPLIER BANGLADESHI AGENT NAME')+sel('status','STATUS',stOpts)+`</div>`;
 }
 function lcSetFilter(k,v){ lcFilters[k]=v; lcRender(); }
 function lcCountText(sl){ return lcState[String(sl)]==='ready'?Tf('lcCount',{n:fmtN(lcRowsFor(sl).length)}):'—'; }
@@ -1847,7 +1863,7 @@ function lcPrintRow(r){
 function openLcPopup(){
   const r=rowBySl(dtRn); if(!r) return;
   dtLcEdit=null;
-  lcFilters={machineType:'',brand:'',useLine:'',supplier:'',agent:''};
+  lcFilters={machineType:'',brand:'',useLine:'',supplier:'',agent:'',status:''};
   let m=document.getElementById('lcModal');
   if(!m){ m=document.createElement('div'); m.id='lcModal'; m.className='lcmodal'; document.body.appendChild(m); }
   lcRender();
