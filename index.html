@@ -3181,7 +3181,7 @@ function fsSaveSetup(){ const uEl=document.getElementById('fsUrl'), tEl=document
       fsSay(j.unit==='ALL'?T('msgSetupSavedAll'):Tf('msgSetupSavedUnit',{u:j.unit}),'ok');
       toast(T('toastSetup'),'ok');
       refreshLive(false);
-    } else { fsSay(T('msgWrongToken'),'err'); toast(T('msgWrongToken'),'err'); }
+    } else { const m=(j && j.error)?j.error:T('msgWrongToken'); fsSay(m,'err'); toast(m,'err'); }
     render(); renderFsTable();
   }).catch(()=>{ fsSay(T('msgSetupSaved'),'ok'); toast(T('toastSetup'),'ok'); render(); renderFsTable(); }); }
 function renderFsTable(){
