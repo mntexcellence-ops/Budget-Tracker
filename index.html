@@ -2372,8 +2372,20 @@ function wfModel(){
   customs.forEach(c=>{ if(!c.no) c.no=++next; });
   return WF_STEPS.map((name,i)=>({no:i+1, name, row:byNo[i+1]||null, custom:false})).concat(customs);
 }
+/* v10.82: no Delivery Date yet — count from Received to TODAY (live).
+   Received = stored w.received first, else the same derived Received the
+   Received column shows (wfReceivedRaw). Future Received or no Received
+   shows '—' (never a negative number). Today is the real current date
+   (todayMid, browser local date) — NOT the frozen snapshot date. */
 function wfDaysText(model, idx){
-  const row=model[idx].row; if(!row || !parseD(row.date||'')) return '—';
+  const row=model[idx].row; if(!row) return '—';
+  if(!parseD(row.date||'')){
+    const recv=parseD(wfReceivedRaw(model, idx));
+    if(!recv) return '—';
+    const n=Math.floor((todayMid()-recv)/86400000);
+    if(n<0) return '—';
+    return n===0?T('stSubSameDay'):Tf('wfDaysN',{n:fmtN(n)});
+  }
   const d=row.days;
   if(d!==undefined && d!==null && d!=='' && !isNaN(Number(d))){ const n=Math.max(0,Math.round(Number(d))); return n===0?T('stSubSameDay'):Tf('wfDaysN',{n:fmtN(n)}); }
   let prev=null;
