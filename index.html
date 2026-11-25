@@ -149,21 +149,41 @@ tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px so
 @media(max-width:680px){.efgrid{grid-template-columns:repeat(2,1fr)}}
 .fsmsg{font-size:12.5px;min-height:18px;padding:6px 18px;background:var(--card)}
 .fsmsg.ok{color:#15803D}.fsmsg.err{color:#DC2626}
-/* ── v10.85: login screen — centered card on a fully OPAQUE background; nothing behind it is visible. */
-.login-screen{position:fixed;inset:0;background:var(--bg);z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
-.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:400px;box-shadow:0 12px 32px rgba(0,0,0,.22);padding:28px 26px 22px;text-align:center}
-.login-card .login-logo{height:64px;max-width:220px;object-fit:contain}
-.login-card h1{font-size:22px;margin:12px 0 4px;color:var(--text)}
-.login-card h1 span{color:var(--brand)}
-.login-sub{font-size:13px;color:var(--muted);margin:0 0 18px}
-.login-field{text-align:left;margin-bottom:12px}
-.login-field label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
-.login-msg{font-size:12.5px;min-height:18px;margin:4px 0 8px;color:var(--muted)}
-.login-msg.ok{color:#15803D}.login-msg.err{color:#DC2626}
-.login-card .entrybtn{width:100%;padding:11px 18px;font-size:14px}
+/* ── v10.86: login screen — dark navy grid + glowing teal chart backdrop,
+   centered glowing card (per the user's reference design). Always dark,
+   independent of the dashboard theme; fully opaque — nothing behind it
+   is visible. ── */
+.login-screen{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
+  background:radial-gradient(900px 480px at 85% 28%,rgba(34,211,238,.16),transparent 60%),radial-gradient(720px 420px at 8% 88%,rgba(34,211,238,.10),transparent 60%),linear-gradient(180deg,#04101f 0%,#06182e 55%,#04101f 100%)}
+.login-screen::before{content:'';position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(148,197,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(148,197,255,.07) 1px,transparent 1px);
+  background-size:56px 56px}
+.login-chart{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.login-card{position:relative;background:linear-gradient(180deg,#0b1e3a,#081426);border:1px solid rgba(56,189,248,.45);border-radius:18px;width:100%;max-width:400px;box-shadow:0 0 0 1px rgba(34,211,238,.12),0 0 42px rgba(34,211,238,.28),0 24px 60px rgba(0,0,0,.55);padding:30px 28px 24px;text-align:center;color:#eef4ff}
+.login-card .login-logo{height:52px;max-width:230px;object-fit:contain;filter:brightness(0) invert(1)}
+.login-card h1{font-size:24px;margin:14px 0 4px;color:#f8fafc;font-weight:700}
+.login-card h1 span{color:#f8fafc}
+.login-sub{font-size:13px;color:#94a3b8;margin:0 0 20px}
+.login-field{text-align:left;margin-bottom:14px}
+.login-field label{font-size:12.5px;font-weight:600;color:#cbd5e1;display:block;margin-bottom:6px}
+.login-input{position:relative}
+.login-input>svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#7dd3fc;pointer-events:none}
+.login-input>svg.login-chev{left:auto;right:12px;color:#94a3b8}
+.login-input select,.login-input input{width:100%;padding:10px 36px;border:1px solid rgba(148,163,184,.35);border-radius:10px;font-size:13.5px;color:#f1f5f9;background:rgba(148,163,184,.10);font-family:inherit;appearance:none;-webkit-appearance:none}
+.login-input select{cursor:pointer}
+.login-input select option{color:#0f172a;background:#fff}
+.login-input select:focus,.login-input input:focus{outline:none;border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.18)}
+.login-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;padding:4px;cursor:pointer;display:flex;color:#94a3b8}
+.login-eye svg{width:18px;height:18px}
+.login-msg{font-size:12.5px;min-height:18px;margin:4px 0 10px;color:#94a3b8;text-align:left}
+.login-msg.ok{color:#4ade80}.login-msg.err{color:#f87171}
+.login-btn{width:100%;padding:12px 18px;font-size:15px;font-weight:700;color:#fff;border:0;border-radius:10px;cursor:pointer;background:linear-gradient(90deg,#0891b2,#06b6d4 55%,#22d3ee);box-shadow:0 6px 20px rgba(6,182,212,.45);display:flex;align-items:center;justify-content:center;gap:8px}
+.login-btn:disabled{opacity:.55;cursor:wait}
+.login-btn svg{width:17px;height:17px}
 .login-guest{margin-top:12px}
-.login-guest button{background:none;border:0;color:var(--brand);font-size:13px;cursor:pointer;text-decoration:underline;padding:4px}
-@media(max-width:420px){.login-card{padding:22px 18px 18px}.login-card h1{font-size:20px}}
+.login-guest button{display:block;width:100%;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.35);color:#e2e8f0;font-size:13.5px;font-weight:600;cursor:pointer;padding:11px 18px;border-radius:10px}
+.login-guest button:hover{background:rgba(148,163,184,.16)}
+@media(max-width:420px){.login-card{padding:24px 20px 20px}.login-card h1{font-size:21px}}
 .dtmodal{position:fixed;inset:0;background:#00000066;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
 .dtcard{background:var(--card);border:1px solid var(--border);border-radius:8px;width:100%;max-width:720px;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden}
 .dthead{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
@@ -708,20 +728,46 @@ tr.lc-row:hover td{background:var(--soft)}
   </div></div>
 </div>
 </div>
-<!-- v10.85: login first — the login screen is the first thing shown and
+<!-- v10.86: login first — the login screen is the first thing shown and
      its background is fully opaque (nothing behind it is visible).
      Select = units + steps 1–12 (the ones with tokens); the token decides
      the access and wins over the select. "Continue as Guest" is back:
-     guests see everything read-only and cannot write anything. -->
+     guests see everything read-only and cannot write anything.
+     Design per the user's reference: dark navy grid + glowing teal chart
+     backdrop, centered glowing card, icon fields, eye toggle on Token,
+     cyan Log in button with arrow. -->
 <div class="login-screen" id="loginScreen" style="display:none">
+  <svg class="login-chart" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 700">
+    <defs>
+      <linearGradient id="lgChartFill" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#22d3ee" stop-opacity=".22"/>
+        <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+      </linearGradient>
+      <filter id="lgGlow" x="-40%" y="-40%" width="180%" height="180%">
+        <feGaussianBlur stdDeviation="5" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+    <path d="M0,520 C150,470 220,560 360,500 S560,380 720,430 S1000,300 1200,330 L1200,700 L0,700 Z" fill="url(#lgChartFill)"/>
+    <path d="M0,520 C150,470 220,560 360,500 S560,380 720,430 S1000,300 1200,330" fill="none" stroke="#22d3ee" stroke-width="2.5" filter="url(#lgGlow)"/>
+    <path d="M0,600 C180,560 300,630 480,580 S760,470 940,520 S1120,450 1200,470" fill="none" stroke="#2dd4bf" stroke-width="1.8" opacity=".7" filter="url(#lgGlow)"/>
+    <g fill="#22d3ee" opacity=".5">
+      <rect x="1050" y="180" width="10" height="60" rx="2"/>
+      <rect x="1070" y="150" width="10" height="90" rx="2"/>
+      <rect x="1090" y="200" width="10" height="40" rx="2"/>
+      <rect x="120" y="560" width="10" height="44" rx="2"/>
+      <rect x="140" y="540" width="10" height="64" rx="2"/>
+      <rect x="160" y="575" width="10" height="29" rx="2"/>
+    </g>
+  </svg>
   <div class="login-card">
     <img id="loginLogo" class="login-logo" alt="Dekko ISHO Group">
     <h1 data-th="loginTitle"></h1>
     <p class="login-sub" data-t="loginSub"></p>
-    <div class="login-field"><label data-t="loginUnitL"></label><select id="lgUnit" class="efinput"></select></div>
-    <div class="login-field"><label data-t="loginTokenL"></label><input type="password" id="lgToken" class="efinput" data-t-ph="loginTokenPh" onkeydown="if(event.key==='Enter')loginSubmit()"></div>
+    <div class="login-field"><label data-t="loginUnitL"></label><div class="login-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18"/><path d="M2 22h20"/><path d="M10 6h1M10 10h1M10 14h1M14 6h1M14 10h1M14 14h1"/></svg><select id="lgUnit"></select><svg class="login-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></div></div>
+    <div class="login-field"><label data-t="loginTokenL"></label><div class="login-input"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="16" r="4"/><path d="M11 13l8-8"/><path d="M16 8l2.5 2.5M13.5 10.5L16 13"/></svg><input type="password" id="lgToken" data-t-ph="loginTokenPh" onkeydown="if(event.key==='Enter')loginSubmit()"><button type="button" class="login-eye" id="lgEye" onclick="loginToggleEye()" aria-label="Show token"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
     <div class="login-msg" id="loginMsg"></div>
-    <button class="entrybtn" id="loginBtn" onclick="loginSubmit()" data-t="loginBtn"></button>
+    <button class="login-btn" id="loginBtn" onclick="loginSubmit()"><span data-t="loginBtn"></span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></button>
     <div class="login-guest"><button id="loginGuestBtn" onclick="loginGuestAction()"></button><button id="loginLogoutBtn" onclick="loginLogoutAction()"></button></div>
   </div>
 </div>
@@ -822,7 +868,7 @@ setupUrlL:'Web app URL (ends with /exec)',setupPassL:'Token — 6-digit master/u
 setupPassPh:'Your token',setupRemember:'Remember token on this device',setupSaveBtn:'💾 Save Setup',
 /* v10.83: login screen strings. */
 loginTitle:'Budget <span>Tracker</span>',loginSub:'Dekko ISHO Group · Sign in to continue',
-loginUnitL:'Unit / Step',loginUnitPh:'Choose your unit or step',loginUnitG:'Unit',loginStepG:'Step',loginTokenL:'Token',loginTokenPh:'Your token',loginBtn:'🔐 Log in',loginGuest:'Continue as Guest',
+loginUnitL:'Unit / Step',loginUnitPh:'Choose your unit or step',loginUnitG:'Unit',loginStepG:'Step',loginTokenL:'Token',loginTokenPh:'Enter your token',loginBtn:'Log in',loginGuest:'Continue as Guest',
 loginLogout:'Log out',loginPickUnit:'❌ Please choose your unit or step first.',
 loginNeedToken:'❌ Enter your token.',loginNetFail:'❌ Could not reach the script — please check your connection and try again.',
 addH:'Add a new project — it will be added to the bottom of the Sheet (SL is assigned automatically). To delete a project, use the Sheet.',
@@ -3360,6 +3406,10 @@ function buildLoginUnits(){ const s=document.getElementById('lgUnit'); if(!s) re
     +'<optgroup label="'+esc(T('loginUnitG'))+'">'+UNITS_ALL.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('')+'</optgroup>'
     +'<optgroup label="'+esc(T('loginStepG'))+'">'+WF_STEPS.slice(0,12).map((n,i)=>`<option value="STEP:${i+1}">Step ${i+1} · ${esc(n)}</option>`).join('')+'</optgroup>'; }
 function loginSay(msg, cls){ const e=document.getElementById('loginMsg'); if(e){ e.textContent=msg; e.className='login-msg '+(cls||''); } }
+/* v10.86: token eye toggle — show/hide the token in the login field. */
+const LG_EYE='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+const LG_EYE_OFF='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.59 9.59 0 0 0 5.39-1.61"/><path d="M2 2l20 20"/></svg>';
+function loginToggleEye(){ const tk=document.getElementById('lgToken'), b=document.getElementById('lgEye'); if(!tk||!b) return; const show=tk.type==='password'; tk.type=show?'text':'password'; b.innerHTML=show?LG_EYE_OFF:LG_EYE; b.setAttribute('aria-label',show?'Hide token':'Show token'); }
 /* v10.85: Guest is back (view-only) — a session-only flag, never stored:
    reloading always shows the login screen first. */
 function isGuest(){ return !curToken() && window.__guest===true; }
@@ -3388,7 +3438,8 @@ function openLogin(){ const sc=document.getElementById('loginScreen'); if(!sc) r
   buildLoginUnits();
   const lg=document.getElementById('loginLogo');
   if(lg){ const tl=document.querySelector('.top-logo'); if(tl&&tl.src){ lg.src=tl.src; lg.style.display=''; } else lg.style.display='none'; }
-  const tk=document.getElementById('lgToken'); if(tk) tk.value='';
+  const tk=document.getElementById('lgToken'); if(tk){ tk.value=''; tk.type='password'; }
+  const ey=document.getElementById('lgEye'); if(ey){ ey.innerHTML=LG_EYE; ey.setAttribute('aria-label','Show token'); }
   loginSay('',''); loginLogoutLabel(); loginGuestLabel();
   sc.style.display='flex'; document.body.style.overflow='hidden';
   const u=document.getElementById('lgUnit'); if(u) u.focus(); }
