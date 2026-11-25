@@ -708,8 +708,10 @@ tr.lc-row:hover td{background:var(--soft)}
   </div></div>
 </div>
 </div>
-<!-- v10.83: login screen — unit select + token; the token decides the access.
-     Guest browsing stays available (the dashboard was never hard-gated). -->
+<!-- v10.84: HARD GATE — the login screen is the only way in: no stored
+     valid token means no dashboard data at all (no guest browsing).
+     Select = units + steps 1–12 (the ones with tokens); the token decides
+     the access and wins over the select. -->
 <div class="login-screen" id="loginScreen" style="display:none">
   <div class="login-card">
     <img id="loginLogo" class="login-logo" alt="Dekko ISHO Group">
@@ -719,7 +721,7 @@ tr.lc-row:hover td{background:var(--soft)}
     <div class="login-field"><label data-t="loginTokenL"></label><input type="password" id="lgToken" class="efinput" data-t-ph="loginTokenPh" onkeydown="if(event.key==='Enter')loginSubmit()"></div>
     <div class="login-msg" id="loginMsg"></div>
     <button class="entrybtn" id="loginBtn" onclick="loginSubmit()" data-t="loginBtn"></button>
-    <div class="login-guest"><button id="loginGuestBtn" onclick="loginGuestAction()"></button></div>
+    <div class="login-guest"><button id="loginLogoutBtn" onclick="loginLogoutAction()"></button></div>
   </div>
 </div>
 <script>
@@ -819,8 +821,8 @@ setupUrlL:'Web app URL (ends with /exec)',setupPassL:'Token — 6-digit master/u
 setupPassPh:'Your token',setupRemember:'Remember token on this device',setupSaveBtn:'💾 Save Setup',
 /* v10.83: login screen strings. */
 loginTitle:'Budget <span>Tracker</span>',loginSub:'Dekko ISHO Group · Sign in to continue',
-loginUnitL:'Unit',loginUnitPh:'ইউনিট বেছে নিন',loginTokenL:'Token',loginTokenPh:'Your token',loginBtn:'🔐 Log in',
-loginGuest:'Continue as Guest',loginLogout:'Log out',loginPickUnit:'❌ Please choose your unit first.',
+loginUnitL:'Unit / Step',loginUnitPh:'বেছে নিন',loginUnitG:'ইউনিট',loginStepG:'স্টেপ',loginTokenL:'Token',loginTokenPh:'Your token',loginBtn:'🔐 Log in',
+loginLogout:'Log out',loginPickUnit:'❌ Please choose your unit or step first.',
 loginNeedToken:'❌ Enter your token.',loginNetFail:'❌ Could not reach the script — please check your connection and try again.',
 addH:'Add a new project — it will be added to the bottom of the Sheet (SL is assigned automatically). To delete a project, use the Sheet.',
 addFoot:'Setup: open ⚙️ Setup and enter your password — owner password = all units, unit password = own unit only. A unit password works for one unit only — the server enforces it.',
@@ -1249,6 +1251,9 @@ function monthBars(data){
     <div style="font-size:12px;text-align:right;color:${thc().ctr};font-weight:600;font-variant-numeric:tabular-nums">${fmtN(d[1])}</div></div>`).join('');
 }
 function render(){
+  /* v10.84: HARD GATE — with no valid token, no dashboard data is rendered
+     at all; any stale content from a previous session is cleared. */
+  if(!curToken()){ clearGatedData(); return; }
   const a=agg();
   const ub=document.getElementById('ddUnitBtn'); if(ub) ub.textContent=ddLabel(selU, UNITS_ALL, 'allUnits', 'noUnits', 'nUnits');
   const sb=document.getElementById('ddStatusBtn'); if(sb) sb.textContent=ddLabel(selS, STATUSES_ALL, 'allStatuses', 'noStatuses', 'nStatuses');
@@ -1485,6 +1490,8 @@ function bootScopeSnapshot(){ const au=allowedUnit(); if(au&&au!=='ALL'&&!isStep
 async function refreshLive(manual, silent, boot){
   const st=document.getElementById('liveStatus'), btn=document.getElementById('btnRefresh');
   if(btn) btn.disabled=true;
+  /* v10.84: HARD GATE — no fetch of any kind without a valid token. */
+  if(!curToken()){ if(btn) btn.disabled=false; return; }
   /* v10.65: fire the Last Workflow fetch in parallel with the main fetch
      (it is a no-op without scriptUrl/token, and re-renders the list when
      its map lands) instead of waiting one extra round trip after it. The
@@ -3313,42 +3320,65 @@ async function fsAddSave(){
       fsSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
 }
 document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return;
-  const lg=document.getElementById('loginScreen');
-  if(lg && lg.style.display==='flex'){ hideLogin(); return; }
   const lm=document.getElementById('lcModal');
   if(lm && lm.style.display==='flex'){ closeLcPopup(); return; }
   const dm=document.getElementById('dtModal');
   if(dm && dm.style.display==='flex') closeDetail();
   else if(document.getElementById('fsModal').style.display==='flex') closeStatusPopup(); });
 function toggleFsSettings(){ const s=document.getElementById('fsSettings'); if(s) s.style.display=s.style.display==='none'?'block':'none'; }
-/* ── v10.83: login screen — unit select + token. The TOKEN decides the
-   access (master → ALL, unit token → that unit, step token → that step);
-   the select is a guide only: if it differs from the token's unit, the
-   token wins. Guest browsing is preserved — the dashboard never had a
-   hard gate, so the screen always offers a guest way in (or Log out when
-   already logged in). The token is remembered on success, like the old
-   Setup's default-checked Remember box. ── */
+/* ── v10.84: HARD GATE — the login screen is the only way into the
+   dashboard. The select lists the 8 units + steps 1–12 (the steps with
+   working tokens; 13–24 are disabled and are NOT listed). The TOKEN
+   decides the access (master → ALL, unit token → that unit, step token →
+   that step) and wins over the select. No guest browsing: with no valid
+   token, no data is rendered and no fetch runs (see the render() and
+   refreshLive() guards + bootAuth()). The token is remembered on success,
+   like the old Setup's default-checked Remember box.
+   NOTE: the frozen snapshot (69 tasks, 19 Nov 2026) is still embedded in
+   this file's `let D = ...` line, so it stays readable in the page source;
+   the gate blocks USE of the dashboard and all live data, it does not
+   make the embedded snapshot unreadable. ── */
 function buildLoginUnits(){ const s=document.getElementById('lgUnit'); if(!s) return;
-  s.innerHTML='<option value="">'+esc(T('loginUnitPh'))+'</option>'+UNITS_ALL.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join(''); }
+  s.innerHTML='<option value="">'+esc(T('loginUnitPh'))+'</option>'
+    +'<optgroup label="'+esc(T('loginUnitG'))+'">'+UNITS_ALL.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('')+'</optgroup>'
+    +'<optgroup label="'+esc(T('loginStepG'))+'">'+WF_STEPS.slice(0,12).map((n,i)=>`<option value="STEP:${i+1}">Step ${i+1} · ${esc(n)}</option>`).join('')+'</optgroup>'; }
 function loginSay(msg, cls){ const e=document.getElementById('loginMsg'); if(e){ e.textContent=msg; e.className='login-msg '+(cls||''); } }
-function loginGuestLabel(){ const b=document.getElementById('loginGuestBtn'); if(!b) return;
-  b.textContent = (allowedUnit()||curToken()) ? T('loginLogout') : T('loginGuest'); }
+function clearLoginState(){ window.__allowedUnit=''; window.__sessionToken=''; window.__stepNo=null; window.__stepName='';
+  fsSet('cu-entry-token',''); fsSet('cu-allowed-unit',''); fsSet('cu-step-no',''); fsSet('cu-step-name',''); }
+function clearGatedData(){ ['kpis','chBarUnit','chDonutStatus','chDonutCount','chDeadlines','chStartMonth','insights','tblTop','tblList','tblUnit','chBarCost','chDonutPay','sbLists','boardWrap','calGrid','listGrid','fsTable','selBar'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; });
+  ['tblListSub','ovMonthSub','liveStatus','notifBadge','calNoDate','selCount'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
+  const pn=document.getElementById('profileName'); if(pn) pn.textContent=T('profileGuest');
+  const pa=document.getElementById('profileAvt'); if(pa) pa.textContent='G'; }
+function loginLogoutLabel(){ const b=document.getElementById('loginLogoutBtn'); if(!b) return;
+  const logged=!!(allowedUnit()||curToken());
+  b.style.display=logged?'':'none'; if(logged) b.textContent=T('loginLogout'); }
 function openLogin(){ const sc=document.getElementById('loginScreen'); if(!sc) return;
   buildLoginUnits();
   const lg=document.getElementById('loginLogo');
   if(lg){ const tl=document.querySelector('.top-logo'); if(tl&&tl.src){ lg.src=tl.src; lg.style.display=''; } else lg.style.display='none'; }
   const tk=document.getElementById('lgToken'); if(tk) tk.value='';
-  loginSay('',''); loginGuestLabel();
+  loginSay('',''); loginLogoutLabel();
   sc.style.display='flex'; document.body.style.overflow='hidden';
   const u=document.getElementById('lgUnit'); if(u) u.focus(); }
 function hideLogin(){ const sc=document.getElementById('loginScreen'); if(sc) sc.style.display='none'; document.body.style.overflow=''; }
-function loginGuestAction(){
-  if(allowedUnit()||curToken()){ // logged in → log out
-    window.__allowedUnit=''; window.__sessionToken=''; window.__stepNo=null; window.__stepName='';
-    fsSet('cu-entry-token',''); fsSet('cu-allowed-unit',''); fsSet('cu-step-no',''); fsSet('cu-step-name','');
-    hideLogin(); render(); refreshLive(false); return; }
-  hideLogin(); }
-function maybeShowLogin(){ if(!curToken()) openLogin(); }
+function loginLogoutAction(){
+  clearLoginState(); clearGatedData();
+  ['dtModal','lcModal','fsModal'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
+  openLogin(); }
+/* ── v10.84: boot auth — a stored token is validated (whoami) BEFORE any
+   data is rendered or fetched; only a valid token opens the dashboard. A
+   stored token that no longer validates is cleared and the login screen
+   is shown instead. A network failure leaves the stored token alone (it
+   is not proof the token is bad) and shows the login screen with a retry
+   message. ── */
+function bootAuth(){
+  const u=scriptUrl(), t=curToken();
+  if(!u||!t){ openLogin(); return; }
+  fetch(u+'?'+new URLSearchParams({action:'whoami',token:t,cb:Date.now()}),{redirect:'follow'}).then(r=>r.json()).then(j=>{
+    if(j&&j.ok&&j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=t; saveStepLogin(j); bootScopeSnapshot(); render(); refreshLive(false,false,true); }
+    else { clearLoginState(); openLogin(); }
+  }).catch(()=>{ openLogin(); loginSay(T('loginNetFail'),'err'); });
+}
 function loginSubmit(){
   const unit=(document.getElementById('lgUnit')||{}).value||'';
   const tok=(document.getElementById('lgToken')||{}).value.trim();
@@ -3363,7 +3393,7 @@ function loginSubmit(){
       fsSet('cu-entry-token',tok); fsSet('cu-allowed-unit',j.unit);
       loginSay(j.unit==='ALL'?T('msgSetupSavedAll'):Tf('msgSetupSavedUnit',{u:j.unit}),'ok');
       toast(T('toastSetup'),'ok');
-      hideLogin(); refreshLive(false); render();
+      hideLogin(); bootScopeSnapshot(); refreshLive(false); render();
     } else { const m=(j && j.error)?j.error:T('msgWrongToken'); loginSay(m,'err'); toast(m,'err'); }
   }).catch(()=>{ if(btn) btn.disabled=false; loginSay(T('loginNetFail'),'err'); });
 }
@@ -3803,7 +3833,7 @@ function atPrintHtml(){
   return `<h3 style="margin:16px 0 6px">${esc(T('dtAttachments'))}</h3><ul style="font-size:13px;margin:0;padding-left:18px">`+
     dtAt.map(f=>`<li>${esc(f.fileName||'—')}${f.by?` — ${esc(f.by)}`:''}${f.date?` · ${fmtD(f.date)}`:''}</li>`).join('')+`</ul>`;
 }
-buildFilters(); applyTheme(); applyLang(); maybeShowLogin(); whoamiRestore(); bootScopeSnapshot(); render(); refreshLive(false,false,true);
+buildFilters(); applyTheme(); applyLang(); bootAuth();
 </script>
 <div id="selBar" style="display:none;position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:120;background:#333;color:#fff;border-radius:8px;padding:10px 16px;box-shadow:0 4px 16px rgba(0,0,0,.25);align-items:center;gap:14px;font-size:13px">
   <span id="selCount"></span><button onclick="clearSel()" style="background:#7b68ee;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer" data-t="selClear"></button>
