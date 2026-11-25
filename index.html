@@ -149,14 +149,15 @@ tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px so
 @media(max-width:680px){.efgrid{grid-template-columns:repeat(2,1fr)}}
 .fsmsg{font-size:12.5px;min-height:18px;padding:6px 18px;background:var(--card)}
 .fsmsg.ok{color:#15803D}.fsmsg.err{color:#DC2626}
-/* ── v10.87: login screen palette — light defaults, dark overrides.
-   Same v10.86 design (navy grid + glowing teal chart backdrop, centered
-   glowing card); the colors follow the dashboard's light/dark theme
-   (applyTheme sets html[data-theme] at boot, before the login shows).
-   Fully opaque in both themes — nothing behind it is visible. ── */
-:root{--lg-bg1:#eef6fd;--lg-bg2:#e2eefb;--lg-glow1:rgba(8,145,178,.12);--lg-glow2:rgba(34,211,238,.14);--lg-grid:rgba(100,116,139,.14);--lg-line1:#0891b2;--lg-line2:#0d9488;--lg-bar:#0891b2;--lg-fill-op:.14;--lg-card1:#ffffff;--lg-card2:#f2f8fd;--lg-card-border:rgba(8,145,178,.35);--lg-card-glow:0 0 0 1px rgba(8,145,178,.10),0 0 32px rgba(8,145,178,.20),0 24px 60px rgba(15,23,42,.16);--lg-title:#0f172a;--lg-text:#0f172a;--lg-sub:#64748b;--lg-label:#334155;--lg-icon:#0891b2;--lg-icon-dim:#64748b;--lg-field-bg:rgba(100,116,139,.10);--lg-field-border:rgba(100,116,139,.35);--lg-field-text:#0f172a;--lg-focus:#0891b2;--lg-focus-ring:rgba(8,145,178,.18);--lg-guest-bg:rgba(100,116,139,.08);--lg-guest-border:rgba(100,116,139,.35);--lg-guest-text:#0f172a;--lg-guest-bg-hov:rgba(100,116,139,.16);--lg-ok:#15803d;--lg-err:#dc2626}
-[data-theme="dark"]{--lg-bg1:#04101f;--lg-bg2:#06182e;--lg-glow1:rgba(34,211,238,.16);--lg-glow2:rgba(34,211,238,.10);--lg-grid:rgba(148,197,255,.07);--lg-line1:#22d3ee;--lg-line2:#2dd4bf;--lg-bar:#22d3ee;--lg-fill-op:.22;--lg-card1:#0b1e3a;--lg-card2:#081426;--lg-card-border:rgba(56,189,248,.45);--lg-card-glow:0 0 0 1px rgba(34,211,238,.12),0 0 42px rgba(34,211,238,.28),0 24px 60px rgba(0,0,0,.55);--lg-title:#f8fafc;--lg-text:#eef4ff;--lg-sub:#94a3b8;--lg-label:#cbd5e1;--lg-icon:#7dd3fc;--lg-icon-dim:#94a3b8;--lg-field-bg:rgba(148,163,184,.10);--lg-field-border:rgba(148,163,184,.35);--lg-field-text:#f1f5f9;--lg-focus:#22d3ee;--lg-focus-ring:rgba(34,211,238,.18);--lg-guest-bg:rgba(148,163,184,.08);--lg-guest-border:rgba(148,163,184,.35);--lg-guest-text:#e2e8f0;--lg-guest-bg-hov:rgba(148,163,184,.16);--lg-ok:#4ade80;--lg-err:#f87171}
-.login-screen{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
+/* ── v10.88: login screen palette — colors from the dashboard theme vars.
+   Same v10.86 design (grid + glowing chart backdrop, centered glowing
+   card); dark mode is the dashboard navy + yellow #fed800 accent (the
+   dashboard dark brand: sidebar + avatar + section headers); title is
+   yellow in dark, darker amber #b45309 in light. Fully opaque —
+   nothing behind it is visible. ── */
+:root{--lg-bg1:var(--bg);--lg-bg2:#ffffff;--lg-glow1:rgba(180,83,9,.10);--lg-glow2:rgba(217,119,6,.08);--lg-grid:rgba(41,45,52,.08);--lg-line1:#b45309;--lg-line2:#d97706;--lg-bar:#b45309;--lg-fill-op:.14;--lg-card1:var(--card);--lg-card2:var(--soft);--lg-card-border:rgba(180,83,9,.35);--lg-card-glow:0 0 0 1px rgba(180,83,9,.08),0 0 32px rgba(180,83,9,.16),0 24px 60px rgba(15,23,42,.12);--lg-title:#b45309;--lg-text:var(--text);--lg-sub:var(--body);--lg-label:var(--text);--lg-icon:#b45309;--lg-icon-dim:var(--muted);--lg-field-bg:var(--soft);--lg-field-border:var(--border);--lg-field-text:var(--text);--lg-focus:#b45309;--lg-focus-ring:rgba(180,83,9,.18);--lg-guest-bg:var(--soft);--lg-guest-border:var(--border);--lg-guest-text:var(--text);--lg-guest-bg-hov:var(--soft2);--lg-ok:#15803d;--lg-err:#dc2626}
+[data-theme="dark"]{--lg-bg1:var(--bg);--lg-bg2:var(--side);--lg-glow1:rgba(254,216,0,.14);--lg-glow2:rgba(245,158,11,.10);--lg-grid:rgba(232,232,232,.06);--lg-line1:#fed800;--lg-line2:#f59e0b;--lg-bar:#fed800;--lg-fill-op:.20;--lg-card1:var(--card);--lg-card2:var(--soft);--lg-card-border:rgba(254,216,0,.45);--lg-card-glow:0 0 0 1px rgba(254,216,0,.10),0 0 32px rgba(254,216,0,.20),0 24px 60px rgba(0,0,0,.55);--lg-title:#fed800;--lg-text:var(--text);--lg-sub:var(--muted);--lg-label:var(--body);--lg-icon:#fed800;--lg-icon-dim:var(--muted);--lg-field-bg:var(--soft);--lg-field-border:var(--border);--lg-field-text:var(--text);--lg-focus:#fed800;--lg-focus-ring:rgba(254,216,0,.18);--lg-guest-bg:var(--soft);--lg-guest-border:var(--border);--lg-guest-text:var(--text);--lg-guest-bg-hov:var(--soft2);--lg-ok:#4ade80;--lg-err:#f87171}
+.login-screen{position:fixed;inset:0;z-index:150;display:flex;font-family:'Inter',system-ui,-apple-system,'Segoe UI',Roboto,Arial,sans-serif;align-items:center;justify-content:center;padding:16px;overflow:auto;
   background:radial-gradient(900px 480px at 85% 28%,var(--lg-glow1),transparent 60%),radial-gradient(720px 420px at 8% 88%,var(--lg-glow2),transparent 60%),linear-gradient(180deg,var(--lg-bg1) 0%,var(--lg-bg2) 55%,var(--lg-bg1) 100%)}
 .login-screen::before{content:'';position:absolute;inset:0;pointer-events:none;
   background-image:linear-gradient(var(--lg-grid) 1px,transparent 1px),linear-gradient(90deg,var(--lg-grid) 1px,transparent 1px);
@@ -187,11 +188,11 @@ tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px so
 .login-eye svg{width:18px;height:18px}
 .login-msg{font-size:12.5px;min-height:18px;margin:4px 0 10px;color:var(--lg-sub);text-align:left}
 .login-msg.ok{color:var(--lg-ok)}.login-msg.err{color:var(--lg-err)}
-.login-btn{width:100%;padding:12px 18px;font-size:15px;font-weight:700;color:#fff;border:0;border-radius:10px;cursor:pointer;background:linear-gradient(90deg,#0891b2,#06b6d4 55%,#22d3ee);box-shadow:0 6px 20px rgba(6,182,212,.45);display:flex;align-items:center;justify-content:center;gap:8px}
+.login-btn{width:100%;padding:12px 18px;font-size:15px;font-weight:700;font-family:inherit;color:#fff;border:0;border-radius:10px;cursor:pointer;background:linear-gradient(90deg,#0891b2,#06b6d4 55%,#22d3ee);box-shadow:0 6px 20px rgba(6,182,212,.45);display:flex;align-items:center;justify-content:center;gap:8px}
 .login-btn:disabled{opacity:.55;cursor:wait}
 .login-btn svg{width:17px;height:17px}
 .login-guest{margin-top:12px}
-.login-guest button{display:block;width:100%;background:var(--lg-guest-bg);border:1px solid var(--lg-guest-border);color:var(--lg-guest-text);font-size:13.5px;font-weight:600;cursor:pointer;padding:11px 18px;border-radius:10px}
+.login-guest button{display:block;width:100%;font-family:inherit;background:var(--lg-guest-bg);border:1px solid var(--lg-guest-border);color:var(--lg-guest-text);font-size:13.5px;font-weight:600;cursor:pointer;padding:11px 18px;border-radius:10px}
 .login-guest button:hover{background:var(--lg-guest-bg-hov)}
 @media(max-width:420px){.login-card{padding:24px 20px 20px}.login-card h1{font-size:21px}}
 .dtmodal{position:fixed;inset:0;background:#00000066;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
