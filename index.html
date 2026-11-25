@@ -851,7 +851,7 @@ unitCostT:'Unit Wise Tentative Cost',unitCostS:'How much tentative cost each uni
 unitPayT:'Unit Wise Payment Share',unitPayS:'Share of total payment disbursed',
 navOv:'OVERVIEW',navList:'PROJECT LIST',navUnit:'UNIT SUMMARY',
 foot:'Source: Dekkoisho workspace · Snapshot 19 Nov 2026 · Live data from the Google Sheet',
-thSL:'SL',thUnit:'Unit',thTask:'Project',thStatus:'Status',thStart:'Start Date',thDeadline:'Deadline',thFinish:'Finish Date',thProgress:'Progress',
+thSL:'SL',thUnit:'Unit',thTask:'Project',thStatus:'Status',thStart:'Start Date',thProbEnd:'Probable End Date',thDeadline:'Deadline',thFinish:'Finish Date',thProgress:'Progress',
 thCost:'Tentative Cost',thPayment:'Payment',thEdit:'Edit',thRemarks:'Remarks',thComplete:'Completed',thLastWf:'Last Workflow',
 thAvgProg:'Avg Progress',thProjects:'Projects',thOverdue:'Overdue',
 insOverdueT:'{n} project(s) overdue',insOverdueB:'Deadline passed and still not complete: <b>{list}</b>{more}',
@@ -1417,9 +1417,13 @@ function render(){
      v10.67 (2026-11-18): Number of Days now sits BETWEEN Received Date and Delivery Date (screen, print sheet and CSV export); both dates are editable — the Add Step form and the edit row each have a Received + a Delivery date input, and the edit row shows the live days between them as the inputs change; a stored Received (script v4.19) is shown first, otherwise the derived value (previous step's Delivery Date) is the fallback.
      v10.68 (2026-11-18): STATUS LOCK — Open / In Progress change only through workflow steps: the Add form always starts a task Open, the Edit forms (detail + fullscreen) offer Complete / Wating only and show a current Open / In Progress as a disabled option, and a board drag to the Open / In Progress columns is blocked; the script (v4.20) enforces the same rule server-side.
      v10.69 (2026-11-19): Open is gone — every task is In Progress unless Complete / Wating (manual). STATUSES_ALL / STATUS_ORDER are now [In Progress, Wating, Complete]; the board has 3 columns; the 4th KPI card counts Wating; the Add form has no status field (new tasks are In Progress); a workflow step added to a Complete / Wating task reopens it to In Progress. Per-step tokens (script v4.21): whoami 'STEP:n' sees all data but edits only that step — project Add/Edit, board drag, subtasks and comments are disabled for step tokens, and only their own step row shows edit/delete buttons. Snapshot re-frozen from the live Sheet (69 tasks, 19 Nov 2026). */
-  const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
+  /* v10.90: Probable End Date column — raw Sheet Due Date (r.due), shown
+     right after Start Date. Finish Date still shows Revised Finish Date
+     falling back to Due Date (r.revised||r.due); this new cell never shows
+     the finish value. Same order in Download All CSV + Print All (ALL_COLS). */
+  const listHead=`<tr><th>${T('thUnit')}</th><th>${T('thTask')}</th><th>${T('thStatus')}</th><th>${T('fPriority')}</th><th class="num">${T('thCost')} (BDT)</th><th>${T('fBst')}</th><th>${T('fMatst')}</th><th>${T('thStart')}</th><th>${T('thProbEnd')}</th><th>${T('thFinish')}</th><th>${T('thProgress')}</th><th class="num">${T('thPayment')} (BDT)</th><th>${T('fComment')}</th><th>${T('thLastWf')}</th></tr>`;
   const listRow=r=>{
-    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
+    return `<tr class="${isOverdue(r)?'odrow ':''}${selRows.has(String(r.sl))?'selrow ':''}rowclick" onclick="openDetail(${r.sl})" title="Click for details"><td class="dt"><b>${r.unit}</b></td><td>${tname(r.name)}</td><td>${statusChip(r.status)}</td><td class="dt">${esc(r.priority)||'—'}</td><td class="num">${fmtN(r.cost||0)}</td><td class="dt bstcell">${esc(r.bst)||'—'}</td><td>${r.matst?tnameW(r.matst,'sm'):'—'}</td><td class="dt">${fmtD(r.start)}</td><td class="dt">${fmtD(r.due)}</td><td class="dt">${fmtD(r.revised||r.due)}</td><td class="dt">${progCell(r)}</td><td class="num">${fmtN(r.disb||0)}</td><td>${r.comment?tnameW(r.comment,'sm'):'—'}</td><td class="lwcell">${lastWfCell(r)}</td></tr>`; };
   /* v3: Group by Unit (v2 sections) or Status (status sections). */
   let sections='';
   if(groupBy==='status'){
@@ -3074,7 +3078,10 @@ function allVisibleRows(){
     if(ua!==ub) return ua-ub; return (parseInt(a.sl,10)||0)-(parseInt(b.sl,10)||0); });
   return rows;
 }
-const ALL_COLS=['SL','Unit','Task','Status','Budget Status','Materials Status','Start Date','Due Date','Finish Date','Progress','Tentative Cost (BDT)','Payment (BDT)','Latest Comment'];
+/* v10.90: 'Probable End Date' label (was 'Due Date') — same column the
+   Project List now shows after Start Date; values are the raw Sheet Due
+   Date (r.due), Finish Date the raw Revised Finish Date (r.revised). */
+const ALL_COLS=['SL','Unit','Task','Status','Budget Status','Materials Status','Start Date','Probable End Date','Finish Date','Progress','Tentative Cost (BDT)','Payment (BDT)','Latest Comment'];
 function allCsvText(){
   const L=[];
   let curUnit=null;
