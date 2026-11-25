@@ -149,8 +149,8 @@ tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px so
 @media(max-width:680px){.efgrid{grid-template-columns:repeat(2,1fr)}}
 .fsmsg{font-size:12.5px;min-height:18px;padding:6px 18px;background:var(--card)}
 .fsmsg.ok{color:#15803D}.fsmsg.err{color:#DC2626}
-/* ── v10.83: login screen — centered card on a dim backdrop over the dashboard. */
-.login-screen{position:fixed;inset:0;background:#00000066;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+/* ── v10.85: login screen — centered card on a fully OPAQUE background; nothing behind it is visible. */
+.login-screen{position:fixed;inset:0;background:var(--bg);z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
 .login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:400px;box-shadow:0 12px 32px rgba(0,0,0,.22);padding:28px 26px 22px;text-align:center}
 .login-card .login-logo{height:64px;max-width:220px;object-fit:contain}
 .login-card h1{font-size:22px;margin:12px 0 4px;color:var(--text)}
@@ -661,7 +661,7 @@ tr.lc-row:hover td{background:var(--soft)}
     <h2 id="fsTitle">Projects</h2>
     <span class="tot" id="fsTotals"></span>
     <span style="flex:1"></span>
-    <button class="entrybtn off" onclick="toggleFsSettings()" data-t="setupBtn"></button>
+    <button class="entrybtn off" id="btnSetupFs" onclick="toggleFsSettings()" data-t="setupBtn"></button>
     <button class="xbtn" onclick="closeStatusPopup()" data-t="closeBtn"></button>
   </div>
   <div id="fsTabBar" style="background:var(--card);border-bottom:1px solid var(--border);padding:8px 18px">
@@ -708,10 +708,11 @@ tr.lc-row:hover td{background:var(--soft)}
   </div></div>
 </div>
 </div>
-<!-- v10.84: HARD GATE — the login screen is the only way in: no stored
-     valid token means no dashboard data at all (no guest browsing).
+<!-- v10.85: login first — the login screen is the first thing shown and
+     its background is fully opaque (nothing behind it is visible).
      Select = units + steps 1–12 (the ones with tokens); the token decides
-     the access and wins over the select. -->
+     the access and wins over the select. "Continue as Guest" is back:
+     guests see everything read-only and cannot write anything. -->
 <div class="login-screen" id="loginScreen" style="display:none">
   <div class="login-card">
     <img id="loginLogo" class="login-logo" alt="Dekko ISHO Group">
@@ -721,7 +722,7 @@ tr.lc-row:hover td{background:var(--soft)}
     <div class="login-field"><label data-t="loginTokenL"></label><input type="password" id="lgToken" class="efinput" data-t-ph="loginTokenPh" onkeydown="if(event.key==='Enter')loginSubmit()"></div>
     <div class="login-msg" id="loginMsg"></div>
     <button class="entrybtn" id="loginBtn" onclick="loginSubmit()" data-t="loginBtn"></button>
-    <div class="login-guest"><button id="loginLogoutBtn" onclick="loginLogoutAction()"></button></div>
+    <div class="login-guest"><button id="loginGuestBtn" onclick="loginGuestAction()"></button><button id="loginLogoutBtn" onclick="loginLogoutAction()"></button></div>
   </div>
 </div>
 <script>
@@ -814,14 +815,14 @@ fSubtasks:'Subtasks',fComment:'Latest Comment',fDesc:'Description',fTaskId:'Task
 fTaskPh:'e.g. Fire Door Replacement Work',
 dtNote:'Note: The list shows {p}% here, but the manual Progress slider is 0.',
 dtNoComment:'—',dtNoDesc:'—',
-setupBtn:'⚙️ Setup',closeBtn:'✖ Close',fsTabList:'📋 Project List',fsTabAdd:'➕ New Project',
+setupBtn:'⚙️ Setup',setupGuest:'Log in to use Setup.',closeBtn:'✖ Close',fsTabList:'📋 Project List',fsTabAdd:'➕ New Project',
 setupH:'Apps Script Web app URL — for THIS sheet only. Deploy the entry script, then paste the URL here once. Saved on this device only.',
 setupHEmbedded:'The script URL is built into this dashboard — enter only your token below (6-digit master/unit token, or 4-digit step token).',
 setupUrlL:'Web app URL (ends with /exec)',setupPassL:'Token — 6-digit master/unit token, or 4-digit step token',
 setupPassPh:'Your token',setupRemember:'Remember token on this device',setupSaveBtn:'💾 Save Setup',
 /* v10.83: login screen strings. */
 loginTitle:'Budget <span>Tracker</span>',loginSub:'Dekko ISHO Group · Sign in to continue',
-loginUnitL:'Unit / Step',loginUnitPh:'বেছে নিন',loginUnitG:'ইউনিট',loginStepG:'স্টেপ',loginTokenL:'Token',loginTokenPh:'Your token',loginBtn:'🔐 Log in',
+loginUnitL:'Unit / Step',loginUnitPh:'Choose your unit or step',loginUnitG:'Unit',loginStepG:'Step',loginTokenL:'Token',loginTokenPh:'Your token',loginBtn:'🔐 Log in',loginGuest:'Continue as Guest',
 loginLogout:'Log out',loginPickUnit:'❌ Please choose your unit or step first.',
 loginNeedToken:'❌ Enter your token.',loginNetFail:'❌ Could not reach the script — please check your connection and try again.',
 addH:'Add a new project — it will be added to the bottom of the Sheet (SL is assigned automatically). To delete a project, use the Sheet.',
@@ -846,14 +847,14 @@ dtTime:'Time',dtSubtasks:'Subtasks',dtSave:'💾 Save',dtCancel:'Cancel',
 tmStartedL:'Started',tmDeadlineL:'Deadline',tmDurationL:'Duration',tmElapsed:'{n} days elapsed',tmNoStart:'No start date',
 tmDaysLeft:'{n} days left',tmOverdueBy:'Overdue by {n} days',tmDueToday:'Due today',tmNoDeadline:'No deadline set',
 tmDuration:'Duration: {n} days ({s} → {e})',
-stEmpty:'No subtasks yet — add one',stAddPh:'Subtask name…',stAddBtn:'➕ Add',stDuePh:'Due date',stEndPh:'End date',stStartPh:'Start date',stEdit:'Edit subtask',stSave:'Save',stDone:'{done} of {total} done',stDel:'Delete subtask',stLoading:'⏳ Loading subtasks…',
+stEmpty:'No subtasks yet — add one',stAddPh:'Subtask name…',stAddBtn:'➕ Add',subGuestNote:'Log in to add or edit subtasks.',stDuePh:'Due date',stEndPh:'End date',stStartPh:'Start date',stEdit:'Edit subtask',stSave:'Save',stDone:'{done} of {total} done',stDel:'Delete subtask',stLoading:'⏳ Loading subtasks…',
 dtCuSubs:'Imported subtasks: {n}',dtEditNote:'Project name and unit cannot be changed — they identify the row in the Sheet.',
 sbLists:'Lists',sbAllProjects:'All Projects',sbNav:'Views',navBoard:'BOARD',navCalendar:'CALENDAR',
 vbList:'List',vbBoard:'Board',vbCalendar:'Calendar',
 groupByL:'Group by',groupUnit:'Unit',groupStatus:'Status',
-bdHint:'Drag a card to another column to change its status',
+bdHint:'Drag a card to another column to change its status',bdGuestNote:'Log in to move tasks on the board.',
 calToday:'Today',calNoDate:'No date',calNoDateSub:'Tasks without a deadline',
-dtComments:'Comments',cmEmpty:'No comments yet — be the first to comment',cmAddPh:'Write a comment…',cmAuthorPh:'Your name',cmPost:'Post',cmLoading:'⏳ Loading comments…',
+dtComments:'Comments',cmEmpty:'No comments yet — be the first to comment',cmAddPh:'Write a comment…',cmAuthorPh:'Your name',cmPost:'Post',cmGuestNote:'Log in to post comments.',cmLoading:'⏳ Loading comments…',
 dtAttachments:'Attachments',atEmpty:'No files yet — upload one',atLoading:'⏳ Loading attachments…',atUpload:'⬆ Upload',atView:'View',atDelete:'Delete file',atConfirmDelete:'Delete file?',atConfirmDeleteB:'This file will be removed from Drive. This cannot be undone.',atSaved:'File uploaded',atDeleted:'File deleted',atTooBig:'File is too large — max 10 MB.',atStepNote:'Step token — you can view attachments, but cannot upload or delete.',atGuestNote:'Log in to upload files.',atNoFile:'Choose a file first.',atLoadFail:'Could not load attachments — please refresh and try again.',
 wdSun:'Sun',wdMon:'Mon',wdTue:'Tue',wdWed:'Wed',wdThu:'Thu',wdFri:'Fri',wdSat:'Sat',
 selBar:'{n} selected',selClear:'Clear',
@@ -867,7 +868,7 @@ toastSaved:'Saved!',toastSubAdd:'Subtask added',toastSubDone:'Subtask completed'
 cfDelSubT:'Delete subtask?',cfDelSubB:'This subtask will be removed from the Sheet. This cannot be undone.',cfCancel:'Cancel',cfDelete:'Delete',
 dtStage:'Stage History',stStageSub:'How this project moved through the stages — and how long each stage lasted',
 wfTitle:'Workflow Steps',wfSub:'Approval and execution steps for this project — who handled each step, when it moved, and how long it took',
-wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Delivery Date',wfDays:'Number of Days',wfReceived:'Received Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',lwToday:'Today',lwAgo1:'1d ago',lwAgo:'{n}d ago',lwAllDone:'All done',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddFlip:'Workflow step added — status set to {st}',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfDelFlip:'Workflow step deleted — status set to {st}',toastWfEdit:'Workflow step updated',
+wfProg:'Workflow: {done} / {total}',wfStep:'Step',wfWho:'Who',wfDate:'Delivery Date',wfDays:'Number of Days',wfReceived:'Received Date',wfRef:'Ref / Remark',wfPending:'Pending',wfAddStep:'Add Step',wfWhoPh:'Who',wfRefPh:'Ref / remark',wfGuestNote:'Preview only — not saved. Log in to save workflow steps to the Sheet.',wfGuestLogin:'Log in to add or edit workflow steps.',wfAllDone:'All 24 workflow steps are done — a custom step can still be added below.',lwToday:'Today',lwAgo1:'1d ago',lwAgo:'{n}d ago',lwAllDone:'All done',wfCustom:'Custom step…',wfCustomPh:'Step name',wfCustomCount:'+ {n} custom',wfLegacy:'Earlier step',wfLegacyCount:'+ {n} earlier',wfCustomTitle:'Custom / Earlier Steps',wfCustomDup:'A step with this name already exists',wfPrint:'🖨️ Print',wfExport:'⬇ Export CSV',wfLocalNote:'Preview step — saved locally only, not in the Sheet.',wfDelT:'Delete workflow step?',wfDelB:'This workflow step will be removed from the Sheet. This cannot be undone.',wfDaysN:'{n} days',wfLoading:'⏳ Loading workflow…',wfEdit:'Edit workflow step',wfDel:'Delete workflow step',toastWfAdd:'Workflow step added',toastWfAddFlip:'Workflow step added — status set to {st}',toastWfAddLocal:'Step added as a local preview (not saved)',toastWfDel:'Workflow step deleted',toastWfDelFlip:'Workflow step deleted — status set to {st}',toastWfEdit:'Workflow step updated',
 prTaskId:'Task ID',prEbs:'EBS Req No.',prPo:'PO / WO No.',prCost:'Tentative Cost (CS)',prStage:'Stage',prDone:'Done',prInProg:'In Progress',prFooter:'Budget Tracker — Workflow Sheet · {d}',
 stSeedNote:'Seeded from the start date — no stage changes have been logged yet. The first status change made from this dashboard will start the real log.',
 stCurrentStage:'Current stage',stStarted:'Started',stInStage:'{n} days in this stage',stDaysIn:'{n} days in {f}',stEndDate:'End Date',stSubStep:'Subtasks',
@@ -1251,9 +1252,12 @@ function monthBars(data){
     <div style="font-size:12px;text-align:right;color:${thc().ctr};font-weight:600;font-variant-numeric:tabular-nums">${fmtN(d[1])}</div></div>`).join('');
 }
 function render(){
-  /* v10.84: HARD GATE — with no valid token, no dashboard data is rendered
-     at all; any stale content from a previous session is cleared. */
-  if(!curToken()){ clearGatedData(); return; }
+  /* v10.85: LOGIN FIRST — with no valid token AND no explicit guest
+     choice, no dashboard data is rendered at all; any stale content
+     from a previous session is cleared. A guest (Continue as Guest)
+     renders read-only; a login renders with that token's access. */
+  if(!curToken() && !isGuest()){ clearGatedData(); return; }
+  applyGuestUI();
   const a=agg();
   const ub=document.getElementById('ddUnitBtn'); if(ub) ub.textContent=ddLabel(selU, UNITS_ALL, 'allUnits', 'noUnits', 'nUnits');
   const sb=document.getElementById('ddStatusBtn'); if(sb) sb.textContent=ddLabel(selS, STATUSES_ALL, 'allStatuses', 'noStatuses', 'nStatuses');
@@ -1490,8 +1494,10 @@ function bootScopeSnapshot(){ const au=allowedUnit(); if(au&&au!=='ALL'&&!isStep
 async function refreshLive(manual, silent, boot){
   const st=document.getElementById('liveStatus'), btn=document.getElementById('btnRefresh');
   if(btn) btn.disabled=true;
-  /* v10.84: HARD GATE — no fetch of any kind without a valid token. */
-  if(!curToken()){ if(btn) btn.disabled=false; return; }
+  /* v10.85: no fetch of any kind without a valid token or an explicit
+     guest choice. A guest runs only the public-CSV branch below (the
+     getdata branch above needs a token); a login runs getdata. */
+  if(!curToken() && !isGuest()){ if(btn) btn.disabled=false; return; }
   /* v10.65: fire the Last Workflow fetch in parallel with the main fetch
      (it is a no-op without scriptUrl/token, and re-renders the list when
      its map lands) instead of waiting one extra round trip after it. The
@@ -1663,7 +1669,8 @@ function subBodyHtml(r){
     const dis=!canE||s.local;
     return `<div class="subrow"><input type="checkbox" ${s.done?'checked':''} ${dis?'disabled':''} ${s.local?'':`onchange="subToggle(${s.row},this.checked)"`}>${s.done?'<span class="subtick">✓</span>':''}<div class="submain"><div class="subname">${esc(s.subtask)}</div><div class="submeta">${subMeta(s)}</div></div>${canE&&!s.local?`<button class="subedit" title="${T('stEdit')}" onclick="subEdit(${s.row})">✏️</button><button class="subdel" title="${T('stDel')}" onclick="subDel(${s.row})">✕</button>`:''}</div>`;
   }).join('');
-  if(canE) h+=`<div class="subadd"><input type="text" id="subName" class="efinput" placeholder="${T('stAddPh')}"><input type="date" id="subStart" class="efinput" style="max-width:170px" title="${T('stStartPh')}" value="${toISODate(todayMid())}"><input type="date" id="subDue" class="efinput" style="max-width:170px" title="${T('stEndPh')}"><button class="entrybtn" onclick="subAdd()">${T('stAddBtn')}</button></div><div id="subMsg" class="fsmsg" style="padding:6px 0"></div>`;
+  if(isGuest()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:6px">${T('subGuestNote')}</div>`;
+  else if(canE) h+=`<div class="subadd"><input type="text" id="subName" class="efinput" placeholder="${T('stAddPh')}"><input type="date" id="subStart" class="efinput" style="max-width:170px" title="${T('stStartPh')}" value="${toISODate(todayMid())}"><input type="date" id="subDue" class="efinput" style="max-width:170px" title="${T('stEndPh')}"><button class="entrybtn" onclick="subAdd()">${T('stAddBtn')}</button></div><div id="subMsg" class="fsmsg" style="padding:6px 0"></div>`;
   return h;
 }
 function subRefresh(){ const b=document.getElementById('dtSubBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=subBodyHtml(r); }
@@ -1684,6 +1691,7 @@ async function loadSubs(quiet){
 }
 async function subToggle(subrow, checked){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isGuest()){ toast(T('subGuestNote'),'err'); subRefresh(); return; }
   if(isStepMode()){ toast(T('stepNote'),'err'); subRefresh(); return; }
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ subRefresh(); toast(T('msgNoScript'),'err'); return; }
@@ -1707,6 +1715,7 @@ async function subToggle(subrow, checked){
 }
 async function subAdd(){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isGuest()){ toast(T('subGuestNote'),'err'); return; }
   if(isStepMode()){ toast(T('stepNote'),'err'); return; }
   const name=((document.getElementById('subName')||{}).value||'').trim();
   if(!name) return;
@@ -1733,10 +1742,11 @@ async function subAdd(){
 }
 /* ── v10.10: edit a subtask inline — name, start date and due date.
    Save calls the script's editsubtask action (v4.6); an empty date clears it. ── */
-function subEdit(subrow){ if(isStepMode()){ toast(T('stepNote'),'err'); return; } dtSubEdit=subrow; subRefresh(); }
+function subEdit(subrow){ if(isGuest()){ toast(T('subGuestNote'),'err'); return; } if(isStepMode()){ toast(T('stepNote'),'err'); return; } dtSubEdit=subrow; subRefresh(); }
 function subCancelEdit(){ dtSubEdit=null; subRefresh(); }
 async function subSaveEdit(subrow){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isGuest()){ toast(T('subGuestNote'),'err'); return; }
   if(isStepMode()){ toast(T('stepNote'),'err'); return; }
   const name=((document.getElementById('seName')||{}).value||'').trim();
   if(!name) return;
@@ -1758,6 +1768,7 @@ async function subSaveEdit(subrow){
 }
 async function subDel(subrow){
   const r=rowBySl(dtRn); if(!r) return;
+  if(isGuest()){ toast(T('subGuestNote'),'err'); return; }
   if(isStepMode()){ toast(T('stepNote'),'err'); return; }
   /* v9: confirm before deleting — the delete used to run immediately. */
   const ok=await confirmDlg(T('cfDelSubT'), T('cfDelSubB'));
@@ -2528,6 +2539,7 @@ function wfAddFormHtml(r){
     const recvDef=wfReceivedIso(model, model.findIndex(m=>m.no===mine.no));
     return `<div class="wfadd"><select id="wfStepSel" class="efinput"><option value="${mine.no}">${mine.no}. ${esc(mine.name)}</option></select><input type="text" id="wfWho" class="efinput" placeholder="${T('wfWhoPh')}" oninput="window.__wfFormTouched=true"><input type="date" id="wfRecv" class="efinput" value="${toISODate(recvDef)}" oninput="window.__wfFormTouched=true"><input type="date" id="wfDate" class="efinput" value="${toISODate(todayMid())}" oninput="window.__wfFormTouched=true"><input type="text" id="wfRef" class="efinput" placeholder="${T('wfRefPh')}" oninput="window.__wfFormTouched=true"><button class="entrybtn" onclick="wfAdd()">${T('wfAddStep')}</button></div><div id="wfMsg" class="fsmsg" style="padding:6px 0"></div>`;
   }
+  if(isGuest()) return `<div style="font-size:12.5px;color:var(--muted);margin-top:8px">${T('wfGuestLogin')}</div>`;
   if(!canE||dtWfState==='loading') return '';
   const model=wfModel();
   const pending=model.filter(m=>!m.custom && !(m.row&&parseD(m.row.date||'')));
@@ -2780,6 +2792,8 @@ async function wfAdd(){
   /* v10.69: a step token may add only their own step (the form offers
      nothing else, but never trust the form alone). */
   if(isStepMode()&&(isCustom||no!==myStepNo())){ say(T('stepNote')); return; }
+  /* v10.85: guests are view-only — no local-preview adds either. */
+  if(isGuest()){ say(T('wfGuestLogin')); return; }
   /* v10.38: double-click guard — a fast second click right after an add,
      before the user touched the rebuilt form, is an accidental
      double-click, not a second add (the rebuilt form auto-selects the
@@ -2851,13 +2865,14 @@ async function wfAdd(){
       wfRefresh();
       const mm=document.getElementById('wfMsg'); if(mm){ const dup=(!isCustom && /already exists/i.test(e.message||''))?wfDupBlockerMsg(no,step):null; mm.textContent=dup||Tf('msgSaveFail',{e:e.message}); mm.className='fsmsg err'; } bgFailToast(e); });
 }
-function wfEdit(no){ if(isStepMode()&&no!==myStepNo()) return; dtWfEdit=no; wfRefresh(); }
+function wfEdit(no){ if(isGuest()) return; if(isStepMode()&&no!==myStepNo()) return; dtWfEdit=no; wfRefresh(); }
 function wfCancelEdit(){ dtWfEdit=null; wfRefresh(); }
 async function wfSaveEdit(no){
   const r=rowBySl(dtRn); if(!r) return;
   /* v10.27: find by stepno — model[no-1] is wrong once custom steps exist. */
   const model=wfModel(); const m=model.find(x=>x.no===no); if(!m||!m.row) return;
   if(isStepMode()&&no!==myStepNo()){ toast(T('stepNote'),'err'); return; }
+  if(isGuest()){ toast(T('wfGuestLogin'),'err'); return; }
   const who=((document.getElementById('wfEWho')||{}).value||'').trim();
   const date=(document.getElementById('wfEDate')||{}).value||'';
   const recv=(document.getElementById('wfERecv')||{}).value||'';
@@ -2909,6 +2924,7 @@ async function wfDel(no){
   /* v10.27: find by stepno — model[no-1] is wrong once custom steps exist. */
   const model=wfModel(); const m=model.find(x=>x.no===no); if(!m||!m.row) return;
   if(isStepMode()&&no!==myStepNo()){ toast(T('stepNote'),'err'); return; }
+  if(isGuest()){ toast(T('wfGuestLogin'),'err'); return; }
   const ok=await confirmDlg(T('wfDelT'), T('wfDelB'));
   if(!ok) return;
   const url=scriptUrl(), tok=curToken();
@@ -3186,7 +3202,7 @@ function fsSay(msg, cls){ const e=document.getElementById('fsMsg'); if(e){ e.tex
 function allowedUnit(){ return window.__allowedUnit || fsGet('cu-allowed-unit') || ''; }
 function curToken(){ return window.__sessionToken || fsGet('cu-entry-token') || ''; }
 function scriptUrl(){ return EMBEDDED_SCRIPT_URL || fsGet('cu-entry-url') || ''; }
-function canEditUnit(u){ const a=allowedUnit(); return !a || a==='ALL' || a.toUpperCase()===(u||'').toUpperCase(); }
+function canEditUnit(u){ if(!curToken()) return false; /* v10.85: guests are view-only — no token, no edit. */ const a=allowedUnit(); return !a || a==='ALL' || a.toUpperCase()===(u||'').toUpperCase(); }
 /* ── v10.69: per-step tokens (script v4.21) — whoami returns unit
    'STEP:n' (plus step + stepName). The holder sees ALL data but edits
    only their own workflow step; project Add/Edit, board drag, subtasks
@@ -3234,7 +3250,7 @@ function openStatusPopup(st){ fsStatus=st; fsEditSl=null; setFsTab('list'); rend
   const sh=document.querySelector('#fsSettings [data-t="setupH"]');
   if(sh) sh.textContent=EMBEDDED_SCRIPT_URL?T('setupHEmbedded'):T('setupH'); }
 function closeStatusPopup(){ document.getElementById('fsModal').style.display='none'; document.body.style.overflow=''; }
-function setFsTab(t){ fsTab=t;
+function setFsTab(t){ if(t==='add'&&isGuest()){ toast(T('setupGuest'),'err'); return; } fsTab=t;
   document.getElementById('fsTabList').className=t==='list'?'on':'';
   document.getElementById('fsTabAdd').className=t==='add'?'on':'';
   document.getElementById('fsTable').style.display=t==='list'?'block':'none';
@@ -3250,7 +3266,7 @@ function setFsTab(t){ fsTab=t;
     const ab=document.getElementById('fsAddBtn'); if(ab) ab.disabled=isStepMode()&&!canProjectEdit3();
   } else renderFsTable();
 }
-function openAddProject(){ openStatusPopup('all'); setFsTab('add'); }
+function openAddProject(){ if(isGuest()){ toast(T('setupGuest'),'err'); return; } openStatusPopup('all'); setFsTab('add'); }
 function fsBuildAddLists(){
   const us=document.getElementById('faUnit');
   if(us) us.innerHTML=UNITS_ALL.map(u=>`<option>${u}</option>`).join('');
@@ -3262,6 +3278,7 @@ function fsBuildAddLists(){
 async function fsAddSave(){
   /* v10.70: step tokens cannot add projects — except step 3. */
   if(isStepMode()&&!canProjectEdit3()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
+  if(isGuest()){ fsSay(T('setupGuest'),'err'); toast(T('setupGuest'),'err'); return; }
   const url=scriptUrl();
   const token=(document.getElementById('fsToken')||{}).value||curToken();
   const unit=document.getElementById('faUnit').value;
@@ -3325,7 +3342,7 @@ document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return;
   const dm=document.getElementById('dtModal');
   if(dm && dm.style.display==='flex') closeDetail();
   else if(document.getElementById('fsModal').style.display==='flex') closeStatusPopup(); });
-function toggleFsSettings(){ const s=document.getElementById('fsSettings'); if(s) s.style.display=s.style.display==='none'?'block':'none'; }
+function toggleFsSettings(){ if(isGuest()){ toast(T('setupGuest'),'err'); return; } const s=document.getElementById('fsSettings'); if(s) s.style.display=s.style.display==='none'?'block':'none'; }
 /* ── v10.84: HARD GATE — the login screen is the only way into the
    dashboard. The select lists the 8 units + steps 1–12 (the steps with
    working tokens; 13–24 are disabled and are NOT listed). The TOKEN
@@ -3343,21 +3360,36 @@ function buildLoginUnits(){ const s=document.getElementById('lgUnit'); if(!s) re
     +'<optgroup label="'+esc(T('loginUnitG'))+'">'+UNITS_ALL.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join('')+'</optgroup>'
     +'<optgroup label="'+esc(T('loginStepG'))+'">'+WF_STEPS.slice(0,12).map((n,i)=>`<option value="STEP:${i+1}">Step ${i+1} · ${esc(n)}</option>`).join('')+'</optgroup>'; }
 function loginSay(msg, cls){ const e=document.getElementById('loginMsg'); if(e){ e.textContent=msg; e.className='login-msg '+(cls||''); } }
-function clearLoginState(){ window.__allowedUnit=''; window.__sessionToken=''; window.__stepNo=null; window.__stepName='';
+/* v10.85: Guest is back (view-only) — a session-only flag, never stored:
+   reloading always shows the login screen first. */
+function isGuest(){ return !curToken() && window.__guest===true; }
+function clearLoginState(){ window.__allowedUnit=''; window.__sessionToken=''; window.__stepNo=null; window.__stepName=''; window.__guest=false;
   fsSet('cu-entry-token',''); fsSet('cu-allowed-unit',''); fsSet('cu-step-no',''); fsSet('cu-step-name',''); }
 function clearGatedData(){ ['kpis','chBarUnit','chDonutStatus','chDonutCount','chDeadlines','chStartMonth','insights','tblTop','tblList','tblUnit','chBarCost','chDonutPay','sbLists','boardWrap','calGrid','listGrid','fsTable','selBar'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=''; });
   ['tblListSub','ovMonthSub','liveStatus','notifBadge','calNoDate','selCount'].forEach(id=>{ const el=document.getElementById(id); if(el) el.textContent=''; });
   const pn=document.getElementById('profileName'); if(pn) pn.textContent=T('profileGuest');
   const pa=document.getElementById('profileAvt'); if(pa) pa.textContent='G'; }
+/* v10.85: guest UI — the Add Project button, the Setup button and the
+   New Project tab are hidden for guests (the panel itself is also
+   guarded in toggleFsSettings). */
+function applyGuestUI(){
+  const g=isGuest();
+  const qa=document.getElementById('btnQuickAdd'); if(qa) qa.style.display=g?'none':'';
+  const sb=document.getElementById('btnSetupFs'); if(sb) sb.style.display=g?'none':'';
+  const ta=document.getElementById('fsTabAdd'); if(ta) ta.style.display=g?'none':'';
+}
 function loginLogoutLabel(){ const b=document.getElementById('loginLogoutBtn'); if(!b) return;
   const logged=!!(allowedUnit()||curToken());
   b.style.display=logged?'':'none'; if(logged) b.textContent=T('loginLogout'); }
+function loginGuestLabel(){ const b=document.getElementById('loginGuestBtn'); if(!b) return;
+  const logged=!!(allowedUnit()||curToken());
+  b.style.display=logged?'none':''; if(!logged) b.textContent=T('loginGuest'); }
 function openLogin(){ const sc=document.getElementById('loginScreen'); if(!sc) return;
   buildLoginUnits();
   const lg=document.getElementById('loginLogo');
   if(lg){ const tl=document.querySelector('.top-logo'); if(tl&&tl.src){ lg.src=tl.src; lg.style.display=''; } else lg.style.display='none'; }
   const tk=document.getElementById('lgToken'); if(tk) tk.value='';
-  loginSay('',''); loginLogoutLabel();
+  loginSay('',''); loginLogoutLabel(); loginGuestLabel();
   sc.style.display='flex'; document.body.style.overflow='hidden';
   const u=document.getElementById('lgUnit'); if(u) u.focus(); }
 function hideLogin(){ const sc=document.getElementById('loginScreen'); if(sc) sc.style.display='none'; document.body.style.overflow=''; }
@@ -3365,6 +3397,13 @@ function loginLogoutAction(){
   clearLoginState(); clearGatedData();
   ['dtModal','lcModal','fsModal'].forEach(id=>{ const el=document.getElementById(id); if(el) el.style.display='none'; });
   openLogin(); }
+/* v10.85: Continue as Guest — view-only. The login screen hides and the
+   dashboard renders from the snapshot + public CSV (refreshLive's CSV
+   branch); every write control is hidden/disabled for guests (see
+   canEditUnit / applyGuestUI / the per-section guest notes). */
+function loginGuestAction(){
+  window.__guest=true;
+  hideLogin(); bootScopeSnapshot(); refreshLive(false); render(); }
 /* ── v10.84: boot auth — a stored token is validated (whoami) BEFORE any
    data is rendered or fetched; only a valid token opens the dashboard. A
    stored token that no longer validates is cleared and the login screen
@@ -3389,7 +3428,7 @@ function loginSubmit(){
   const btn=document.getElementById('loginBtn'); if(btn) btn.disabled=true;
   fetch(u+'?'+new URLSearchParams({action:'whoami',token:tok,cb:Date.now()}),{redirect:'follow'}).then(r=>r.json()).then(j=>{
     if(btn) btn.disabled=false;
-    if(j && j.ok && j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=tok; saveStepLogin(j);
+    if(j && j.ok && j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=tok; window.__guest=false; saveStepLogin(j);
       fsSet('cu-entry-token',tok); fsSet('cu-allowed-unit',j.unit);
       loginSay(j.unit==='ALL'?T('msgSetupSavedAll'):Tf('msgSetupSavedUnit',{u:j.unit}),'ok');
       toast(T('toastSetup'),'ok');
@@ -3406,7 +3445,7 @@ function fsSaveSetup(){ const uEl=document.getElementById('fsUrl'), tEl=document
   if(!EMBEDDED_SCRIPT_URL) fsSet('cu-entry-url',u);
   if(!tok){ fsSay(T('msgSetupSaved'),'ok'); render(); renderFsTable(); return; }
   fetch(u+'?'+new URLSearchParams({action:'whoami',token:tok,cb:Date.now()}),{redirect:'follow'}).then(r=>r.json()).then(j=>{
-    if(j && j.ok && j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=tok; saveStepLogin(j);
+    if(j && j.ok && j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=tok; window.__guest=false; saveStepLogin(j);
       if(rem){ fsSet('cu-entry-token',tok); fsSet('cu-allowed-unit',j.unit); }
       fsSay(j.unit==='ALL'?T('msgSetupSavedAll'):Tf('msgSetupSavedUnit',{u:j.unit}),'ok');
       toast(T('toastSetup'),'ok');
@@ -3437,14 +3476,15 @@ function renderFsTable(){
     : '<p style="color:'+thc().nodata+';font-size:13px">'+T('fsNoProjects')+'</p>';
   setHTML('fsTable', tbl);
 }
-function fsEdit(sl){ fsEditSl=sl; renderFsTable(); }
-function openListEdit(sl){ openStatusPopup('all'); fsEditSl=sl; renderFsTable();
+function fsEdit(sl){ if(isGuest()) return; fsEditSl=sl; renderFsTable(); }
+function openListEdit(sl){ if(isGuest()) return; openStatusPopup('all'); fsEditSl=sl; renderFsTable();
   const er=document.getElementById('fsEditRow'); if(er) er.scrollIntoView({block:'center'}); }
 function fsCancelEdit(){ fsEditSl=null; renderFsTable(); }
 async function fsSaveEdit(sl){
   const row=rowBySl(sl);
   if(!row){ fsSay(T('msgRowGone'),'err'); return; }
   if(isStepMode()&&!canProjectEdit3()){ fsSay(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
+  if(isGuest()){ fsSay(T('setupGuest'),'err'); toast(T('setupGuest'),'err'); return; }
   const url=scriptUrl();
   const token=(document.getElementById('fsToken')||{}).value||curToken();
   if(!url){ fsSay(T('msgNoScript'),'err'); toggleFsSettings(); return; }
@@ -3574,7 +3614,7 @@ function renderBoard(){
       <div class="bdcol-h"><span style="display:flex;align-items:center;gap:8px"><span class="bdcol-dot" style="background:${cc}"></span>${esc(s)}</span><span class="cnt">${cards.length}</span></div>`+
       (cards.map(r=>{ const dl=odDeadline(r);
         const dstr=dl?fmtDShort(r.revised||r.due):(r.start?fmtDShort(r.start):'—');
-        return `<div class="bdcard bdcard-c" draggable="true" ondragstart="bdDragStart(event,${r.sl})" onclick="bdCardClick(event,${r.sl})" style="background:${statusColor(r.status)}">
+        return `<div class="bdcard bdcard-c" draggable="${isGuest()?'false':'true'}" ondragstart="bdDragStart(event,${r.sl})" onclick="bdCardClick(event,${r.sl})" style="background:${statusColor(r.status)}">
           <span class="bdtag">#${esc(r.unit)}</span>
           <h5>${tname(r.name)}</h5>
           <div class="meta">Completed: ${r.prog||0}%</div>
@@ -3585,7 +3625,7 @@ function renderBoard(){
   }).join('');
   wrap.innerHTML=`<div class="board">${cols}</div>`;
 }
-function bdDragStart(ev,sl){ window.__dragSl=sl; window.__dragging=true;
+function bdDragStart(ev,sl){ if(isGuest()) return; window.__dragSl=sl; window.__dragging=true;
   try{ ev.dataTransfer.setData('text/plain', String(sl)); ev.dataTransfer.effectAllowed='move'; }catch(e){} }
 document.addEventListener('dragend', ()=>{ setTimeout(()=>{ window.__dragging=false; }, 50); });
 function bdCardClick(ev,sl){ if(window.__dragging) return; openDetail(sl); }
@@ -3608,6 +3648,8 @@ async function moveTask(sl, newStatus){
     toast(T('stepNote'),'err');
     return false;
   }
+  /* v10.85: guests are view-only — no board drags. */
+  if(isGuest()){ boardSay(T('bdGuestNote'),'err'); toast(T('bdGuestNote'),'err'); return false; }
   if(newStatus==='In Progress'){
     boardSay('In Progress changes only through workflow steps — drag to Complete or Wating instead.','err');
     toast('In Progress changes only through workflow steps.','err');
@@ -3682,7 +3724,8 @@ function cmBodyHtml(r){
   if(!dtCm.length){ h+=`<div style="font-size:13px;color:var(--muted)">${T('cmEmpty')}</div>`; }
   else h+=dtCm.map(c=>`<div class="cmrow"><div class="cmh">${avatarHtml(c.author||'?',20)} <b>${esc(c.author||'—')}</b> · ${c.date?fmtD(c.date):''}</div><div>${esc(c.comment)}</div></div>`).join('');
   const canE=canEditUnit(r.unit);
-  if(canE) h+=`<div class="cmadd"><input type="text" id="cmAuthor" class="efinput" style="max-width:180px" placeholder="${T('cmAuthorPh')}" value="${esc(cmAuthor())}"><input type="text" id="cmText" class="efinput" placeholder="${T('cmAddPh')}"><button class="entrybtn" onclick="cmAdd()">${T('cmPost')}</button></div><div id="cmMsg" class="fsmsg" style="padding:6px 0"></div>`;
+  if(isGuest()) h+=`<div style="font-size:12.5px;color:var(--muted);margin-top:6px">${T('cmGuestNote')}</div>`;
+  else if(canE) h+=`<div class="cmadd"><input type="text" id="cmAuthor" class="efinput" style="max-width:180px" placeholder="${T('cmAuthorPh')}" value="${esc(cmAuthor())}"><input type="text" id="cmText" class="efinput" placeholder="${T('cmAddPh')}"><button class="entrybtn" onclick="cmAdd()">${T('cmPost')}</button></div><div id="cmMsg" class="fsmsg" style="padding:6px 0"></div>`;
   return h;
 }
 function cmRefresh(){ const b=document.getElementById('dtCmBody'); const r=rowBySl(dtRn); if(b&&r) b.innerHTML=cmBodyHtml(r); }
@@ -3708,6 +3751,7 @@ async function cmAdd(){
   const m=document.getElementById('cmMsg');
   const say=(t,c)=>{ if(m){ m.textContent=t; m.className='fsmsg '+(c||''); } };
   if(isStepMode()){ say(T('stepNote'),'err'); toast(T('stepNote'),'err'); return; }
+  if(isGuest()){ say(T('cmGuestNote'),'err'); toast(T('cmGuestNote'),'err'); return; }
   if(!text) return;
   const url=scriptUrl(), tok=curToken();
   if(!url||!tok){ say(T('msgNoScript'),'err'); toast(T('msgNoScript'),'err'); return; }
