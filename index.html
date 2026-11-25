@@ -149,6 +149,21 @@ tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px so
 @media(max-width:680px){.efgrid{grid-template-columns:repeat(2,1fr)}}
 .fsmsg{font-size:12.5px;min-height:18px;padding:6px 18px;background:var(--card)}
 .fsmsg.ok{color:#15803D}.fsmsg.err{color:#DC2626}
+/* ── v10.83: login screen — centered card on a dim backdrop over the dashboard. */
+.login-screen{position:fixed;inset:0;background:#00000066;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto}
+.login-card{background:var(--card);border:1px solid var(--border);border-radius:16px;width:100%;max-width:400px;box-shadow:0 12px 32px rgba(0,0,0,.22);padding:28px 26px 22px;text-align:center}
+.login-card .login-logo{height:64px;max-width:220px;object-fit:contain}
+.login-card h1{font-size:22px;margin:12px 0 4px;color:var(--text)}
+.login-card h1 span{color:var(--brand)}
+.login-sub{font-size:13px;color:var(--muted);margin:0 0 18px}
+.login-field{text-align:left;margin-bottom:12px}
+.login-field label{font-size:12px;color:var(--muted);display:block;margin-bottom:4px}
+.login-msg{font-size:12.5px;min-height:18px;margin:4px 0 8px;color:var(--muted)}
+.login-msg.ok{color:#15803D}.login-msg.err{color:#DC2626}
+.login-card .entrybtn{width:100%;padding:11px 18px;font-size:14px}
+.login-guest{margin-top:12px}
+.login-guest button{background:none;border:0;color:var(--brand);font-size:13px;cursor:pointer;text-decoration:underline;padding:4px}
+@media(max-width:420px){.login-card{padding:22px 18px 18px}.login-card h1{font-size:20px}}
 .dtmodal{position:fixed;inset:0;background:#00000066;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
 .dtcard{background:var(--card);border:1px solid var(--border);border-radius:8px;width:100%;max-width:720px;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden}
 .dthead{padding:14px 18px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
@@ -378,7 +393,7 @@ th{padding:8px 10px}
 .notif-row:hover{background:var(--soft)}
 .notif-name{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .notif-empty{font-size:13px;color:var(--muted);padding:10px}
-.profile-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:4px 12px 4px 4px;font-size:13px;font-weight:600;color:var(--text);box-shadow:0 1px 2px var(--shadow);white-space:nowrap}
+.profile-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:4px 12px 4px 4px;font-size:13px;font-weight:600;color:var(--text);box-shadow:0 1px 2px var(--shadow);white-space:nowrap;cursor:pointer}
 .pc-avt{width:28px;height:28px;border-radius:50%;background:var(--brand-b);color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;flex:none}
 #btnQuickAdd{white-space:nowrap}
 .kpi .share{height:4px;background:var(--soft2);border-radius:3px;overflow:hidden;margin-top:9px}
@@ -534,7 +549,7 @@ tr.lc-row:hover td{background:var(--soft)}
       </div>
       <button class="entrybtn" id="btnQuickAdd" onclick="openAddProject()" data-t="quickAdd"></button>
       <button class="iconbtn" id="btnModeTop" onclick="toggleMode()" title="Toggle theme">🌙</button>
-      <span class="profile-chip" id="profileChip" title="Login state"><span class="pc-avt" id="profileAvt">G</span><span id="profileName">Guest</span></span>
+      <span class="profile-chip" id="profileChip" title="Login state" onclick="openLogin()"><span class="pc-avt" id="profileAvt">G</span><span id="profileName">Guest</span></span>
     </div>
     <div class="live">
     <div style="display:flex;gap:8px;justify-content:flex-end;align-items:center">
@@ -693,6 +708,20 @@ tr.lc-row:hover td{background:var(--soft)}
   </div></div>
 </div>
 </div>
+<!-- v10.83: login screen — unit select + token; the token decides the access.
+     Guest browsing stays available (the dashboard was never hard-gated). -->
+<div class="login-screen" id="loginScreen" style="display:none">
+  <div class="login-card">
+    <img id="loginLogo" class="login-logo" alt="Dekko ISHO Group">
+    <h1 data-th="loginTitle"></h1>
+    <p class="login-sub" data-t="loginSub"></p>
+    <div class="login-field"><label data-t="loginUnitL"></label><select id="lgUnit" class="efinput"></select></div>
+    <div class="login-field"><label data-t="loginTokenL"></label><input type="password" id="lgToken" class="efinput" data-t-ph="loginTokenPh" onkeydown="if(event.key==='Enter')loginSubmit()"></div>
+    <div class="login-msg" id="loginMsg"></div>
+    <button class="entrybtn" id="loginBtn" onclick="loginSubmit()" data-t="loginBtn"></button>
+    <div class="login-guest"><button id="loginGuestBtn" onclick="loginGuestAction()"></button></div>
+  </div>
+</div>
 <script>
 const SHEET_CSV_URL = 'https://docs.google.com/spreadsheets/d/1LVyKMJRTGdK0Kc3hTK3wntWi116Sfmwa8WUwIhUiptw/gviz/tq?tqx=out:csv&gid=1460669279';
 /* ── v10: built-in script URL (empty until the owner deploys script v4 and
@@ -788,6 +817,11 @@ setupH:'Apps Script Web app URL — for THIS sheet only. Deploy the entry script
 setupHEmbedded:'The script URL is built into this dashboard — enter only your token below (6-digit master/unit token, or 4-digit step token).',
 setupUrlL:'Web app URL (ends with /exec)',setupPassL:'Token — 6-digit master/unit token, or 4-digit step token',
 setupPassPh:'Your token',setupRemember:'Remember token on this device',setupSaveBtn:'💾 Save Setup',
+/* v10.83: login screen strings. */
+loginTitle:'Budget <span>Tracker</span>',loginSub:'Dekko ISHO Group · Sign in to continue',
+loginUnitL:'Unit',loginUnitPh:'ইউনিট বেছে নিন',loginTokenL:'Token',loginTokenPh:'Your token',loginBtn:'🔐 Log in',
+loginGuest:'Continue as Guest',loginLogout:'Log out',loginPickUnit:'❌ Please choose your unit first.',
+loginNeedToken:'❌ Enter your token.',loginNetFail:'❌ Could not reach the script — please check your connection and try again.',
 addH:'Add a new project — it will be added to the bottom of the Sheet (SL is assigned automatically). To delete a project, use the Sheet.',
 addFoot:'Setup: open ⚙️ Setup and enter your password — owner password = all units, unit password = own unit only. A unit password works for one unit only — the server enforces it.',
 saveBtn:'💾 Save New Project',
@@ -3279,12 +3313,60 @@ async function fsAddSave(){
       fsSay(Tf('msgSaveFail',{e:e.message}),'err'); bgFailToast(e); });
 }
 document.addEventListener('keydown', e=>{ if(e.key!=='Escape') return;
+  const lg=document.getElementById('loginScreen');
+  if(lg && lg.style.display==='flex'){ hideLogin(); return; }
   const lm=document.getElementById('lcModal');
   if(lm && lm.style.display==='flex'){ closeLcPopup(); return; }
   const dm=document.getElementById('dtModal');
   if(dm && dm.style.display==='flex') closeDetail();
   else if(document.getElementById('fsModal').style.display==='flex') closeStatusPopup(); });
 function toggleFsSettings(){ const s=document.getElementById('fsSettings'); if(s) s.style.display=s.style.display==='none'?'block':'none'; }
+/* ── v10.83: login screen — unit select + token. The TOKEN decides the
+   access (master → ALL, unit token → that unit, step token → that step);
+   the select is a guide only: if it differs from the token's unit, the
+   token wins. Guest browsing is preserved — the dashboard never had a
+   hard gate, so the screen always offers a guest way in (or Log out when
+   already logged in). The token is remembered on success, like the old
+   Setup's default-checked Remember box. ── */
+function buildLoginUnits(){ const s=document.getElementById('lgUnit'); if(!s) return;
+  s.innerHTML='<option value="">'+esc(T('loginUnitPh'))+'</option>'+UNITS_ALL.map(u=>`<option value="${esc(u)}">${esc(u)}</option>`).join(''); }
+function loginSay(msg, cls){ const e=document.getElementById('loginMsg'); if(e){ e.textContent=msg; e.className='login-msg '+(cls||''); } }
+function loginGuestLabel(){ const b=document.getElementById('loginGuestBtn'); if(!b) return;
+  b.textContent = (allowedUnit()||curToken()) ? T('loginLogout') : T('loginGuest'); }
+function openLogin(){ const sc=document.getElementById('loginScreen'); if(!sc) return;
+  buildLoginUnits();
+  const lg=document.getElementById('loginLogo');
+  if(lg){ const tl=document.querySelector('.top-logo'); if(tl&&tl.src){ lg.src=tl.src; lg.style.display=''; } else lg.style.display='none'; }
+  const tk=document.getElementById('lgToken'); if(tk) tk.value='';
+  loginSay('',''); loginGuestLabel();
+  sc.style.display='flex'; document.body.style.overflow='hidden';
+  const u=document.getElementById('lgUnit'); if(u) u.focus(); }
+function hideLogin(){ const sc=document.getElementById('loginScreen'); if(sc) sc.style.display='none'; document.body.style.overflow=''; }
+function loginGuestAction(){
+  if(allowedUnit()||curToken()){ // logged in → log out
+    window.__allowedUnit=''; window.__sessionToken=''; window.__stepNo=null; window.__stepName='';
+    fsSet('cu-entry-token',''); fsSet('cu-allowed-unit',''); fsSet('cu-step-no',''); fsSet('cu-step-name','');
+    hideLogin(); render(); refreshLive(false); return; }
+  hideLogin(); }
+function maybeShowLogin(){ if(!curToken()) openLogin(); }
+function loginSubmit(){
+  const unit=(document.getElementById('lgUnit')||{}).value||'';
+  const tok=(document.getElementById('lgToken')||{}).value.trim();
+  if(!unit){ loginSay(T('loginPickUnit'),'err'); return; }
+  if(!tok){ loginSay(T('loginNeedToken'),'err'); return; }
+  const u=scriptUrl();
+  if(!u){ loginSay(T('msgNoScript'),'err'); return; }
+  const btn=document.getElementById('loginBtn'); if(btn) btn.disabled=true;
+  fetch(u+'?'+new URLSearchParams({action:'whoami',token:tok,cb:Date.now()}),{redirect:'follow'}).then(r=>r.json()).then(j=>{
+    if(btn) btn.disabled=false;
+    if(j && j.ok && j.unit){ window.__allowedUnit=j.unit; window.__sessionToken=tok; saveStepLogin(j);
+      fsSet('cu-entry-token',tok); fsSet('cu-allowed-unit',j.unit);
+      loginSay(j.unit==='ALL'?T('msgSetupSavedAll'):Tf('msgSetupSavedUnit',{u:j.unit}),'ok');
+      toast(T('toastSetup'),'ok');
+      hideLogin(); refreshLive(false); render();
+    } else { const m=(j && j.error)?j.error:T('msgWrongToken'); loginSay(m,'err'); toast(m,'err'); }
+  }).catch(()=>{ if(btn) btn.disabled=false; loginSay(T('loginNetFail'),'err'); });
+}
 function fsSaveSetup(){ const uEl=document.getElementById('fsUrl'), tEl=document.getElementById('fsToken');
   let u=(uEl||{}).value.trim();
   if(!u && EMBEDDED_SCRIPT_URL) u=EMBEDDED_SCRIPT_URL;
@@ -3721,7 +3803,7 @@ function atPrintHtml(){
   return `<h3 style="margin:16px 0 6px">${esc(T('dtAttachments'))}</h3><ul style="font-size:13px;margin:0;padding-left:18px">`+
     dtAt.map(f=>`<li>${esc(f.fileName||'—')}${f.by?` — ${esc(f.by)}`:''}${f.date?` · ${fmtD(f.date)}`:''}</li>`).join('')+`</ul>`;
 }
-buildFilters(); applyTheme(); applyLang(); whoamiRestore(); bootScopeSnapshot(); render(); refreshLive(false,false,true);
+buildFilters(); applyTheme(); applyLang(); maybeShowLogin(); whoamiRestore(); bootScopeSnapshot(); render(); refreshLive(false,false,true);
 </script>
 <div id="selBar" style="display:none;position:fixed;left:50%;bottom:18px;transform:translateX(-50%);z-index:120;background:#333;color:#fff;border-radius:8px;padding:10px 16px;box-shadow:0 4px 16px rgba(0,0,0,.25);align-items:center;gap:14px;font-size:13px">
   <span id="selCount"></span><button onclick="clearSel()" style="background:#7b68ee;color:#fff;border:0;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:600;cursor:pointer" data-t="selClear"></button>
