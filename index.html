@@ -950,8 +950,14 @@ function toggleMode(){ darkMode=!darkMode;
 let selU = new Set(UNITS_ALL), selS = new Set(STATUSES_ALL);
 /* v10.19: Budget Status filter — options come from the data itself (the
    Sheet's "Budget Status" column, whose values the owner writes), not a
-   fixed list. '' means the row has no budget status yet. */
-let BST_ALL = [], selB = new Set(), BST_KNOWN = new Set();
+   fixed list. '' means the row has no budget status yet.
+   v10.89: BST_OFF holds values the user DELIBERATELY unchecked (updated
+   only by togB / pickAll 'B' / resetAll). syncBstOptions rebuilds selB as
+   the current universe minus BST_OFF, so a scope change (narrow unit
+   login, then back to master) never removes values from the selection —
+   the old BST_KNOWN guard + prune did exactly that (master showed 55/75
+   after a DGL-2 login in the same session). */
+let BST_ALL = [], selB = new Set(), BST_OFF = new Set();
 let selOverdue = false;
 /* v10.42: Progress filter — 'all' | '100' | 'below'. Replaces the v10.40
    "100% only" checkbox chip (the dropdown's "100%" option covers the same
@@ -1064,11 +1070,13 @@ function syncBstOptions(){
   const vals=[...new Set(D.rows.map(r=>r.bst||'').filter(v=>v!==''))].sort();
   const hasBlank=D.rows.some(r=>!r.bst);
   BST_ALL=hasBlank?['',...vals]:vals;
-  /* Only values never seen before join the selection — otherwise a
-     deliberate Clear (pickAll 'B' false) would be undone by the next
-     buildFilters, and an unchecked value would come straight back. */
-  BST_ALL.forEach(v=>{ if(!BST_KNOWN.has(v)){ BST_KNOWN.add(v); selB.add(v); } });
-  [...selB].forEach(v=>{ if(!BST_ALL.includes(v)) selB.delete(v); });
+  /* v10.89: selection = current universe minus deliberately-unchecked
+     values. A value absent from the current rows simply has no option
+     shown, and it re-joins the selection the moment it reappears —
+     unless the user deliberately unchecked it (BST_OFF). Scope changes
+     therefore never shrink the selection. */
+  selB.clear();
+  BST_ALL.forEach(v=>{ if(!BST_OFF.has(v)) selB.add(v); });
 }
 function jsq(v){ return String(v).replace(/\\/g,'\\\\').replace(/'/g,"\\'"); }
 function buildFilters(){
@@ -1087,7 +1095,7 @@ function buildFilters(){
 }
 function togU(u,on){ on?selU.add(u):selU.delete(u); render(); }
 function togS(s,on){ on?selS.add(s):selS.delete(s); render(); }
-function togB(v,on){ on?selB.add(v):selB.delete(v); render(); }
+function togB(v,on){ if(on){ BST_OFF.delete(v); selB.add(v); } else { BST_OFF.add(v); selB.delete(v); } render(); }
 function toggleSel(sl,on){ const k=String(sl); on?selRows.add(k):selRows.delete(k); render();
   const fm=document.getElementById('fsModal'); if(fm && fm.style.display==='flex') renderFsTable(); }
 function clearSel(){ selRows.clear(); render();
@@ -1096,7 +1104,7 @@ function renderSelBar(){ const b=document.getElementById('selBar'); if(!b) retur
   if(!selRows.size){ b.style.display='none'; return; }
   b.style.display='flex';
   const c=document.getElementById('selCount'); if(c) c.textContent=Tf('selBar',{n:selRows.size}); }
-function resetAll(){ UNITS_ALL.forEach(u=>selU.add(u)); STATUSES_ALL.forEach(s=>selS.add(s));
+function resetAll(){ BST_OFF.clear(); UNITS_ALL.forEach(u=>selU.add(u)); STATUSES_ALL.forEach(s=>selS.add(s));
   selB.clear(); BST_ALL.forEach(v=>selB.add(v));
   selOverdue=false;
   const fo=document.getElementById('fOverdue'); if(fo) fo.checked=false;
@@ -1110,7 +1118,7 @@ function toggleDD(which,ev){ ev.stopPropagation();
   p.style.display = p.style.display==='none' ? 'block' : 'none'; }
 function pickAll(kind,on){
   if(kind==='U'){ selU.clear(); if(on) UNITS_ALL.forEach(u=>selU.add(u)); }
-  else if(kind==='B'){ selB.clear(); if(on) BST_ALL.forEach(v=>selB.add(v)); }
+  else if(kind==='B'){ if(on){ BST_OFF.clear(); } else { BST_ALL.forEach(v=>BST_OFF.add(v)); } selB.clear(); if(on) BST_ALL.forEach(v=>selB.add(v)); }
   else { selS.clear(); if(on) STATUSES_ALL.forEach(s=>selS.add(s)); }
   buildFilters(); render(); }
 document.addEventListener('click', e=>{ if(!e.target.closest('.dd')){
