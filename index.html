@@ -149,40 +149,50 @@ tr.tot td{font-weight:800;color:var(--text);background:#f5f3ff;border-top:2px so
 @media(max-width:680px){.efgrid{grid-template-columns:repeat(2,1fr)}}
 .fsmsg{font-size:12.5px;min-height:18px;padding:6px 18px;background:var(--card)}
 .fsmsg.ok{color:#15803D}.fsmsg.err{color:#DC2626}
-/* ── v10.86: login screen — dark navy grid + glowing teal chart backdrop,
-   centered glowing card (per the user's reference design). Always dark,
-   independent of the dashboard theme; fully opaque — nothing behind it
-   is visible. ── */
+/* ── v10.87: login screen palette — light defaults, dark overrides.
+   Same v10.86 design (navy grid + glowing teal chart backdrop, centered
+   glowing card); the colors follow the dashboard's light/dark theme
+   (applyTheme sets html[data-theme] at boot, before the login shows).
+   Fully opaque in both themes — nothing behind it is visible. ── */
+:root{--lg-bg1:#eef6fd;--lg-bg2:#e2eefb;--lg-glow1:rgba(8,145,178,.12);--lg-glow2:rgba(34,211,238,.14);--lg-grid:rgba(100,116,139,.14);--lg-line1:#0891b2;--lg-line2:#0d9488;--lg-bar:#0891b2;--lg-fill-op:.14;--lg-card1:#ffffff;--lg-card2:#f2f8fd;--lg-card-border:rgba(8,145,178,.35);--lg-card-glow:0 0 0 1px rgba(8,145,178,.10),0 0 32px rgba(8,145,178,.20),0 24px 60px rgba(15,23,42,.16);--lg-title:#0f172a;--lg-text:#0f172a;--lg-sub:#64748b;--lg-label:#334155;--lg-icon:#0891b2;--lg-icon-dim:#64748b;--lg-field-bg:rgba(100,116,139,.10);--lg-field-border:rgba(100,116,139,.35);--lg-field-text:#0f172a;--lg-focus:#0891b2;--lg-focus-ring:rgba(8,145,178,.18);--lg-guest-bg:rgba(100,116,139,.08);--lg-guest-border:rgba(100,116,139,.35);--lg-guest-text:#0f172a;--lg-guest-bg-hov:rgba(100,116,139,.16);--lg-ok:#15803d;--lg-err:#dc2626}
+[data-theme="dark"]{--lg-bg1:#04101f;--lg-bg2:#06182e;--lg-glow1:rgba(34,211,238,.16);--lg-glow2:rgba(34,211,238,.10);--lg-grid:rgba(148,197,255,.07);--lg-line1:#22d3ee;--lg-line2:#2dd4bf;--lg-bar:#22d3ee;--lg-fill-op:.22;--lg-card1:#0b1e3a;--lg-card2:#081426;--lg-card-border:rgba(56,189,248,.45);--lg-card-glow:0 0 0 1px rgba(34,211,238,.12),0 0 42px rgba(34,211,238,.28),0 24px 60px rgba(0,0,0,.55);--lg-title:#f8fafc;--lg-text:#eef4ff;--lg-sub:#94a3b8;--lg-label:#cbd5e1;--lg-icon:#7dd3fc;--lg-icon-dim:#94a3b8;--lg-field-bg:rgba(148,163,184,.10);--lg-field-border:rgba(148,163,184,.35);--lg-field-text:#f1f5f9;--lg-focus:#22d3ee;--lg-focus-ring:rgba(34,211,238,.18);--lg-guest-bg:rgba(148,163,184,.08);--lg-guest-border:rgba(148,163,184,.35);--lg-guest-text:#e2e8f0;--lg-guest-bg-hov:rgba(148,163,184,.16);--lg-ok:#4ade80;--lg-err:#f87171}
 .login-screen{position:fixed;inset:0;z-index:150;display:flex;align-items:center;justify-content:center;padding:16px;overflow:auto;
-  background:radial-gradient(900px 480px at 85% 28%,rgba(34,211,238,.16),transparent 60%),radial-gradient(720px 420px at 8% 88%,rgba(34,211,238,.10),transparent 60%),linear-gradient(180deg,#04101f 0%,#06182e 55%,#04101f 100%)}
+  background:radial-gradient(900px 480px at 85% 28%,var(--lg-glow1),transparent 60%),radial-gradient(720px 420px at 8% 88%,var(--lg-glow2),transparent 60%),linear-gradient(180deg,var(--lg-bg1) 0%,var(--lg-bg2) 55%,var(--lg-bg1) 100%)}
 .login-screen::before{content:'';position:absolute;inset:0;pointer-events:none;
-  background-image:linear-gradient(rgba(148,197,255,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(148,197,255,.07) 1px,transparent 1px);
+  background-image:linear-gradient(var(--lg-grid) 1px,transparent 1px),linear-gradient(90deg,var(--lg-grid) 1px,transparent 1px);
   background-size:56px 56px}
+#lgChartFill stop:first-child{stop-color:var(--lg-line1);stop-opacity:var(--lg-fill-op)}
+#lgChartFill stop:last-child{stop-color:var(--lg-line1);stop-opacity:0}
+.login-chart .lg-area{fill:url(#lgChartFill)}
+.login-chart .lg-line1{stroke:var(--lg-line1)}
+.login-chart .lg-line2{stroke:var(--lg-line2)}
+.login-chart .lg-bars{fill:var(--lg-bar)}
 .login-chart{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
-.login-card{position:relative;background:linear-gradient(180deg,#0b1e3a,#081426);border:1px solid rgba(56,189,248,.45);border-radius:18px;width:100%;max-width:400px;box-shadow:0 0 0 1px rgba(34,211,238,.12),0 0 42px rgba(34,211,238,.28),0 24px 60px rgba(0,0,0,.55);padding:30px 28px 24px;text-align:center;color:#eef4ff}
-.login-card .login-logo{height:52px;max-width:230px;object-fit:contain;filter:brightness(0) invert(1)}
-.login-card h1{font-size:24px;margin:14px 0 4px;color:#f8fafc;font-weight:700}
-.login-card h1 span{color:#f8fafc}
-.login-sub{font-size:13px;color:#94a3b8;margin:0 0 20px}
+.login-card{position:relative;background:linear-gradient(180deg,var(--lg-card1),var(--lg-card2));border:1px solid var(--lg-card-border);border-radius:18px;width:100%;max-width:400px;box-shadow:var(--lg-card-glow);padding:30px 28px 24px;text-align:center;color:var(--lg-text)}
+.login-card .login-logo{height:52px;max-width:230px;object-fit:contain}
+[data-theme="dark"] .login-card .login-logo{filter:brightness(0) invert(1)}
+.login-card h1{font-size:24px;margin:14px 0 4px;color:var(--lg-title);font-weight:700}
+.login-card h1 span{color:var(--lg-title)}
+.login-sub{font-size:13px;color:var(--lg-sub);margin:0 0 20px}
 .login-field{text-align:left;margin-bottom:14px}
-.login-field label{font-size:12.5px;font-weight:600;color:#cbd5e1;display:block;margin-bottom:6px}
+.login-field label{font-size:12.5px;font-weight:600;color:var(--lg-label);display:block;margin-bottom:6px}
 .login-input{position:relative}
-.login-input>svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:#7dd3fc;pointer-events:none}
-.login-input>svg.login-chev{left:auto;right:12px;color:#94a3b8}
-.login-input select,.login-input input{width:100%;padding:10px 36px;border:1px solid rgba(148,163,184,.35);border-radius:10px;font-size:13.5px;color:#f1f5f9;background:rgba(148,163,184,.10);font-family:inherit;appearance:none;-webkit-appearance:none}
+.login-input>svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);width:16px;height:16px;color:var(--lg-icon);pointer-events:none}
+.login-input>svg.login-chev{left:auto;right:12px;color:var(--lg-icon-dim)}
+.login-input select,.login-input input{width:100%;padding:10px 36px;border:1px solid var(--lg-field-border);border-radius:10px;font-size:13.5px;color:var(--lg-field-text);background:var(--lg-field-bg);font-family:inherit;appearance:none;-webkit-appearance:none}
 .login-input select{cursor:pointer}
 .login-input select option{color:#0f172a;background:#fff}
-.login-input select:focus,.login-input input:focus{outline:none;border-color:#22d3ee;box-shadow:0 0 0 3px rgba(34,211,238,.18)}
-.login-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;padding:4px;cursor:pointer;display:flex;color:#94a3b8}
+.login-input select:focus,.login-input input:focus{outline:none;border-color:var(--lg-focus);box-shadow:0 0 0 3px var(--lg-focus-ring)}
+.login-eye{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:none;border:0;padding:4px;cursor:pointer;display:flex;color:var(--lg-icon-dim)}
 .login-eye svg{width:18px;height:18px}
-.login-msg{font-size:12.5px;min-height:18px;margin:4px 0 10px;color:#94a3b8;text-align:left}
-.login-msg.ok{color:#4ade80}.login-msg.err{color:#f87171}
+.login-msg{font-size:12.5px;min-height:18px;margin:4px 0 10px;color:var(--lg-sub);text-align:left}
+.login-msg.ok{color:var(--lg-ok)}.login-msg.err{color:var(--lg-err)}
 .login-btn{width:100%;padding:12px 18px;font-size:15px;font-weight:700;color:#fff;border:0;border-radius:10px;cursor:pointer;background:linear-gradient(90deg,#0891b2,#06b6d4 55%,#22d3ee);box-shadow:0 6px 20px rgba(6,182,212,.45);display:flex;align-items:center;justify-content:center;gap:8px}
 .login-btn:disabled{opacity:.55;cursor:wait}
 .login-btn svg{width:17px;height:17px}
 .login-guest{margin-top:12px}
-.login-guest button{display:block;width:100%;background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.35);color:#e2e8f0;font-size:13.5px;font-weight:600;cursor:pointer;padding:11px 18px;border-radius:10px}
-.login-guest button:hover{background:rgba(148,163,184,.16)}
+.login-guest button{display:block;width:100%;background:var(--lg-guest-bg);border:1px solid var(--lg-guest-border);color:var(--lg-guest-text);font-size:13.5px;font-weight:600;cursor:pointer;padding:11px 18px;border-radius:10px}
+.login-guest button:hover{background:var(--lg-guest-bg-hov)}
 @media(max-width:420px){.login-card{padding:24px 20px 20px}.login-card h1{font-size:21px}}
 .dtmodal{position:fixed;inset:0;background:#00000066;z-index:200;display:flex;align-items:flex-start;justify-content:center;padding:28px 12px;overflow:auto}
 .dtcard{background:var(--card);border:1px solid var(--border);border-radius:8px;width:100%;max-width:720px;box-shadow:0 8px 24px rgba(0,0,0,.18);overflow:hidden}
@@ -728,30 +738,25 @@ tr.lc-row:hover td{background:var(--soft)}
   </div></div>
 </div>
 </div>
-<!-- v10.86: login first — the login screen is the first thing shown and
-     its background is fully opaque (nothing behind it is visible).
-     Select = units + steps 1–12 (the ones with tokens); the token decides
-     the access and wins over the select. "Continue as Guest" is back:
-     guests see everything read-only and cannot write anything.
-     Design per the user's reference: dark navy grid + glowing teal chart
-     backdrop, centered glowing card, icon fields, eye toggle on Token,
-     cyan Log in button with arrow. -->
+<!-- v10.87: login colors follow the dashboard's light/dark theme
+     (palette vars --lg-* on :root / [data-theme="dark"]); layout is
+     unchanged from v10.86. -->
 <div class="login-screen" id="loginScreen" style="display:none">
   <svg class="login-chart" aria-hidden="true" preserveAspectRatio="none" viewBox="0 0 1200 700">
     <defs>
       <linearGradient id="lgChartFill" x1="0" y1="0" x2="0" y2="1">
-        <stop offset="0" stop-color="#22d3ee" stop-opacity=".22"/>
-        <stop offset="1" stop-color="#22d3ee" stop-opacity="0"/>
+        <stop offset="0"/>
+        <stop offset="1"/>
       </linearGradient>
       <filter id="lgGlow" x="-40%" y="-40%" width="180%" height="180%">
         <feGaussianBlur stdDeviation="5" result="b"/>
         <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
       </filter>
     </defs>
-    <path d="M0,520 C150,470 220,560 360,500 S560,380 720,430 S1000,300 1200,330 L1200,700 L0,700 Z" fill="url(#lgChartFill)"/>
-    <path d="M0,520 C150,470 220,560 360,500 S560,380 720,430 S1000,300 1200,330" fill="none" stroke="#22d3ee" stroke-width="2.5" filter="url(#lgGlow)"/>
-    <path d="M0,600 C180,560 300,630 480,580 S760,470 940,520 S1120,450 1200,470" fill="none" stroke="#2dd4bf" stroke-width="1.8" opacity=".7" filter="url(#lgGlow)"/>
-    <g fill="#22d3ee" opacity=".5">
+    <path class="lg-area" d="M0,520 C150,470 220,560 360,500 S560,380 720,430 S1000,300 1200,330 L1200,700 L0,700 Z"/>
+    <path class="lg-line1" d="M0,520 C150,470 220,560 360,500 S560,380 720,430 S1000,300 1200,330" fill="none" stroke-width="2.5" filter="url(#lgGlow)"/>
+    <path class="lg-line2" d="M0,600 C180,560 300,630 480,580 S760,470 940,520 S1120,450 1200,470" fill="none" stroke-width="1.8" opacity=".7" filter="url(#lgGlow)"/>
+    <g class="lg-bars" opacity=".5">
       <rect x="1050" y="180" width="10" height="60" rx="2"/>
       <rect x="1070" y="150" width="10" height="90" rx="2"/>
       <rect x="1090" y="200" width="10" height="40" rx="2"/>
